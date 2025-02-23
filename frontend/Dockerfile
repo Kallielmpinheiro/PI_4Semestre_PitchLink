@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 
 # Instalar a versão específica do Angular CLI globalmente
 RUN npm install -g @angular/cli@19.0.4
-
+RUN npm install -g @angular-devkit/build-angular@19.0.4
 # Instalar as dependências do projeto Angular
 RUN npm install
 

@@ -11,7 +11,15 @@ RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/
 RUN python -m venv /env
 ENV PATH="/env/bin:$PATH"
 
+
 # Copiar o requirements.txt e instalar as dependências dentro do venv
+
+RUN pip install cryptography
+RUN pip install PyJWT
+RUN  pip install requests
+RUN  pip install django-allauth
+RUN pip install django-allauth --upgrade
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
