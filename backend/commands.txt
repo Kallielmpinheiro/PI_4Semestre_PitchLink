@@ -1,0 +1,2 @@
+docker compose up -d
+docker exec -it PI4SEM psql -U postgres -d PI4SEM
