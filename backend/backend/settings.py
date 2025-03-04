@@ -183,7 +183,13 @@ SOCIALACCOUNT_PROVIDERS = {
                 "secret": os.environ.get("LINKEDIN_CLIENT_SECRET"),
                 "settings": {
                     "server_url": "https://www.linkedin.com/oauth",
+                    "authorization_endpoint": "https://www.linkedin.com/oauth/v2/authorization",
+                    "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
+                    "userinfo_endpoint": "https://api.linkedin.com/v2/me",
+                    "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
                 },
+                 'SCOPE': ['openid', 'profile', 'email'],
+
             }
         ]
     },
