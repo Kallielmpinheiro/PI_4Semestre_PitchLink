@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 8000
 
 # Rodar o servidor do Django com hot reload
-CMD ["python", "manage.py", "runserver"]
+CMD ["python manage.py makemigrations && python manage.py migrate && python manage.py runserver"]
