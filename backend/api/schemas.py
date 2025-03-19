@@ -9,3 +9,7 @@ class TestReq(Schema):
 
 class TestResp(Schema):
     name : str
+
+
+class ProfileReq(Schema):
+    pass 
