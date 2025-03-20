@@ -1,12 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment.prod';
+import { api } from '/app/src/providers'
 
 @Injectable({
   providedIn: 'root'
 })
+
+
 export class AuthService {
-  private apiUrl = 'http://localhost:8000'; // URL do seu backend Django
+  private apiUrl = 'http://localhost:8000';
+  private baseUrl = environment.baseUrl
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -27,4 +32,10 @@ export class AuthService {
       this.router.navigate(['/']);
     });
   }
+
+  ListService(){
+    return this.http.get(`${this.baseUrl}${api.list}`, { withCredentials: true });
+  }
+
+
 }
