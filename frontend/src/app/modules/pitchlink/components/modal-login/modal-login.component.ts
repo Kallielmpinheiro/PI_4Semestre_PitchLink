@@ -12,9 +12,25 @@ export class ModalLoginComponent {
 
   loginWithGoogle() {
     this.authService.loginWithGoogle();
+    console.log('test')
   }
 
   loginWithLinkedin(){
     this.authService.loginWithLinkedin();
   }
+
+  Listarusuarios() {
+    this.authService.ListService().subscribe({
+      next: (response) => {
+        console.log(response);
+      },
+      error: (error) => {
+        console.error(error);
+      },
+      complete: () => {
+        console.log('Requisição completada');
+      }
+    });
+  }
+
 }

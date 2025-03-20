@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
+    'corsheaders',
 
     'django.contrib.sites',
     'allauth',
@@ -58,6 +59,13 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:8000",
+    "http://172.18.0.4:4200",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 
 MIDDLEWARE = [
@@ -69,7 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
-
+    'corsheaders.middleware.CorsMiddleware',
     ]
 
 ROOT_URLCONF = 'backend.urls'
