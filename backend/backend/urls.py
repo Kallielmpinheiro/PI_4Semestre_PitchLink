@@ -17,9 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from api.api import api
+from api.views import custom_linkedin_callback
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
+    path('accounts/oidc/linkedin-server/login/callback/', custom_linkedin_callback, name='linkedin_callback'),
+    path('accounts/', include('allauth.urls')),
 
 ]

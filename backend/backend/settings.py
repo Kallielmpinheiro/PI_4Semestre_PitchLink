@@ -50,8 +50,13 @@ INSTALLED_APPS = [
 
     #providers
     'allauth.socialaccount.providers.google',
-    # 'allauth.socialaccount.providers.linkedin'
+    'allauth.socialaccount.providers.openid_connect',
 
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 
@@ -102,7 +107,7 @@ DATABASES = {
     }
 }
 
-SITE_ID = 1
+SITE_ID = 2
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -146,3 +151,49 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # adicional
+
+SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_LOGOUT_ON_GET = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+            'secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+            'key': ''
+        }
+    },
+    "openid_connect": {
+        "APPS": [
+            {
+                "provider_id": "linkedin-server",
+                "name": "LinkedIn OIDC",
+                "client_id": os.environ.get("LINKEDIN_CLIENT_ID"),
+                "secret": os.environ.get("LINKEDIN_CLIENT_SECRET"),
+                "settings": {
+                    "server_url": "https://www.linkedin.com/oauth",
+                    "authorization_endpoint": "https://www.linkedin.com/oauth/v2/authorization",
+                    "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
+                    "userinfo_endpoint": "https://api.linkedin.com/v2/me",
+                    "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
+                },
+                 'SCOPE': ['openid', 'profile', 'email'],
+
+            }
+        ]
+    },
+}
+
+LOGIN_REDIRECT_URL = 'http://localhost:4200/'
+LOGOUT_REDIRECT_URL = 'http://localhost:4200/'
