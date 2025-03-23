@@ -1,16 +1,14 @@
-from django.http import JsonResponse
-from ninja import NinjaAPI
-from typing import Any
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.models import SocialToken
 from django.contrib.auth import get_user_model
 from ninja.security import django_auth
-from allauth.socialaccount.models import SocialAccount
-import requests
-from allauth.socialaccount.models import SocialToken, SocialApp
-from datetime import datetime
-from django.utils import timezone
-import traceback
-import pytz
 from api.schemas import ErrorResponse
+from django.http import JsonResponse
+from datetime import datetime
+from ninja import NinjaAPI
+from typing import Any
+import requests
+import pytz
 
 
 api = NinjaAPI()

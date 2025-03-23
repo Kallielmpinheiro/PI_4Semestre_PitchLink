@@ -1,9 +1,7 @@
-from django.shortcuts import render
-from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView
 from allauth.socialaccount.providers.openid_connect.views import OpenIDConnectOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView
+from allauth.socialaccount.views import SignupView
 from django.shortcuts import redirect
-
-# Create your views here.
 
 def custom_linkedin_callback(request):
 
@@ -21,4 +19,6 @@ def custom_linkedin_callback(request):
     view.adapter = adapter  
     return view.dispatch(request)
 
-
+class CustomSocialSignupView(SignupView):
+    def dispatch(self, request, *args, **kwargs):
+        return redirect('http://localhost:4200/')

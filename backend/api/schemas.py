@@ -1,8 +1,6 @@
-from ninja import Schema
 from typing import Optional
-from datetime import date, datetime
-from typing import List, Any
-from decimal import Decimal
+from ninja import Schema
+from typing import List
 
 
 class ErrorResponse(Schema):
