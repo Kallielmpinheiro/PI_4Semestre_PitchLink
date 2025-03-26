@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AuthService } from '../../../../services/auth.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-modal-login',
@@ -12,9 +12,25 @@ export class ModalLoginComponent {
 
   loginWithGoogle() {
     this.authService.loginWithGoogle();
+    console.log('test')
   }
 
   loginWithLinkedin(){
     this.authService.loginWithLinkedin();
   }
+
+  Listarusuarios() {
+    this.authService.ListService().subscribe({
+      next: (response) => {
+        console.log(response);
+      },
+      error: (error) => {
+        console.error(error);
+      },
+      complete: () => {
+        console.log('Requisição completada');
+      }
+    });
+  }
+
 }

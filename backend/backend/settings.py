@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
+    'corsheaders',
 
     'django.contrib.sites',
     'allauth',
@@ -58,6 +59,13 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:8000",
+    "http://172.18.0.4:4200",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 
 MIDDLEWARE = [
@@ -69,7 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
-
+    'corsheaders.middleware.CorsMiddleware',
     ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -157,6 +165,7 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_LOGOUT_ON_GET = True
+SOCIALACCOUNT_STORE_TOKENS = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -175,24 +184,24 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     },
     "openid_connect": {
-        "APPS": [
-            {
-                "provider_id": "linkedin-server",
-                "name": "LinkedIn OIDC",
-                "client_id": os.environ.get("LINKEDIN_CLIENT_ID"),
-                "secret": os.environ.get("LINKEDIN_CLIENT_SECRET"),
-                "settings": {
-                    "server_url": "https://www.linkedin.com/oauth",
-                    "authorization_endpoint": "https://www.linkedin.com/oauth/v2/authorization",
-                    "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
-                    "userinfo_endpoint": "https://api.linkedin.com/v2/me",
-                    "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
-                },
-                 'SCOPE': ['openid', 'profile', 'email'],
-
-            }
-        ]
-    },
+    "APPS": [
+        {
+            "provider_id": "linkedin-server",
+            "name": "LinkedIn OIDC",
+            "client_id": os.environ.get("LINKEDIN_CLIENT_ID"),
+            "secret": os.environ.get("LINKEDIN_CLIENT_SECRET"),
+            "settings": {
+                "issuer": "https://www.linkedin.com",
+                "server_url": "https://www.linkedin.com/oauth",
+                "authorization_endpoint": "https://www.linkedin.com/oauth/v2/authorization",
+                "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
+                "userinfo_endpoint": "https://api.linkedin.com/v2/userinfo",
+                "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
+            },
+            'SCOPE': ['openid', 'profile', 'email'],  
+        }
+    ]
+},
 }
 
 LOGIN_REDIRECT_URL = 'http://localhost:4200/'
