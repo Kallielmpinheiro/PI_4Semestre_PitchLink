@@ -1,18 +1,21 @@
-import { DatePipe } from '@angular/common';
+import { NgModule } from '@angular/core';
 import { Component, inject, signal, WritableSignal } from '@angular/core';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule, FormControl, FormArray } from '@angular/forms';
 import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
-import { Datepicker } from 'flowbite';
+import { CommonModule } from '@angular/common';
+import { ModalComponent } from '../../components/modal/modal.component';
+
 
 @Component({
   selector: 'app-perfil',
-  imports: [ReactiveFormsModule, NavBarComponent],
+  imports: [ReactiveFormsModule, NavBarComponent, CommonModule, ModalComponent],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css'
 })
+
 export class PerfilComponent {
 
-  categorias = [
+  categories = [
     "Tecnologia",
     "Marketing",
     "Vendas",
@@ -68,8 +71,16 @@ export class PerfilComponent {
   protected formPerfil = this.formBuilderService.group({
     firstName: ["", Validators.required],
     lastName: ["", Validators.required],
-    data: [""]
+    data: [""],
+    categoriesItens: this.buildCategories()
+    
   })
+
+  buildCategories() {
+    const values =  this.categories.map(() => new FormControl(false))
+    
+    return this.formBuilderService.array(values)
+  }
 
   changePhoto(event: Event) {
     const inputImageUser = event.target as HTMLInputElement
@@ -91,11 +102,14 @@ export class PerfilComponent {
     this.imageUser.set(null)
   }
 
+ 
+
   sendForm() {
     const date = document.getElementById("data") as HTMLInputElement;
 
     this.formPerfil.patchValue( { data: date.value })    
 
-    console.log(this.formPerfil.value); // Mostra o valor do formulário, inclusive a data selecionada
+    console.log(this.formPerfil.value); 
+
   }
 }
