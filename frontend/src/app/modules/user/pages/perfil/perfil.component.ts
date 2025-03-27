@@ -4,11 +4,18 @@ import { FormBuilder, Validators, ReactiveFormsModule, FormControl, FormArray } 
 import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../components/modal/modal.component';
+import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
 
 
 @Component({
   selector: 'app-perfil',
-  imports: [ReactiveFormsModule, NavBarComponent, CommonModule, ModalComponent],
+  imports: [
+    ReactiveFormsModule,
+    NavBarComponent, 
+    CommonModule, 
+    ModalComponent,
+    AlertFormComponent
+  ],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.css'
 })
@@ -63,15 +70,17 @@ export class PerfilComponent {
     "Liderança",
     "Eventos e Conferências"
   ];
-  
-  private formBuilderService = inject(FormBuilder)
+
+  submittedFormPerfil = false;
 
   imageUser: WritableSignal<string | null | ArrayBuffer> = signal(null)
+  
+  private formBuilderService = inject(FormBuilder)
 
   protected formPerfil = this.formBuilderService.group({
     firstName: ["", Validators.required],
     lastName: ["", Validators.required],
-    data: [""],
+    data: ["", Validators.required ],
     categoriesItens: this.buildCategories()
     
   })
@@ -102,14 +111,23 @@ export class PerfilComponent {
     this.imageUser.set(null)
   }
 
- 
-
   sendForm() {
+    this.submittedFormPerfil = true;
+    
+    if (this.formPerfil.valid) {
+      console.log("Formulário válido!");
+    }
     const date = document.getElementById("data") as HTMLInputElement;
 
     this.formPerfil.patchValue( { data: date.value })    
 
-    console.log(this.formPerfil.value); 
+    const categoriesMap = this.formPerfil.value.categoriesItens?.map( ( item, index ) =>{
+        return item ? this.categories[index] : null;
+    }).filter( item => item != null )
 
+    const resultForm = { ...this.formPerfil.value, categoriesItens: categoriesMap } 
+
+    console.log(resultForm)
+  
   }
 }

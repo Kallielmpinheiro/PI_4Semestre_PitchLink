@@ -11,10 +11,18 @@
                         <div class="mb-2">
                             <label for="firstName" class="block mb-2 text-sm font-medium text-white">Primeiro Nome</label>
                             <input type="text" id="firstName" formControlName="firstName" class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Nome" />
+                         
+                            @if (submittedFormPerfil && !formPerfil.controls.firstName.valid) {
+                                <app-alert-form textAlert="Campo obrigatório"/>
+                            }
+                           
                         </div>
                         <div class="mb-2">
                             <label for="lastName" class="block mb-2 text-sm font-medium text-white">Último Nome</label>
                             <input type="text" id="lastName" formControlName="lastName" class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Último Nome" />
+                            @if (submittedFormPerfil && !formPerfil.controls.lastName.valid) {
+                                <app-alert-form textAlert="Campo obrigatório"/>
+                            }
                         </div>
                         <div class="mb-2">
                             <label for="datepicker" class="block mb-2 text-sm font-medium text-white">Data de Nascimento</label>
@@ -25,8 +33,13 @@
                                     </svg>
                                 </div>
                                 <input datepicker datepicker-format="dd/mm/yyyy" datepicker-autohide  type="text" id="data" name="data" formControlName="data"  class=" border text-sm rounded-lg  block w-full ps-10 p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500" placeholder="Selecione um data">
+                                
                             </div>
+                            @if (submittedFormPerfil && !formPerfil.controls.data.valid) {
+                                <app-alert-form textAlert="Campo obrigatório"/>
+                            }                            
                         </div>
+                        
                     </div>
                     
                     <button 
@@ -37,7 +50,12 @@
                         type="button">
                         + Categorias
                     </button>
-                    <button type="submit" (click)="sendForm()" class="text-white block focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full  px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800">Submit</button>
+                    <button 
+                        type="submit" 
+                        (click)="sendForm()" class="text-white block focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full  px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800"
+                    >
+                        Salvar
+                    </button>
                 </form>
             </div>
 
