@@ -16,6 +16,8 @@ import os
 
 load_dotenv()
 
+BASE_URL_WEB = 'http://localhost:4200'
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -204,5 +206,4 @@ SOCIALACCOUNT_PROVIDERS = {
 },
 }
 
-LOGIN_REDIRECT_URL = 'http://localhost:4200/'
-LOGOUT_REDIRECT_URL = 'http://localhost:4200/'
+LOGOUT_REDIRECT_URL = BASE_URL_WEB
