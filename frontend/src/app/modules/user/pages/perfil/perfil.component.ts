@@ -1,10 +1,11 @@
-import { NgModule } from '@angular/core';
+import { EventEmitter, NgModule, Output } from '@angular/core';
 import { Component, inject, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, FormControl, FormArray } from '@angular/forms';
 import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
 import { CommonModule } from '@angular/common';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -21,7 +22,13 @@ import { AlertFormComponent } from '../../components/alert-form/alert-form.compo
 })
 
 export class PerfilComponent {
+  hideNav = false;
 
+  constructor(private route: ActivatedRoute) {
+    this.route.data.subscribe(data => {
+      this.hideNav = data['hideNav'];
+    });
+  }
   categories = [
     "Tecnologia",
     "Marketing",
