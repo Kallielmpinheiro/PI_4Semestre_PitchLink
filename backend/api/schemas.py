@@ -9,12 +9,14 @@ class ErrorResponse(Schema):
     message: str
     errors: Optional[List[str]] = []
 
-class TestReq(Schema):
-    name: str
+from ninja import Schema
+from typing import Optional, List
+from datetime import datetime
 
-class TestResp(Schema):
-    name : str
-
-
-class ProfileReq(Schema):
-    pass 
+class SaveReq(Schema):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    profile_picture: Optional[str] = None
+    data_nasc: Optional[str] = None
+    categories: Optional[List[str]] = None

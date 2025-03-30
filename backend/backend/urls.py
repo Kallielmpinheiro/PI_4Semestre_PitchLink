@@ -15,14 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from api.views import (
-    custom_linkedin_callback,
-    CustomSocialSignupView
-)
-
 from django.urls import path, include
 from django.contrib import admin
 from api.api import api
+from api.views import CustomSocialSignupView, custom_linkedin_callback
 
 urlpatterns = [
     path('admin/', admin.site.urls),

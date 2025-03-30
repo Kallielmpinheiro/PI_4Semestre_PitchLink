@@ -1,10 +1,18 @@
 from django.db import models
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.db.models import JSONField
 
 # Create your models here.
 
-class Account(models.Model):
-    name = models.CharField('Primeiro Mome', max_length=255)
-    last_name = models. CharField('Sobrenome', max_length=255)
+class User(models.Model):
+    first_name = models.CharField(_('Nome'), max_length=255, blank=True, null=True)
+    last_name = models.CharField(_('Sobrenome'), max_length=255, blank=True, null=True)
+    email = models.EmailField(_('Email'), unique=True, blank=True, null=True)
+    profile_picture = models.URLField(_('Foto'), max_length=500, blank=True, null=True)
+    data_nasc = models.DateField(_('Data Nasc.'), blank=True, null=True)
+    categories = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
 
-class Profile(models.Model):
-    pass
+    class Meta:
+        verbose_name = _('Usuario')
+        verbose_name_plural = _('Usuarios')

@@ -9,8 +9,9 @@ from ninja import NinjaAPI
 from typing import Any
 import requests
 import pytz
-
-
+from api.schemas import SaveReq
+from api.models import User
+import logging
 api = NinjaAPI()
 
 @api.get("/check-auth", auth=django_auth)
@@ -35,9 +36,37 @@ def check_auth(request):
         return JsonResponse({"authenticated": False})
 
 @api.post("/full-profile")
-def regsiter(request):
-    return 200, {'message': 'manda a request ai pai'}
+def register(request, payload: SaveReq):
+    
+    # TODO: Upload img base64
+    
+    
+    if not User.objects.get(email=payload.email):
+        account = User(
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+            email=payload.email,
+            profile_picture=payload.profile_picture,
+            data_nasc=payload.data_nasc,
+            categories=payload.categories,            
+        )
+        account.save()
+        
+        return 200, {"message": "Usuário registrado com sucesso!"}
+    
+    if User.objects.get(email=payload.email):
 
+        account = User.objects.get(email=payload.email)
+        
+        account.first_name = payload.first_name
+        account.last_name = payload.last_name
+        account.profile_picture = payload.profile_picture
+        account.data_nasc = payload.data_nasc
+        account.categories = payload.categories
+        account.save()
+        
+        return 200, {"message": "Perfil atualizado com sucesso!"}
+        
 @api.get("/users")
 def list_users(request):
     User = get_user_model()
@@ -101,6 +130,7 @@ def obter_perfil_social_usuario(request):
                         if resposta.status_code == 200:
                             return resposta.json()
                         else:
+                         
                             return 404, {"message": "Erro ao obter dados do LinkedIn"}
 
                     except requests.exceptions.RequestException:
@@ -120,3 +150,4 @@ def obter_perfil_social_usuario(request):
                 return 404, {"message": "Erro inesperado no processamento"}
 
     return 200, dados_usuario
+
