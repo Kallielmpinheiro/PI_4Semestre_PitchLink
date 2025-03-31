@@ -23,20 +23,25 @@ export class AuthService {
     window.location.href = `${this.baseUrl}${socialAccounts.linkedin}`;
   }
 
+
   checkAuth() {
-    return this.http.get(`${this.baseUrl}${api.check}`, { withCredentials: true })
-    .pipe(map(() => true),
-    catchError(() => of(false)));
+    return this.http.get(`${this.baseUrl}${api.check}`, { withCredentials: true }).pipe(
+      map((response: any) => {
+        if (response && response.data) {
+          return response;
+        }
+        return false;
+      }),
+      catchError((error) => {
+        return of(error);
+      })
+    );
   }
 
   logout() {
     return this.http.post(`${this.baseUrl}${socialAccounts.logout}`, { withCredentials: true }).subscribe(() => {
       this.router.navigate(['/']);
     });
-  }
-
-  ListService(){
-    return this.http.get(`${this.baseUrl}${api.list}`, { withCredentials: true });
   }
 
   //  TODO : Arrumar os nomes

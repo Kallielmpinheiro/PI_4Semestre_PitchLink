@@ -4,7 +4,7 @@ import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
 import { CommonModule, formatDate } from '@angular/common';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 
 interface DateValidationResult {
@@ -32,7 +32,7 @@ export class PerfilComponent implements OnInit {
   userProfile: any = null;
   loading = false;
   error: string | null = null;
-  hideNav = false;
+  hideNav = true;
   submittedFormPerfil = false;
   imageUser: WritableSignal<string | null | ArrayBuffer> = signal(null);
 
@@ -62,7 +62,8 @@ export class PerfilComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute, 
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.route.data.subscribe(data => {
       this.hideNav = data['hideNav'];
@@ -282,6 +283,9 @@ export class PerfilComponent implements OnInit {
               categorias: formData.categories,
               profile_picture: formData.profile_picture
             };
+
+            this.router.navigate(['/app/recs'])
+
           }
         },
         error: (err) => {

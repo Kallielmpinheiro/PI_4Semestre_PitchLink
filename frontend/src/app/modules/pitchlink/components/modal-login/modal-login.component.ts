@@ -19,18 +19,4 @@ export class ModalLoginComponent {
     this.authService.loginWithLinkedin();
   }
 
-  Listarusuarios() {
-    this.authService.ListService().subscribe({
-      next: (response) => {
-        console.log(response);
-      },
-      error: (error) => {
-        console.error(error);
-      },
-      complete: () => {
-        console.log('Requisição completada');
-      }
-    });
-  }
-
 }
