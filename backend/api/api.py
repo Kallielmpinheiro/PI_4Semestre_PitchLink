@@ -1,10 +1,9 @@
 from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.models import SocialToken
-from django.contrib.auth import get_user_model
+from api.schemas import ErrorResponse, SuccessResponse
+from api.schemas import SaveReq, UserReq
 from ninja.security import django_auth
-from api.schemas import ErrorResponse
-from django.http import JsonResponse
 from datetime import datetime
+from api.models import User
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -13,50 +12,55 @@ import pytz
 
 api = NinjaAPI()
 
-@api.get("/check-auth", auth=django_auth)
+@api.get("/check-auth", response={200: SuccessResponse, 401: ErrorResponse, 404: ErrorResponse, 500: ErrorResponse})
 def check_auth(request):
-    user = request.user
-    if user.is_authenticated:
-        social_token = None
-        try:
-            social_token = SocialToken.objects.get(account__user=user, app__provider='linkedin')
-        except SocialToken.DoesNotExist:
-            social_token = None
+    try:
+        if request.user.is_authenticated:
+            user = User.objects.filter(email=request.user.email).values()
+            
+            if not user:
+                return 404, {"message": "Usuário não encontrado!"}
+            
+            return 200, {"data": user}
         
-        if social_token:
-            return JsonResponse({
-                "authenticated": True,
-                "username": user.username,
-                "linkedin_token": social_token.token 
-            })
-        else:
-            return JsonResponse({"authenticated": True, "username": user.username, "linkedin_token": None})
-    else:
-        return JsonResponse({"authenticated": False})
-
-@api.post("/full-profile")
-def regsiter(request):
-    return 200, {'message': 'manda a request ai pai'}
-
-@api.get("/users")
-def list_users(request):
-    User = get_user_model()
-    users = User.objects.filter(is_active=True, is_staff=False)
+        return 401, {"message": "Não Autorizado"}
     
-    user_list = []
-    for user in users:
-        user_data = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'date_joined': user.date_joined,
-            'last_login': user.last_login
-        }
-        user_list.append(user_data)
+    except Exception as err:
+        return 500, {"message": str(err)}
+
+
+@api.post("/full-profile", response={200: SuccessResponse})
+def register(request, payload: SaveReq):
     
-    return user_list
+    # TODO: Upload img base64
+    
+    
+    if not User.objects.filter(email=payload.email):
+        account = User(
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+            email=payload.email,
+            profile_picture=payload.profile_picture,
+            data_nasc=payload.data_nasc,
+            categories=payload.categories,            
+        )
+        account.save()
+        
+        return 200, {"message": "Usuário registrado com sucesso!"}
+    
+    if User.objects.get(email=payload.email):
+
+        account = User.objects.get(email=payload.email)
+        
+        account.first_name = payload.first_name
+        account.last_name = payload.last_name
+        account.profile_picture = payload.profile_picture
+        account.data_nasc = payload.data_nasc
+        account.categories = payload.categories
+        account.save()
+        
+        return 200, {"message": "Perfil atualizado com sucesso!"}
+
 
 @api.get("/obter-perfil-social-usuario", auth=django_auth, response={200: Any, 404: ErrorResponse})
 def obter_perfil_social_usuario(request):
@@ -101,6 +105,7 @@ def obter_perfil_social_usuario(request):
                         if resposta.status_code == 200:
                             return resposta.json()
                         else:
+                         
                             return 404, {"message": "Erro ao obter dados do LinkedIn"}
 
                     except requests.exceptions.RequestException:
@@ -120,3 +125,4 @@ def obter_perfil_social_usuario(request):
                 return 404, {"message": "Erro inesperado no processamento"}
 
     return 200, dados_usuario
+
