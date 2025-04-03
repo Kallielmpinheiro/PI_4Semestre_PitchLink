@@ -7,6 +7,7 @@ import { SwingComponent } from './modules/views/cards/pages/swing/swing.componen
 import { LayoutComponent } from './modules/views/aplicacao/pages/layout/layout.component';
 import { authGuardNotFoundGuard } from './core/guards/not-found/auth-guard-not-found.guard';
 import { authGuardSuccessGuard } from './core/guards/success/auth-guard-success.guard';
+import { IdeiaComponent } from './modules/user/pages/ideia/ideia.component';
 
 export const routes: Routes = [
     {
@@ -27,6 +28,12 @@ export const routes: Routes = [
             {path:'recs', component: SwingComponent},
             {path:'perfil', component: PerfilComponent}
         ]
+    },
+    
+
+    { 
+        path: 'ideia', 
+        component: IdeiaComponent
     },
     {
         path: '**',

@@ -10,12 +10,16 @@
                         <div class="mb-2">
                             <label for="firstName" class="block mb-2 text-sm font-medium text-white">Primeiro
                                 Nome</label>
-                            <input type="text" id="firstName" formControlName="firstName"
+                            <input 
+                                type="text" 
+                                id="firstName" 
+                                formControlName="firstName"
                                 class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Nome" />
+                                placeholder="Nome" 
+                            />
 
                             @if (submittedFormPerfil && !formPerfil.controls.firstName.valid) {
-                            <app-alert-form textAlert="Campo obrigatório" />
+                                <app-alert-form textAlert="Campo obrigatório" />
                             }
 
                         </div>
@@ -25,7 +29,7 @@
                                 class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Último Nome" />
                             @if (submittedFormPerfil && !formPerfil.controls.lastName.valid) {
-                            <app-alert-form textAlert="Campo obrigatório" />
+                                <app-alert-form textAlert="Campo obrigatório" />
                             }
                         </div>
                         <div class="mb-2">
@@ -37,6 +41,8 @@
                                 </svg>
                               </div>
                               <input 
+                                datepiker
+                                datepiker-autohide
                                 type="text"
                                 id="data" 
                                 name="data" 
@@ -111,19 +117,19 @@
             formArrayName="categoriesItens">
 
             @for (item of formPerfil.controls['categoriesItens'].value; track $index) {
-            <li>
-                <input type="checkbox" class="peer hidden" [formControlName]="$index" id="{{ $index }}">
-                <label for="{{ $index }}"
-                    class="inline-flex items-center justify-between w-full p-3 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                    <div class="block">
-                        <div class="w-full text-sm font-semibold"> {{ categories[$index] }} </div>
-                    </div>
-                </label>
-            </li>
+                <li>
+                    <input type="checkbox" class="peer hidden" [formControlName]="$index" id="{{ $index }}">
+                    <label for="{{ $index }}"
+                        class="inline-flex items-center justify-between w-full p-3 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
+                        <div class="block">
+                            <div class="w-full text-sm font-semibold"> {{ categories[$index] }} </div>
+                        </div>
+                    </label>
+                </li>
             }
         </ul>
 
-        <!-- validar se tem algum checkbox selecionado e passar por parametro o data-modal-toggle="select-modal" se n manda vazio pra n fechar -->
+        
         <button data-modal-toggle="select-modal"
             class="text-white inline-flex w-full justify-center focus:ring-4 focus:outline-none  font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800">
             Salvar
