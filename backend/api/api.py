@@ -2,6 +2,7 @@ from allauth.socialaccount.models import SocialAccount
 from api.schemas import ErrorResponse, SuccessResponse
 from api.schemas import SaveReq, UserReq
 from ninja.security import django_auth
+from django.contrib.auth import logout
 from datetime import datetime
 from api.models import User
 from ninja import NinjaAPI
@@ -27,6 +28,11 @@ def check_auth(request):
     
     except Exception as err:
         return 500, {"message": str(err)}
+    
+@api.get("/logout", response={200: SuccessResponse, 401: ErrorResponse, 404: ErrorResponse, 500: ErrorResponse})
+def custom_logout(request):
+    logout(request)
+    return 200, {"message": "Logout feito com sucesso!"}
 
 
 @api.post("/full-profile", response={200: SuccessResponse})
