@@ -17,16 +17,24 @@ export const routes: Routes = [
     {
         path: 'perfil',
         component: PerfilComponent,
-        data: { hideNav: true },
-        canActivate: [authGuardNotFoundGuard]
+        canActivate: [authGuardNotFoundGuard],
+        title: 'Meu Perfil | PitchLink'
     },
     {
         path: 'app',
         component: LayoutComponent,
         canActivate: [authGuardSuccessGuard],
         children: [
-            {path:'recs', component: SwingComponent},
-            {path:'perfil', component: PerfilComponent}
+            {
+                path:'recs', 
+                component: SwingComponent
+            },
+            {
+                path:'perfil', 
+                component: PerfilComponent, 
+                data: { hideNav: true },
+                title: 'Meu Perfil | PitchLink'
+            }
         ]
     },
     
