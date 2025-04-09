@@ -9,8 +9,6 @@ import { AuthService } from './core/services/auth.service';
   template: `<router-outlet />`,
 })
 export class AppComponent {
-  title = 'frontend';
-
   constructor(private authService: AuthService) {}
 
   ngOnInit(): void {

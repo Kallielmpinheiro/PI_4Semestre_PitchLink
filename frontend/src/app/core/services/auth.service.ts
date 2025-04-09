@@ -39,9 +39,7 @@ export class AuthService {
   }
 
   logout() {
-    return this.http.post(`${this.baseUrl}${socialAccounts.logout}`, { withCredentials: true }).subscribe(() => {
-      this.router.navigate(['/']);
-    });
+    return this.http.get(`${this.baseUrl}${api.logout}`, { withCredentials: true });
   }
 
   //  TODO : Arrumar os nomes

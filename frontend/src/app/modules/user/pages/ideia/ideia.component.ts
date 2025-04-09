@@ -17,6 +17,9 @@ import { AlertFormComponent } from '../../components/alert-form/alert-form.compo
   styleUrl: './ideia.component.css'
 })
 export class IdeiaComponent {
+imageUser() {
+throw new Error('Method not implemented.');
+}
 
   /*
   TODO: 
@@ -24,6 +27,8 @@ export class IdeiaComponent {
     ADICIONAR GRID DE IMAGES
 
   */
+
+  teste = [0, 1,2,3, 4,5]
   submitForm = false;
   categories = [
     "Tecnologia", "Marketing", "Vendas", "Finanças", "Gestão de Projetos",
