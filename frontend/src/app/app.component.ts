@@ -9,22 +9,9 @@ import { AuthService } from './core/services/auth.service';
   template: `<router-outlet />`,
 })
 export class AppComponent {
-  title = 'frontend';
-  
-  isAuthenticated = false;
-
   constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
     initFlowbite();
-
-    this.authService.checkAuth().subscribe(
-      (response: any) => {
-        this.isAuthenticated = response.authenticated;
-      },
-      (error) => {
-        this.isAuthenticated = false;
-      }
-    );
   }
 }

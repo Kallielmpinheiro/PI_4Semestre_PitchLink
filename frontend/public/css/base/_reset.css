@@ -7,10 +7,23 @@ body {
 
 body {
     font-family: Montserrat, Roboto, "Helvetica Neue", sans-serif;
+    background-color: var(--azul-profundo);
 }
 
 ul {
     list-style: none;
     padding: 0;
     margin: 0;
+}
+
+
+input[type=number] {
+    -moz-appearance: textfield; /* Remove as setas no Firefox */
+    appearance: textfield; /* Padrão para outros navegadores */
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0; /* Remove qualquer espaço extra */
 }

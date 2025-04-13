@@ -7,7 +7,10 @@ class ErrorResponse(Schema):
     error: bool = True
     result: str = 'error'
     message: str
-    errors: Optional[List[str]] = []
+class SuccessResponse(Schema):
+    status: int = 200
+    data: list = None
+    message: str = None
 
 from ninja import Schema
 from typing import Optional, List
@@ -20,3 +23,6 @@ class SaveReq(Schema):
     profile_picture: Optional[str] = None
     data_nasc: Optional[str] = None
     categories: Optional[List[str]] = None
+    
+class UserReq(Schema):
+    email: str
