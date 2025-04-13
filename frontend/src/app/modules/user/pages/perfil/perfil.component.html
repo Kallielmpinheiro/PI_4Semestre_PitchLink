@@ -5,7 +5,7 @@
         <h1 class="text-white font-bold text-4xl mb-5">Criar uma conta </h1>
         <div class="flex justify-center w-full max-sm:flex-col-reverse  ">
             <div class=" w-full max-w-80">
-                <form [formGroup]="formPerfil">
+                <form [formGroup]="profileForm">
                     <div class="w-full mb-4">
                         <div class="mb-2">
                             <label for="firstName" class="block mb-2 text-sm font-medium text-white">Primeiro
@@ -18,7 +18,7 @@
                                 placeholder="Nome" 
                             />
 
-                            @if (submittedFormPerfil && !formPerfil.controls.firstName.valid) {
+                            @if (submittedForm() && !profileForm.controls.firstName.valid) {
                                 <app-alert-form textAlert="Campo obrigatório" />
                             }
 
@@ -28,7 +28,7 @@
                             <input type="text" id="lastName" formControlName="lastName"
                                 class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Último Nome" />
-                            @if (submittedFormPerfil && !formPerfil.controls.lastName.valid) {
+                            @if (submittedForm() && !profileForm.controls.lastName.valid) {
                                 <app-alert-form textAlert="Campo obrigatório" />
                             }
                         </div>
@@ -53,10 +53,10 @@
                                 (input)="formatDateInput($event)"
                                 maxlength="10">
                             </div>
-                            @if (submittedFormPerfil && formPerfil.controls.data.errors?.['invalidFormat']) {
+                            @if (submittedForm() && profileForm.controls.birthDate.errors?.['invalidFormat']) {
                               <app-alert-form textAlert="Formato inválido. Use dd/mm/aaaa" />
                             }
-                            @if (submittedFormPerfil && formPerfil.controls.data.errors?.['invalidDate']) {
+                            @if (submittedForm() && profileForm.controls.birthDate.errors?.['invalidDate']) {
                               <app-alert-form textAlert="Data inválida" />
                             }
                           </div>
@@ -68,7 +68,7 @@
                         type="button">
                         + Categorias
                     </button>
-                    <button type="submit" (click)="sendForm()"
+                    <button type="submit" (click)="submitForm()"
                         class="text-white block focus:ring-4 focus:outline-none font-medium rounded-lg text-sm w-full  px-5 py-2.5 text-center bg-blue-600 hover:bg-blue-700 focus:ring-blue-800">
                         Salvar
                     </button>
@@ -111,12 +111,12 @@
 
 
 <app-modal>
-    <div class="p-4 md:p-5" [formGroup]="formPerfil">
+    <div class="p-4 md:p-5" [formGroup]="profileForm">
         <p class=" text-gray-400 mb-4">Selecione as categorias de seu interesse:</p>
         <ul id="categoriesItens" class="flex flex-wrap justify-center w-full mb-4 gap-2"
             formArrayName="categoriesItens">
 
-            @for (item of formPerfil.controls['categoriesItens'].value; track $index) {
+            @for (item of profileForm.controls['categories'].value; track $index) {
                 <li>
                     <input type="checkbox" class="peer hidden" [formControlName]="$index" id="{{ $index }}">
                     <label for="{{ $index }}"
