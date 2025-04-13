@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.prod';
 import { api, socialAccounts } from '../../../providers';
 import { catchError, map, Observable, of, throwError } from 'rxjs';
 import { UserProfile, ProfileFormData } from '../models/model';
@@ -11,9 +10,8 @@ import { UserProfile, ProfileFormData } from '../models/model';
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
   
-  private readonly baseUrl = environment.apiUrl;
+  private readonly baseUrl = environment.getBaseUrl();
   
   private readonly httpOptions = { withCredentials: true };
   
