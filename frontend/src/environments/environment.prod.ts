@@ -3,7 +3,7 @@ export const environment = {
   apiUrl: '/api',
   getBaseUrl: () => {
     const hostname = window.location.hostname;
-    return hostname === 'localhost' ? 'http://localhost:8000' : 'http://127.0.0.1:8000';
+    return `http://${hostname}:8000`
   }
 };
 

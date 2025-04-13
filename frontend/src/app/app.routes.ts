@@ -17,6 +17,8 @@ export const routes: Routes = [
     {
         path: 'perfil',
         component: PerfilComponent,
+        canActivate: [authGuardNotFoundGuard],
+        data: { hideNav: true },
         title: 'Meu Perfil | PitchLink'
     },
     {
@@ -31,7 +33,7 @@ export const routes: Routes = [
             {
                 path:'perfil', 
                 component: PerfilComponent, 
-                data: { hideNav: true },
+                data: { hideNav: false },
                 title: 'Meu Perfil | PitchLink'
             }
         ]

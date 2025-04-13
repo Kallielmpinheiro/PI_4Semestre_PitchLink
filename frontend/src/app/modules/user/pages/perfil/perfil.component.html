@@ -1,4 +1,6 @@
-<app-nav-bar *ngIf="!hideNav" />
+@if (hideNav()) {
+    <app-nav-bar/>
+}
 
 <div class="h-full bg-azul-profundo flex flex-col justify-center items-center">
     <div class="flex flex-grow items-center  flex-col h-full bg-azul-profundo w-full mt-28 ">

@@ -35,7 +35,7 @@ export class SidebarComponent implements OnInit {
       this.authService.checkAuth().subscribe(response => {
         let data: any = response.data[0]
         this.nome = `${data.first_name} ${data.last_name}`
-        this.imagem = data.profile_picture
+        this.imagem = data.profile_picture === "" ? data.profile_picture_url : `http://localhost:8000/media/${data.profile_picture}`
       });
     }
 }
