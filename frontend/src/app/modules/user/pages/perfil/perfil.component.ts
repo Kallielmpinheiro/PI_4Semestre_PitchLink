@@ -229,7 +229,7 @@ export class PerfilComponent implements OnInit {
   submitForm(): void {
     this.submittedForm.set(true);
     this.markFormGroupTouched(this.profileForm);
-
+    
     if (!this.profileForm.valid) {
       return;
     }
@@ -247,7 +247,6 @@ export class PerfilComponent implements OnInit {
       ), categories: this.getSelectedCategories(),
       profile_picture: this.imageUser()
     };
-
     this.authService.saveFullProfile(formData).subscribe({
       next: (response) => {
         this.loading.set(false);
@@ -293,4 +292,19 @@ export class PerfilComponent implements OnInit {
       }
     });
   }
+  
+  syncDatepickerValue(): void {
+    setTimeout(() => {
+      const input = document.getElementById('data') as HTMLInputElement;
+      if (input?.value) {
+        const value = input.value.trim();
+        this.profileForm.get('birthDate')?.setValue(value);
+        this.profileForm.get('birthDate')?.markAsDirty();
+        this.profileForm.get('birthDate')?.updateValueAndValidity();
+  
+      } 
+    }, 50);
+  }
+  
+
 }

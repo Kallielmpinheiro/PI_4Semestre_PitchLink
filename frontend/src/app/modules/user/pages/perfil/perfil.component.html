@@ -41,16 +41,18 @@
                                 </svg>
                               </div>
                               <input 
-                                datepiker
-                                datepiker-autohide
+                                datepicker
+                                datepicker-autohide
+                                datepicker-format="dd/mm/yyyy"
                                 type="text"
                                 id="data" 
                                 name="data" 
-                                formControlName="data"
+                                formControlName="birthDate"
                                 class="border text-sm rounded-lg block w-full ps-10 p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="dd/mm/aaaa"
                                 autocomplete="off"
                                 (input)="formatDateInput($event)"
+                                (focusout)="syncDatepickerValue()"
                                 maxlength="10">
                             </div>
                             @if (submittedForm() && profileForm.controls.birthDate.errors?.['invalidFormat']) {
@@ -114,7 +116,7 @@
     <div class="p-4 md:p-5" [formGroup]="profileForm">
         <p class=" text-gray-400 mb-4">Selecione as categorias de seu interesse:</p>
         <ul id="categoriesItens" class="flex flex-wrap justify-center w-full mb-4 gap-2"
-            formArrayName="categoriesItens">
+            formArrayName="categories">
 
             @for (item of profileForm.controls['categories'].value; track $index) {
                 <li>
