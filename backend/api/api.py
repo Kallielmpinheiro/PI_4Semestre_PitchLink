@@ -2,9 +2,9 @@ import traceback
 from allauth.socialaccount.models import SocialAccount
 from api.schemas import ErrorResponse, SuccessResponse
 from api.schemas import SaveReq, UserReq
-from ninja.security import django_auth
+from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 from api.models import User
 from ninja import NinjaAPI
@@ -15,33 +15,38 @@ import base64
 import os
 from django.core.files.base import ContentFile
 from django.conf import settings
+import jwt
+from django.http import HttpResponse, Http404, JsonResponse
 
 api = NinjaAPI()
 
-@api.get("/check-auth", response={200: SuccessResponse, 401: ErrorResponse, 404: ErrorResponse, 500: ErrorResponse})
+class AuthBearer(HttpBearer):
+    def authenticate(self, request, token):
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.DecodeError:
+            return None
+        try:
+            user = User.objects.get(id=payload["id"])
+        except User.DoesNotExist:   
+            return None
+        return user
+     
+@api.get("/check-auth", auth=AuthBearer())
 def check_auth(request):
-    try:
-        if request.user.is_authenticated:
-            user = User.objects.filter(email=request.user.email).values()
-            
-            if not user:
-                return 404, {"message": "Usuário não encontrado!"}
-            
-            return 200, {"data": user}
-        
-        return 401, {"message": "Não Autorizado"}
-    
-    except Exception as err:
-        return 500, {"message": str(err)}
-    
+    user = User.objects.get(id=request.auth.id) 
+    return {"data": {"id": user.id}}
+
 @api.get("/logout", response={200: SuccessResponse, 401: ErrorResponse, 404: ErrorResponse, 500: ErrorResponse})
 def custom_logout(request):
     logout(request)
     return 200, {"message": "Logout feito com sucesso!"}
 
-
-@api.post("/full-profile", response={200: SuccessResponse, 500: ErrorResponse})
+@api.post("/full-profile")
 def register(request, payload: SaveReq):
+ 
     try:
         profile_picture = None
         profile_picture_url = None
@@ -89,7 +94,23 @@ def register(request, payload: SaveReq):
                 account.profile_picture_url = profile_picture_url
                 
             account.save()
-            return 200, {"message": "Usuário registrado com sucesso!"}
+            
+            token = jwt.encode(
+                {
+                    'id': account.id,
+                    'exp': datetime.utcnow() + timedelta(days=7), 
+                    'iat': datetime.utcnow()
+                },
+                settings.SECRET_KEY,
+                algorithm="HS256"
+            )
+            
+            return 200, {
+                "message": "Usuário registrado com sucesso!",
+                "token": token,
+                "user_id": account.id
+            }
+            
         else:
             account = User.objects.filter(email=payload.email).first()
             account.first_name = payload.first_name
@@ -176,3 +197,16 @@ def obter_perfil_social_usuario(request):
 
     return 200, dados_usuario
 
+
+@api.get('/get-image', auth=AuthBearer())
+def get_user_image(request):
+    try:
+        user = request.auth
+        if user.profile_picture:
+            image_url = f"{settings.MEDIA_URL}{user.profile_picture}"
+            return JsonResponse({"image_url": image_url})
+        elif user.profile_picture_url:
+            return JsonResponse({"image_url": user.profile_picture_url})
+        raise Http404("Image not found")
+    except User.DoesNotExist:
+        raise Http404("User not found")
