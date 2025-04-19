@@ -8,13 +8,10 @@ class ErrorResponse(Schema):
     result: str = 'error'
     message: str
 class SuccessResponse(Schema):
+    token : str = None
     status: int = 200
     data: list = None
     message: str = None
-
-from ninja import Schema
-from typing import Optional, List
-from datetime import datetime
 
 class SaveReq(Schema):
     first_name: Optional[str] = None

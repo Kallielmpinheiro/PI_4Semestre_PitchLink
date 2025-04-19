@@ -4,10 +4,11 @@ from allauth.socialaccount.providers.oauth2.views import OAuth2CallbackView
 from allauth.socialaccount.views import SignupView
 from django.shortcuts import redirect
 from api.models import User
-
+import jwt
+from datetime import datetime, timedelta
+from django.conf import settings
 
 def custom_linkedin_callback(request):
-    # Trata caso de cancelamento
     if request.GET.get('error') in ['user_cancelled_login', 'user_cancelled_authorize']:
         return redirect('http://localhost:4200/')
 
@@ -18,10 +19,8 @@ def custom_linkedin_callback(request):
         adapter_class = OpenIDConnectOAuth2Adapter
 
         def dispatch(self, request, *args, **kwargs):
-            # Chama a implementação original para autenticar o usuário
             response = super().dispatch(request, *args, **kwargs)
             
-            # Verifica se o usuário está autenticado e é primeiro login
             if request.user.is_authenticated:
                 if not User.objects.filter(email=request.user.email).exists():
                     return redirect('http://localhost:4200/perfil')
@@ -46,13 +45,36 @@ def custom_google_callback(request):
             response = super().dispatch(request, *args, **kwargs)
 
             if request.user.is_authenticated:
-                if not User.objects.filter(email=request.user.email).exists():
-                    return redirect('http://localhost:4200/perfil')
-                return redirect('http://localhost:4200/app/recs')
+                auth_user = request.user
+
+                try:
+                    user = User.objects.get(email=auth_user.email)
+                    perfil_existente = True  
+                except User.DoesNotExist:
+                    user = User.objects.create(email=auth_user.email)
+                    perfil_existente = False  
+
+                token = jwt.encode(
+                    {
+                        'id': user.id,
+                        'exp': datetime.utcnow() + timedelta(days=7),
+                        'iat': datetime.utcnow()
+                    },
+                    settings.SECRET_KEY,
+                    algorithm="HS256"
+                )
+                print(token)
+
+                if perfil_existente:
+                    redirect_url = f"http://localhost:4200/auth-redirect?token={token}&user_id={user.id}"
+                else:
+                    redirect_url = f"http://localhost:4200/modal-login?token={token}&user_id={user.id}&perfil=true"
+
+                return redirect(redirect_url)
 
             return response
 
-    # Instancia manual da view
+
     view = GoogleCallbackView()
     view.request = request
     view.adapter = adapter
