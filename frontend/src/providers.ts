@@ -6,6 +6,7 @@ export const api = {
     check: prefix + '/check-auth',
     DTO : prefix + '/obter-perfil-social-usuario',
     logout: prefix + '/logout',
+    image : prefix + '/get-image',
     
 }
 

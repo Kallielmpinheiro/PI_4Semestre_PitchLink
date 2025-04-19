@@ -61,7 +61,6 @@ export class PerfilComponent implements OnInit {
     this.loadUserProfileData();
   }
 
-
   loadUserProfileData(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -148,7 +147,6 @@ export class PerfilComponent implements OnInit {
   private updateSelectedCategories(selectedCategories: string[]): void {
     const categoriesArray = this.profileForm.get('categories') as FormArray;
     categoriesArray.clear();
-
     this.categories.forEach(category => {
       const isSelected = selectedCategories.includes(category);
       categoriesArray.push(new FormControl(isSelected));
@@ -212,7 +210,7 @@ export class PerfilComponent implements OnInit {
 
     const file = input.files[0];
 
-    if (file.size > 5 * 1024 * 1024) { 
+    if (file.size > 5 * 1024 * 1024) {
       return;
     }
 
@@ -229,7 +227,7 @@ export class PerfilComponent implements OnInit {
   submitForm(): void {
     this.submittedForm.set(true);
     this.markFormGroupTouched(this.profileForm);
-    
+
     if (!this.profileForm.valid) {
       return;
     }
@@ -292,7 +290,7 @@ export class PerfilComponent implements OnInit {
       }
     });
   }
-  
+
   syncDatepickerValue(): void {
     setTimeout(() => {
       const input = document.getElementById('data') as HTMLInputElement;
@@ -301,10 +299,10 @@ export class PerfilComponent implements OnInit {
         this.profileForm.get('birthDate')?.setValue(value);
         this.profileForm.get('birthDate')?.markAsDirty();
         this.profileForm.get('birthDate')?.updateValueAndValidity();
-  
-      } 
+
+      }
     }, 50);
   }
-  
+
 
 }

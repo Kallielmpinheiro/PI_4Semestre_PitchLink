@@ -17,7 +17,6 @@ export const routes: Routes = [
     {
         path: 'perfil',
         component: PerfilComponent,
-        canActivate: [authGuardNotFoundGuard],
         data: { hideNav: true },
         title: 'Meu Perfil | PitchLink'
     },
