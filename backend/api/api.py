@@ -197,16 +197,35 @@ def obter_perfil_social_usuario(request):
 
     return 200, dados_usuario
 
-
-@api.get('/get-image', auth=AuthBearer())
+@api.get('/get-image', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_user_image(request):
     try:
         user = request.auth
-        if user.profile_picture:
-            image_url = f"{settings.MEDIA_URL}{user.profile_picture}"
-            return JsonResponse({"image_url": image_url})
-        elif user.profile_picture_url:
-            return JsonResponse({"image_url": user.profile_picture_url})
-        raise Http404("Image not found")
     except User.DoesNotExist:
-        raise Http404("User not found")
+        return 404, {'message': 'Conta nao encontrada'}
+        
+    if user.profile_picture:
+        image_url = f"{settings.MEDIA_URL}{user.profile_picture}"
+        return 200, {"image_url": image_url}
+    elif user.profile_picture_url:
+        return 200, {"image_url": user.profile_picture_url}
+    return 404, {"message": "Image not found"}
+
+@api.get('/get-perfil', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_user_perfil(request):
+    
+    try:
+        user = User.objects.get(id=request.auth)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta nao encontrada'}
+        
+    data = {
+        'last_name': user.last_name if user.last_name else '-',
+        'email': user.email if user.email else '-',
+        'profile_picture': str(user.profile_picture) if user.profile_picture else '-',
+        'profile_picture_url': user.profile_picture_url if user.profile_picture else '-',
+        'data_nasc': user.data_nasc if user.data_nasc else '-',
+        'categories': user.categories if user.categories else '-'
+    }
+    
+    return 200, {'data': data}
