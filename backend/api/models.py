@@ -18,6 +18,9 @@ class User(models.Model):
         verbose_name = _('Usuario')
         verbose_name_plural = _('Usuarios')
     
+    def __str__(self):
+        return self.first_name
+    
     @property
     def get_profile_picture(self):
         if self.profile_picture and self.profile_picture.name:
@@ -25,4 +28,21 @@ class User(models.Model):
         elif self.profile_picture_url:
             return self.profile_picture_url
         return None
+
+
+class Innovation(models.Model): # Ideias
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_innovations')
+    partners = models.ManyToManyField(User, blank=True, related_name='partnered_innovations')
+    nome = models.CharField(_('Nome'), max_length=255, blank=True, null=True)
+    descricao = models.CharField(_('Descrição'), max_length=255, blank=True, null=True)
+    investimento_minimo = models.CharField(_('Investimento Mínimo'), max_length=255, blank=True, null=True)
+    porcentagem_cedida = models.CharField(_('Porcentagem Cedida'), max_length=255, blank=True, null=True)
+    categorias = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
+    imagem = models.FileField(_('Imagem'), upload_to='ideias/', blank=True, null=True)
     
+    class Meta:
+        verbose_name = _('Ideia')
+        verbose_name_plural = _('Ideias')
+
+    def __str__(self):
+        return self.nome

@@ -2,11 +2,13 @@ from typing import Optional
 from ninja import Schema
 from typing import List
 
+# Schemas payloads para requests
 
 class ErrorResponse(Schema):
     error: bool = True
     result: str = 'error'
     message: str
+    
 class SuccessResponse(Schema):
     token : str = None
     status: int = 200
@@ -23,3 +25,15 @@ class SaveReq(Schema):
     
 class UserReq(Schema):
     email: str
+    
+class CreateInnovationReq(Schema):
+    partners: Optional[str] = None
+    nome: Optional[str] = None
+    descricao : Optional[str] = None
+    investimento_minimo : Optional[str] = None
+    porcentagem_cedida : Optional[str] = None
+    categorias : Optional[str] = None
+    imagem: Optional[str] = None
+    
+class SearchInnovationReq(Schema):
+    search : str

@@ -126,4 +126,14 @@ export class AuthService {
   setToken(token: string): void {
     this.token = token;
   }
+
+  postCreateInnovation(innovationData: any): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postCreateInnovation}`, innovationData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
 }

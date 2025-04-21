@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import User
+from api.models import User, Innovation
 # Register your models here.
 
 
@@ -8,5 +8,15 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('id','first_name','email','data_nasc')
     
 admin.site.register(User, UserAdmin)
+
+
+
+class InnovationAdmin(admin.ModelAdmin):
+    search_fields = ('owner__first_name',)
+    list_display = ('id','owner','categorias','investimento_minimo','porcentagem_cedida')
     
-    
+admin.site.register(Innovation,InnovationAdmin)
+
+admin.site.site_header = 'PitchLink Admin'
+admin.site.index_title = 'Painel Administrativo'
+admin.site.site_title = admin.site.site_header
