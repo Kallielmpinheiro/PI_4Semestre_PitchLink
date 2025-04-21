@@ -22,9 +22,33 @@ def custom_linkedin_callback(request):
             response = super().dispatch(request, *args, **kwargs)
             
             if request.user.is_authenticated:
-                if not User.objects.filter(email=request.user.email).exists():
-                    return redirect('http://localhost:4200/perfil')
-                return redirect('http://localhost:4200/app/recs')
+                auth_user = request.user
+
+                try:
+                    user = User.objects.get(email=auth_user.email)
+                    perfil_existente = True  
+                except User.DoesNotExist:
+                    user = User.objects.create(email=auth_user.email)
+                    perfil_existente = False  
+
+                token = jwt.encode(
+                    {
+                        'id': user.id,
+                        'exp': datetime.utcnow() + timedelta(days=7),
+                        'iat': datetime.utcnow()
+                    },
+                    settings.SECRET_KEY,
+                    algorithm="HS256"
+                )
+                print(token)
+
+                if perfil_existente:
+                    redirect_url = f"http://localhost:4200/auth-redirect?token={token}&user_id={user.id}"
+                else:
+                    redirect_url = f"http://localhost:4200/modal-login?token={token}&user_id={user.id}&perfil=true"
+
+                return redirect(redirect_url)
+                
             return response
 
     view = LinkedInCallbackView()
