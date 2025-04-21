@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, signal } from '@angular/core';
 import Hammer from 'hammerjs';
+import { ICards } from '../interface/ICards.interface';
 
 @Component({
   selector: 'app-swing',
@@ -10,6 +11,30 @@ import Hammer from 'hammerjs';
 })
 export class SwingComponent implements AfterViewInit {
   title = 'Pitch Cards';
+
+  public arrayCards = signal<ICards[]>([
+    {
+      idCard: 1,
+      title: "Gabriel de Oliveira",
+      src: "https://avatars.githubusercontent.com/u/143122763?v=4",
+      slogan: "Inovação que conecta. Simples assim.",
+      categorias: ["Tecnologia", "Desenvolvimento Web", "Inteligência Artificial", "Big Data e Analytics"]
+    },
+    {
+      idCard: 2,
+      title: "Gabriel Cardoso",
+      src: "https://avatars.githubusercontent.com/u/147005428?v=4",
+      slogan: "Menos ruído, mais essência.",
+      categorias: ["Marketing", "Publicidade", "Marketing Digital", "Gestão de Marca"]
+    },
+    {
+      idCard: 3,
+      title: "Dilma Rusbé",
+      src: "https://upload.wikimedia.org/wikipedia/commons/b/bd/Dilma_Rousseff_fevereiro_2011_3-B.jpg",
+      slogan: "O futuro é agora. Nós estocamos vento.",
+      categorias: ["Startups", "Empreendedorismo Social", "Inovação", "Mentoria de Carreira"]
+    }
+  ])
 
   ngAfterViewInit(): void {
     const tinderContainer = document.querySelector('.pitch')!;
@@ -47,10 +72,12 @@ export class SwingComponent implements AfterViewInit {
         console.log(event.deltaX)
     
         // Quando o movimento for para a direita (deltaX > 0), é um "like" (coração)
-        tinderContainer.classList.toggle('pitch_love', event.deltaX > tolerance);
+        card.classList.toggle('pitch_love', event.deltaX > tolerance);
+        tinderContainer.classList.toggle('pitch_love_btn', event.deltaX > tolerance);
         
         // Quando o movimento for para a esquerda (deltaX < 0), é um "dislike" (X)
-        tinderContainer.classList.toggle('pitch_nope', event.deltaX < -tolerance);
+        card.classList.toggle('pitch_nope', event.deltaX < -tolerance);
+        tinderContainer.classList.toggle('pitch_nope_btn', event.deltaX < -tolerance);
     
         const xMulti = event.deltaX * 0.03;
         const yMulti = event.deltaY / 80;
