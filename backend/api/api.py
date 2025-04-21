@@ -1,12 +1,12 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import ErrorResponse, SuccessResponse
-from api.schemas import SaveReq, UserReq
+from api.schemas import ErrorResponse, SuccessResponse,CreateInnovationReq
+from api.schemas import SaveReq, UserReq, SearchInnovationReq
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
 import time
-from api.models import User
+from api.models import User, Innovation
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -17,6 +17,7 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 import jwt
 from django.http import HttpResponse, Http404, JsonResponse
+from django.db import transaction
 
 api = NinjaAPI()
 
@@ -228,4 +229,84 @@ def get_user_perfil(request):
         'categories': user.categories if user.categories else '-'
     }
     
+    return 200, {'data': data}
+
+@api.post('/post-create-innovation', response={200: dict, 404: dict})
+def post_create_innovation(request, payload: CreateInnovationReq):
+
+    try:
+        user = User.objects.get(id=1)  
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        with transaction.atomic():
+            innovation = Innovation.objects.create(
+                owner=user,
+                nome=payload.nome,
+                descricao=payload.descricao,
+                investimento_minimo=payload.investimento_minimo,
+                porcentagem_cedida=payload.porcentagem_cedida,
+                categorias=payload.categorias,
+                imagem=payload.imagem,
+            )
+    except Exception as e:
+        return 404, {'message', str(e)}
+
+    return 200, {'message': 'Inovação criada com sucesso!', 'id': innovation.id}
+
+@api.get('/get-innovation', response={200: dict, 404: dict})
+def get_innovation(request):
+
+    try:
+        
+        user = User.objects.get(id=1)  
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    data = []
+
+    try:
+        inv = Innovation.objects.all()
+        for x in inv:
+            data.append({
+                'id': x.id,  
+                'nome': x.nome,
+                'descricao': x.descricao
+            })
+
+    except Exception as e:
+        return 404, {'message': str(e)}
+
+    return 200, {'data':data}
+
+@api.post('/post-search-innovation', response={200: dict, 404: dict})
+def search_innovation(request, payload : SearchInnovationReq):
+    try:
+        user = User.objects.get(id=1)  
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    data = []
+
+    print(payload.search)
+    
+    try:
+        inv = Innovation.objects.filter(categorias=payload.search)
+        for x in inv:
+            data.append({
+                'id': x.id,
+                'owner': x.owner.first_name if x.owner else '-',
+                'partners': list(map(lambda p: {'id': p.id, 'nome': p.first_name}, x.partners.all())),
+                'nome': x.nome if x.nome else '-',
+                'descricao': x.descricao if x.descricao else '-',
+                'investimento_minimo': x.investimento_minimo if x.investimento_minimo else '-',
+                'porcentagem_cedida': x.porcentagem_cedida if x.porcentagem_cedida else '-',
+                'categorias': x.categorias if x.categorias else '-',
+                'imagem': x.imagem.url if x.imagem else '-',
+            })
+
+    except Exception as e:
+        return 404, {'message': str(e)}
+
     return 200, {'data': data}

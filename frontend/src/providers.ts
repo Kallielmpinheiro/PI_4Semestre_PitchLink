@@ -7,7 +7,9 @@ export const api = {
     DTO : prefix + '/obter-perfil-social-usuario',
     logout: prefix + '/logout',
     image : prefix + '/get-image',
-    
+    postCreateInnovation: prefix + '/post-create-innovation', 
+    getInnovation: prefix + '/get-innovation',
+    postSearchInnovation: prefix + '/post-search-innovation'
 }
 
 export const socialAccounts = {
