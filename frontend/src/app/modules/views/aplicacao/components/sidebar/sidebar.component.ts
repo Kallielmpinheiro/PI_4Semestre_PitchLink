@@ -34,16 +34,20 @@ export class SidebarComponent implements OnInit {
     this.isRecs = this.router.url === '/app/recs';
     this.isPerfil = this.router.url === '/app/perfil';
 
-    this.authService.checkAuth().subscribe(response => {
-    
-      this.authService.image().subscribe(
-        imageResponse => {
+    this.authService.image().subscribe(
+      imageResponse => {
+
+        // Verifica se a URL já é absoluta
+
+        if (imageResponse.image_url.startsWith('http')) {
+          this.imagem = imageResponse.image_url;
+        } else {
           this.imagem = `${environment.getBaseUrl()}${imageResponse.image_url}`;
-        },
-        error => {
-          console.error(error);
         }
-      );
-    });
+      },
+      error => {
+        console.error(error);
+      }
+    );
   }
 }
