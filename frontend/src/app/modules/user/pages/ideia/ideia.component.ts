@@ -4,6 +4,7 @@ import { formatCurrency } from '@angular/common';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-ideia',
@@ -45,7 +46,7 @@ throw new Error('Method not implemented.');
   ];
 
   private formBuilderService = inject(FormBuilder);
-  
+  private authService = inject(AuthService)
   protected formNewIdea = this.formBuilderService.group({
     nameIdeia: ["", [Validators.required]],
     descriptionIdeia: [ 
@@ -57,24 +58,7 @@ throw new Error('Method not implemented.');
     categoriesItens: this.buildCategories()
   });
   
-  submitFomr() {
-    console.log(this.formNewIdea.valid)
-    console.log(this.formNewIdea.getError("nameIdea"))
-    
 
-    if( this.formNewIdea.valid ) {
-      const formData = {
-        nameIdeia: this.formNewIdea?.value.nameIdeia,
-        descriptionIdeia: this.formNewIdea.value.descriptionIdeia?.trim(),
-        valueInvestment: this.formNewIdea.value.valueInvestment,
-        valueIPercentnvestment: this.formNewIdea.value.valueIPercentInvestment, 
-        categoriesItens: this.getSelectedCategories(),
-      };
-
-      console.log(formData)
-    }
-    
-  }
 
   private getSelectedCategories(): string[] {
       const selected = (this.formNewIdea.get('categoriesItens') as FormArray).controls
@@ -97,4 +81,36 @@ throw new Error('Method not implemented.');
       })
     }
   }
+
+  submitFomr() {
+    if (this.formNewIdea.valid) {
+      this.submitForm = true;
+
+      
+      const formData = {
+        nome: this.formNewIdea?.value.nameIdeia,
+        descricao: this.formNewIdea.value.descriptionIdeia?.trim(),
+        investimento_minimo: this.formNewIdea.value.valueInvestment?.toString(),
+        porcentagem_cedida: this.formNewIdea.value.valueIPercentInvestment?.toString(),
+        categorias: this.getSelectedCategories().join(','), 
+        imagem: null 
+      };
+  
+      this.authService.postCreateInnovation(formData).subscribe({
+        next: (response) => {
+          console.log('Innovation created successfully', response);
+          this.submitForm = false;
+        },
+        error: (error) => {
+          console.error('Error creating innovation', error);
+          this.submitForm = false;
+        }
+      });
+    } else {
+      Object.keys(this.formNewIdea.controls).forEach(key => {
+        this.formNewIdea.get(key)?.markAsTouched();
+      });
+    }
+  }
+
 }
