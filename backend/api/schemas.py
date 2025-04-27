@@ -1,6 +1,6 @@
-from typing import Optional
-from ninja import Schema
-from typing import List
+from typing import List, Optional
+from ninja import NinjaAPI, Schema, Form, File
+from ninja.files import UploadedFile
 
 # Schemas payloads para requests
 
@@ -21,7 +21,7 @@ class SaveReq(Schema):
     email: Optional[str] = None
     profile_picture: Optional[str] = None
     data_nasc: Optional[str] = None
-    categories: Optional[List[str]] = None
+    categories: Optional[List[str]] = None 
     
 class UserReq(Schema):
     email: str
@@ -33,7 +33,6 @@ class CreateInnovationReq(Schema):
     investimento_minimo : Optional[str] = None
     porcentagem_cedida : Optional[str] = None
     categorias : Optional[str] = None
-    imagem: Optional[str] = None
     
 class SearchInnovationReq(Schema):
     search : str

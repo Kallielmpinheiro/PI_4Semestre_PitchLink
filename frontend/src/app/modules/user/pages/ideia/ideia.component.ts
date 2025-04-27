@@ -45,6 +45,9 @@ throw new Error('Method not implemented.');
     "Big Data e Analytics", "Coworking", "Marketing Pessoal", "Liderança", "Eventos e Conferências"
   ];
 
+  selectedFiles: File[] = [];
+  previewImages: string[] = [];
+
   private formBuilderService = inject(FormBuilder);
   private authService = inject(AuthService)
   protected formNewIdea = this.formBuilderService.group({
@@ -58,6 +61,43 @@ throw new Error('Method not implemented.');
     categoriesItens: this.buildCategories()
   });
   
+  getRemainingSlots(): number[] {
+
+    const uploadButtonSlot = this.previewImages.length < 6 ? 1 : 0;
+    const totalSlots = 6;
+    const usedSlots = this.previewImages.length + uploadButtonSlot;
+    const remainingSlots = Math.max(0, totalSlots - usedSlots);
+    
+    return Array(remainingSlots).fill(0);
+  }
+
+  onFileSelected(event: any) {
+    const files = event.target.files;
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (this.isValidImageFile(file) && this.previewImages.length < 6) {
+          this.selectedFiles.push(file);
+          
+          const reader = new FileReader();
+          reader.onload = (e: any) => {
+            this.previewImages.push(e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  }
+
+  isValidImageFile(file: File): boolean {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    return validTypes.includes(file.type);
+  }
+
+  removeImage(index: number) {
+    this.selectedFiles.splice(index, 1);
+    this.previewImages.splice(index, 1);
+  }
 
 
   private getSelectedCategories(): string[] {
@@ -85,32 +125,70 @@ throw new Error('Method not implemented.');
   submitFomr() {
     if (this.formNewIdea.valid) {
       this.submitForm = true;
-
       
-      const formData = {
-        nome: this.formNewIdea?.value.nameIdeia,
-        descricao: this.formNewIdea.value.descriptionIdeia?.trim(),
-        investimento_minimo: this.formNewIdea.value.valueInvestment?.toString(),
-        porcentagem_cedida: this.formNewIdea.value.valueIPercentInvestment?.toString(),
-        categorias: this.getSelectedCategories().join(','), 
-        imagem: null 
-      };
-  
+      const formData = new FormData();
+      formData.append('nome', this.formNewIdea.value.nameIdeia || '');
+      formData.append('descricao', this.formNewIdea.value.descriptionIdeia?.trim() || '');
+      formData.append('investimento_minimo', this.formNewIdea.value.valueInvestment?.toString() || '0');
+      formData.append('porcentagem_cedida', this.formNewIdea.value.valueIPercentInvestment?.toString() || '0');
+      formData.append('categorias', this.getSelectedCategories().join(','));
+      
+      this.selectedFiles.forEach((file, index) => {
+      formData.append(`imagens`, file);
+      });
+    
       this.authService.postCreateInnovation(formData).subscribe({
-        next: (response) => {
-          console.log('Innovation created successfully', response);
-          this.submitForm = false;
-        },
-        error: (error) => {
-          console.error('Error creating innovation', error);
-          this.submitForm = false;
-        }
+      next: (response) => {
+        this.submitForm = false;
+        this.openModal(response.message);
+      },
+      error: (error) => {
+        this.submitForm = false;
+        this.openModal(error.error?.message);
+      }
       });
     } else {
+      
+      let firstErrorKey: string | null = null;
       Object.keys(this.formNewIdea.controls).forEach(key => {
-        this.formNewIdea.get(key)?.markAsTouched();
+        const control = this.formNewIdea.get(key);
+        if (control?.errors && !firstErrorKey) {
+          firstErrorKey = key;
+        }
       });
+      
+      let errorMessage = 'Formulário inválido';
+      if (firstErrorKey) {
+        const control = this.formNewIdea.get(firstErrorKey);
+        if (control?.errors) {
+          if (control.errors['required']) {
+        errorMessage = `O campo ${firstErrorKey} é obrigatório`;
+          } else if (control.errors['min']) {
+        errorMessage = `O campo ${firstErrorKey} precisa ter no mínimo ${control.errors['min'].min} caracteres`;
+          }
+        }
+      }
+      this.openModal(errorMessage);
+      this.formNewIdea.markAllAsTouched();
     }
   }
+
+  modalText: string = '';
+
+openModal(text: string) {
+  this.modalText = text;
+  const modal = document.getElementById('response-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+closeModal() {
+  const modal = document.getElementById('response-modal');
+  if (modal) {
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+  }}
 
 }
