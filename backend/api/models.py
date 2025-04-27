@@ -6,6 +6,8 @@ from django.db.models import JSONField
 # Create your models here.
 
 class User(models.Model):
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
     first_name = models.CharField(_('Nome'), max_length=255, blank=True, null=True)
     last_name = models.CharField(_('Sobrenome'), max_length=255, blank=True, null=True)
     email = models.EmailField(_('Email'), unique=True, blank=True, null=True)
@@ -30,7 +32,9 @@ class User(models.Model):
         return None
 
 
-class Innovation(models.Model): # Ideias
+class Innovation(models.Model):
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_innovations')
     partners = models.ManyToManyField(User, blank=True, related_name='partnered_innovations')
     nome = models.CharField(_('Nome'), max_length=255, blank=True, null=True)
@@ -38,11 +42,24 @@ class Innovation(models.Model): # Ideias
     investimento_minimo = models.CharField(_('Investimento Mínimo'), max_length=255, blank=True, null=True)
     porcentagem_cedida = models.CharField(_('Porcentagem Cedida'), max_length=255, blank=True, null=True)
     categorias = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
-    imagem = models.FileField(_('Imagem'), upload_to='ideias/', blank=True, null=True)
-    
+
     class Meta:
         verbose_name = _('Ideia')
         verbose_name_plural = _('Ideias')
 
     def __str__(self):
         return self.nome
+
+class InnovationImage(models.Model):
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_innovationsimages')
+    innovation = models.ForeignKey(Innovation, on_delete=models.CASCADE, related_name='images')
+    imagem = models.FileField(_('Foto'), upload_to='Innovation/', blank=True, null=True)
+
+    class Meta:
+        verbose_name = _('Imagem da Ideia')
+        verbose_name_plural = _('Imagens das Ideias')
+
+    def __str__(self):
+        return f"Imagem para a ideia: {self.innovation.nome}"
