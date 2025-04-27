@@ -6,7 +6,7 @@ from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
 import time
-from api.models import User, Innovation
+from api.models import User, Innovation, InnovationImage
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -16,7 +16,7 @@ import os
 from django.core.files.base import ContentFile
 from django.conf import settings
 import jwt
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import HttpResponse, Http404, JsonResponse, HttpRequest
 from django.db import transaction
 
 api = NinjaAPI()
@@ -216,7 +216,7 @@ def get_user_image(request):
 def get_user_perfil(request):
     
     try:
-        user = User.objects.get(id=request.auth)
+        user = request.auth
     except User.DoesNotExist:
         return 404, {'message': 'Conta nao encontrada'}
         
@@ -231,35 +231,71 @@ def get_user_perfil(request):
     
     return 200, {'data': data}
 
-@api.post('/post-create-innovation', response={200: dict, 404: dict})
-def post_create_innovation(request, payload: CreateInnovationReq):
-
+@api.post('/post-create-innovation', auth=AuthBearer(), response={200: dict, 404: dict, 500: dict})
+def post_create_innovation(request: HttpRequest):
+    
     try:
-        user = User.objects.get(id=1)  
+        user = request.auth
     except User.DoesNotExist:
-        return 404, {'message': 'Conta não encontrada'}
+        return 404, {"message": "Conta não encontrada"} 
+    
+    data = request.POST
 
+    payload = CreateInnovationReq(
+        partners=data.get('partners'),
+        nome=data.get('nome'),
+        descricao=data.get('descricao'),
+        investimento_minimo=data.get('investimento_minimo'),
+        porcentagem_cedida=data.get('porcentagem_cedida'),
+        categorias=data.get('categorias'),
+    )
+        
+    if payload.investimento_minimo < 0:
+        return 404, {'message':'Valor indevido'}
+    elif not payload.categorias:
+        return 404, {'message':'Informe categorias'}
+    elif not payload.porcentagem_cedida:
+        return 404, {'message':'Informe porcentagem cedida'}
+    elif not payload.investimento_minimo:
+        return 404, {'message':'Informe investimento_minimo'}
+    elif not payload.descricao:
+        return 404, {'message':'Informe descricao'}
+    elif not payload.nome:
+        return 404, {'message':'Informe nome'}
+    
     try:
         with transaction.atomic():
-            innovation = Innovation.objects.create(
+            innovation = Innovation(
                 owner=user,
                 nome=payload.nome,
                 descricao=payload.descricao,
                 investimento_minimo=payload.investimento_minimo,
                 porcentagem_cedida=payload.porcentagem_cedida,
-                categorias=payload.categorias,
-                imagem=payload.imagem,
+                categorias=payload.categorias.split(',') if payload.categorias else [],
             )
-    except Exception as e:
-        return 404, {'message', str(e)}
+            innovation.save()
 
-    return 200, {'message': 'Inovação criada com sucesso!', 'id': innovation.id}
+            images = []
+            for image_file in request.FILES.getlist('imagens'):
+                images.append(
+                    InnovationImage(
+                        owner=user,
+                        innovation=innovation,
+                        imagem=image_file
+                    )
+                )
+            InnovationImage.objects.bulk_create(images)
+
+    except Exception as e:
+        return 500, {"message": str(e)}
+
+    return 200, { "message": "Inovação criada com sucesso!"}
+
 
 @api.get('/get-innovation', response={200: dict, 404: dict})
 def get_innovation(request):
 
     try:
-        
         user = User.objects.get(id=1)  
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
