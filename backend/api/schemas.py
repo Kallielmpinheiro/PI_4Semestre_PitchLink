@@ -28,11 +28,11 @@ class UserReq(Schema):
     
 class CreateInnovationReq(Schema):
     partners: Optional[str] = None
-    nome: Optional[str] = None
-    descricao : Optional[str] = None
-    investimento_minimo : Optional[str] = None
-    porcentagem_cedida : Optional[str] = None
-    categorias : Optional[str] = None
+    nome: str
+    descricao: str
+    investimento_minimo: float
+    porcentagem_cedida: float
+    categorias: str
     
 class SearchInnovationReq(Schema):
     search : str
