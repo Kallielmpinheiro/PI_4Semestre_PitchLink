@@ -9,7 +9,8 @@ export const api = {
     image : prefix + '/get-image',
     postCreateInnovation: prefix + '/post-create-innovation', 
     getInnovation: prefix + '/get-innovation',
-    postSearchInnovation: prefix + '/post-search-innovation'
+    postSearchInnovation: prefix + '/post-search-innovation',
+    getUser: prefix + '/get-perfil',
 }
 
 export const socialAccounts = {

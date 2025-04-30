@@ -217,10 +217,12 @@ def get_user_perfil(request):
     
     try:
         user = request.auth
+        # user = User.objects.get(id=1)  
     except User.DoesNotExist:
         return 404, {'message': 'Conta nao encontrada'}
         
     data = {
+        'first_name':user.first_name if user.first_name else '-',
         'last_name': user.last_name if user.last_name else '-',
         'email': user.email if user.email else '-',
         'profile_picture': str(user.profile_picture) if user.profile_picture else '-',
