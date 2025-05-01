@@ -142,6 +142,7 @@ export class IdeiaComponent {
           console.log(response)
           this.submitForm = false;
           this.openModal(response.message);
+          this.resetForm();
         },
         error: (error) => {
           console.log(error.error?.message || error.message);
@@ -204,6 +205,14 @@ export class IdeiaComponent {
         valueIPercentInvestment: 0
       })
     }
+  }
+
+
+  resetForm() {
+    this.formNewIdea.reset();
+    this.formNewIdea.setControl('categoriesItens', this.buildCategories());
+    this.selectedFiles = [];
+    this.previewImages = [];
   }
 
 }

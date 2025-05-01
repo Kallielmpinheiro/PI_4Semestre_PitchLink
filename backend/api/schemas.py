@@ -36,3 +36,9 @@ class CreateInnovationReq(Schema):
     
 class SearchInnovationReq(Schema):
     search : str
+    
+    
+class ImgInnovationReq(Schema):
+    id : int 
+    
+    

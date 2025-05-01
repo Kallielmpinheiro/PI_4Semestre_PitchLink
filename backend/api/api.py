@@ -1,7 +1,7 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
 from api.schemas import ErrorResponse, SuccessResponse,CreateInnovationReq
-from api.schemas import SaveReq, UserReq, SearchInnovationReq
+from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
@@ -202,6 +202,7 @@ def obter_perfil_social_usuario(request):
 def get_user_image(request):
     try:
         user = request.auth
+        # user = User.objects.get(id=1)      
     except User.DoesNotExist:
         return 404, {'message': 'Conta nao encontrada'}
         
@@ -211,6 +212,8 @@ def get_user_image(request):
     elif user.profile_picture_url:
         return 200, {"image_url": user.profile_picture_url}
     return 404, {"message": "Image not found"}
+
+
 
 @api.get('/get-perfil', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_user_perfil(request):
@@ -238,6 +241,7 @@ def post_create_innovation(request: HttpRequest):
     
     try:
         user = request.auth
+        # user = User.objects.get(id=1)  
     except User.DoesNotExist:
         return 404, {"message": "Conta não encontrada"} 
     
@@ -278,6 +282,10 @@ def post_create_innovation(request: HttpRequest):
             innovation.save()
 
             images = []
+            
+            if not request.FILES.getlist('imagens'):
+                return 404, {'message':'Anexe no minimo 1 img'}
+
             for image_file in request.FILES.getlist('imagens'):
                 images.append(
                     InnovationImage(
@@ -294,34 +302,47 @@ def post_create_innovation(request: HttpRequest):
     return 200, { "message": "Inovação criada com sucesso!"}
 
 
-@api.get('/get-innovation', response={200: dict, 404: dict})
+@api.get('/get-innovation', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_innovation(request):
 
     try:
-        user = User.objects.get(id=1)  
+        user = request.auth
+        # user = User.objects.get(id=1)   
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
 
     data = []
 
     try:
+        
         inv = Innovation.objects.all()
+        
         for x in inv:
+            
+            imagem_url = x.get_image()
+            full_image_url = request.build_absolute_uri(imagem_url)
+                
             data.append({
-                'id': x.id,  
-                'nome': x.nome,
-                'descricao': x.descricao
+                    'id': x.id,
+                    'owner': x.owner.first_name,
+                    'nome': x.nome,
+                    'descricao': x.descricao,
+                    'investimento_minimo': x.investimento_minimo,
+                    'porcentagem_cedida': x.porcentagem_cedida,
+                    'categorias': x.categorias,
+                    'imagem': full_image_url,
             })
 
     except Exception as e:
         return 404, {'message': str(e)}
 
-    return 200, {'data':data}
+    return 200, {'data': data}
 
-@api.post('/post-search-innovation', response={200: dict, 404: dict})
+@api.post('/post-search-innovation',  auth=AuthBearer(), response={200: dict, 404: dict})
 def search_innovation(request, payload : SearchInnovationReq):
     try:
-        user = User.objects.get(id=1)  
+        user = request.auth
+        # user = User.objects.get(id=1)   
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
 
