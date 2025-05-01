@@ -1,28 +1,84 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, signal } from '@angular/core';
 import Hammer from 'hammerjs';
+import { ICards, Innovation } from '../interface/ICards.interface';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-swing',
   imports: [CommonModule],
   templateUrl: './swing.component.html',
-  styleUrls: ['./swing.component.css']  // Corrigir o nome de styleUrl para styleUrls
+  styleUrls: ['./swing.component.css']
 })
 export class SwingComponent implements AfterViewInit {
+
+  constructor(
+    private authService: AuthService
+  ) { }
+
   title = 'Pitch Cards';
 
+  public arrayCards = signal<ICards[]>([]);
+  
+  ngOnInit(): void {
+    this.authService.getInnovation().subscribe(
+      dataResponse => {
+
+        const innovations: Innovation[] = dataResponse.data;
+        
+        const cards: ICards[] = innovations.map((innovation: Innovation) => {
+          
+          return {
+
+            idCard: innovation.id,
+            src: innovation.imagem, 
+            title: innovation.nome, 
+            slogan: innovation.descricao,
+            categorias: innovation.categorias,
+            investimento_minimo: innovation.investimento_minimo,
+            porcentagem_cedida: innovation.porcentagem_cedida,
+
+          };
+        });
+        
+        this.arrayCards.set(cards);
+        
+        setTimeout(() => this.initCards(), 0);
+      },
+      error => {
+        console.log(error);
+      }
+    );
+  }
+
   ngAfterViewInit(): void {
-    const tinderContainer = document.querySelector('.pitch')!;
+  }
+
+  private initCards(): void {
+    const tinderContainer = document.querySelector('.pitch');
+    
+    if (!tinderContainer) {
+      console.error('Pitch container not found');
+      return;
+    }
+    
     const allCards = document.querySelectorAll('.pitch--card');
     const nope = document.getElementById('nope');  // Botão de "Não"
     const love = document.getElementById('love');  // Botão de "Sim"
+    
+    // Store the component instance for use in event handlers
+    const component = this;
+
+    if (!allCards.length) {
+      return;
+    }
 
     // Função que inicializa as cartas na tela
-    const initCards = () => {
+    const initCardsPosition = () => {
       const newCards = document.querySelectorAll('.pitch--card:not(.removed)');
 
       newCards.forEach((card, index) => {
-        const cardElement = card as HTMLElement;  // Garantir que card é tratado como HTMLElement
+        const cardElement = card as HTMLElement;
         cardElement.style.zIndex = (allCards.length - index).toString();
         cardElement.style.transform = `scale(${(20 - index) / 20}) translateY(-${30 * index}px)`;
         cardElement.style.opacity = ((10 - index) / 10).toString();
@@ -31,26 +87,29 @@ export class SwingComponent implements AfterViewInit {
       tinderContainer.classList.add('loaded');
     };
 
-    initCards();
+    initCardsPosition();
 
     // Para cada carta, é configurado o evento de "pan" (movimento do dedo ou mouse)
     allCards.forEach((el) => {
-      const card = el as HTMLElement;  // Type assertion para garantir que `el` seja tratado como HTMLElement
+      const card = el as HTMLElement;
       const hammertime = new Hammer(card);
       const tolerance = 250;  // Distância mínima em pixels que o cartão precisa mover para ser removido
+      
+      // Get the card ID from the element
+      const cardId = card.id.replace('card-', '');
     
       hammertime.on('pan', (event) => {
         card.classList.add('moving');
         if (event.deltaX === 0) return;
         if (event.center.x === 0 && event.center.y === 0) return;
-
-        console.log(event.deltaX)
     
         // Quando o movimento for para a direita (deltaX > 0), é um "like" (coração)
-        tinderContainer.classList.toggle('pitch_love', event.deltaX > tolerance);
+        card.classList.toggle('pitch_love', event.deltaX > tolerance);
+        tinderContainer.classList.toggle('pitch_love_btn', event.deltaX > tolerance);
         
         // Quando o movimento for para a esquerda (deltaX < 0), é um "dislike" (X)
-        tinderContainer.classList.toggle('pitch_nope', event.deltaX < -tolerance);
+        card.classList.toggle('pitch_nope', event.deltaX < -tolerance);
+        tinderContainer.classList.toggle('pitch_nope_btn', event.deltaX < -tolerance);
     
         const xMulti = event.deltaX * 0.03;
         const yMulti = event.deltaY / 80;
@@ -84,20 +143,13 @@ export class SwingComponent implements AfterViewInit {
       
           // Aplica a transformação para deslocar o cartão para fora da tela
           card.style.transform = `translate(${toX}px, ${toY + event.deltaY}px) rotate(${rotate}deg)`;
+                    
         } else {
-          // Se o movimento não foi suficiente, o cartão volta para o lugar original
           card.style.transform = '';
         }
       
         // Atualiza a posição dos cartões restantes
-        initCards();
-
-        // AQUI PODE SE COLOCAR TRATATIVAS PARA QUANDO O CARD FOR LIBERADO:
-        // if (event.deltaX > tolerance) {
-        //   console.log("Aqui vc pode colocar o que deseja quando for SIM");
-        // } else if(event.deltaX < -tolerance){
-        //   console.log("Aqui vc pode colocar o que deseja quando for NÃO");
-        // }
+        initCardsPosition();
       });
     });
 
@@ -109,6 +161,7 @@ export class SwingComponent implements AfterViewInit {
       if (!cards.length) return;
 
       const card = cards[0] as HTMLElement;
+      const cardId = card.id.replace('card-', '');
 
       card.classList.add('removed');
 
@@ -120,7 +173,7 @@ export class SwingComponent implements AfterViewInit {
         card.style.transform = `translate(-${moveOutWidth}px, -100px) rotate(30deg)`;
       }
 
-      initCards();
+      initCardsPosition();
 
       event.preventDefault();
     };

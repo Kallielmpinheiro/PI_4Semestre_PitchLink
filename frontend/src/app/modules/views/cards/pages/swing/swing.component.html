@@ -1,39 +1,41 @@
 <div class="pitch">
-    <div class="pitch--status">
-        <i class="fa fa-remove"></i>
-        <i class="fa fa-heart"></i>
-    </div>
-
     <div class="pitch--cards">
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/people" />
-            <h3>Demo card 1</h3>
-            <p>This is a demo for pitch like swipe cards</p>
+        @for (item of arrayCards(); track item) {
+        <div class="pitch--card" [id]="item.idCard">
+            <div class="pitch--status">
+                <div class="nope-icon"></div>
+                <div class="love-icon"></div>
+            </div>
+            <figure class="relative cursor-pointer filter transition-transform h-full">
+                <img [src]="item.src" class="h-full object-cover" />
+
+                <figcaption class="absolute px-4 pb-6 text-white w-full bottom-0 text-start bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                    <div class="space-y-1">
+                        <h3 class="text-lg font-bold">{{ item.title }}</h3>
+                        <p class="text-sm font-medium">{{ item.slogan }}</p>
+                        <p class="text-sm font-medium"><span class="text-gray-300">Investimento Mínimo:</span> {{ item.investimento_minimo }}</p>
+                        <p class="text-sm font-medium"><span class="text-gray-300">Porcentagem Cedida:</span> {{ item.porcentagem_cedida }} %</p>
+                    </div>
+                
+                    <div class="mt-3">
+                        <ul id="categoriesItens" class="flex flex-wrap justify-start gap-2" formArrayName="categories">
+                            @for (item of item.categorias; track item) {
+                            <li>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/20">
+                                    {{ item }}
+                                </span>
+                            </li>
+                            }
+                        </ul>
+                    </div>
+                </figcaption>
+            </figure>
         </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/animals" />
-            <h3>Demo card 2</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/nature" />
-            <h3>Demo card 3</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/tech" />
-            <h3>Demo card 4</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/arch" />
-            <h3>Demo card 5</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
+        }
     </div>
 
     <div class="pitch--buttons">
-        <button id="nope"><i class="fa fa-remove"></i></button>
-        <button id="love"><i class="fa fa-heart"></i></button>
+        <button class="btn-nope" id="nope"><i class="fa fa-remove"></i></button>
+        <button class="btn-love" id="love"><i class="fa fa-dollar"></i></button>
     </div>
 </div>

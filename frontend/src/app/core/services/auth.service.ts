@@ -136,4 +136,23 @@ export class AuthService {
     });
   }
 
+  getUser(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getUser}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  getInnovation(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getInnovation}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+  
+
 }

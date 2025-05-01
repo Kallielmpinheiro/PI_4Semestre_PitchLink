@@ -15,11 +15,18 @@ import { AuthService } from '../../../../../core/services/auth.service';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
+
 export class SidebarComponent implements OnInit {
+
   isRecs = false;
   isPerfil = false;
 
   nome: string = '';
+  sobrenome: string = '';
+  email: string = '';
+  data_nasc: string = '';
+  categories: string = '';
+
   imagem: string = '';
 
   constructor(
@@ -49,5 +56,24 @@ export class SidebarComponent implements OnInit {
         console.error(error);
       }
     );
+
+    this.authService.getUser().subscribe(
+      dataResponse =>{
+        this.nome = dataResponse.data.first_name;
+        this.sobrenome = dataResponse.data.last_name;
+        this.email = dataResponse.data.email;
+        this.data_nasc = dataResponse.data.data_nasc;
+        this.categories = dataResponse.data.categories;
+  
+        
+    },
+    error => {
+      console.error('Error fetching user data:', error);
+    }
+
+      
+
+    )
+
   }
 }

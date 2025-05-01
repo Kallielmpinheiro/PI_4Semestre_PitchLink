@@ -49,6 +49,13 @@ class Innovation(models.Model):
 
     def __str__(self):
         return self.nome
+    
+    def get_image(self):
+        _image = self.images.first()
+        if _image and hasattr(_image.imagem, 'url'):
+            return _image.imagem.url
+        return None
+
 
 class InnovationImage(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
