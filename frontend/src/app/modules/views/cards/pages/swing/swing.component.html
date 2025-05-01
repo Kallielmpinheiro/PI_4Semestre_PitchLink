@@ -9,20 +9,25 @@
             <figure class="relative cursor-pointer filter transition-transform h-full">
                 <img [src]="item.src" class="h-full object-cover" />
 
-                <figcaption class="absolute px-3 pb-6 text-white w-full bottom-0 text-start bg-gradient-to-t from-20% from-black">
-                    <h3 class="font-bold">{{ item.title }}</h3>
-                    <p class="font-medium">{{ item.slogan }}</p>
-                    <ul id="categoriesItens" class="flex flex-wrap justify-start w-full mt-2 gap-2" formArrayName="categories">
-                        @for (item of item.categorias; track item) {
-                        <li>
-                            <label class="inline-flex items-center justify-between w-full px-2 py-1 rounded-full text-white bg-gray-400/25">
-                                <div class="block">
-                                    <div class="w-full text-sm font-semibold"> {{ item }} </div>
-                                </div>
-                            </label>
-                        </li>
-                        }
-                    </ul>
+                <figcaption class="absolute px-4 pb-6 text-white w-full bottom-0 text-start bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                    <div class="space-y-1">
+                        <h3 class="text-lg font-bold">{{ item.title }}</h3>
+                        <p class="text-sm font-medium">{{ item.slogan }}</p>
+                        <p class="text-sm font-medium"><span class="text-gray-300">Investimento Mínimo:</span> {{ item.investimento_minimo }}</p>
+                        <p class="text-sm font-medium"><span class="text-gray-300">Porcentagem Cedida:</span> {{ item.porcentagem_cedida }} %</p>
+                    </div>
+                
+                    <div class="mt-3">
+                        <ul id="categoriesItens" class="flex flex-wrap justify-start gap-2" formArrayName="categories">
+                            @for (item of item.categorias; track item) {
+                            <li>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/20">
+                                    {{ item }}
+                                </span>
+                            </li>
+                            }
+                        </ul>
+                    </div>
                 </figcaption>
             </figure>
         </div>
