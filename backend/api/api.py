@@ -318,9 +318,11 @@ def get_innovation(request):
         inv = Innovation.objects.all()
         
         for x in inv:
-            
-            imagem_url = x.get_image()
-            full_image_url = request.build_absolute_uri(imagem_url)
+            imagens = []
+
+            list_imagem_url = x.get_all_images()
+            for imagem_url in list_imagem_url:
+                imagens.append(request.build_absolute_uri(imagem_url))
                 
             data.append({
                     'id': x.id,
@@ -330,7 +332,7 @@ def get_innovation(request):
                     'investimento_minimo': x.investimento_minimo,
                     'porcentagem_cedida': x.porcentagem_cedida,
                     'categorias': x.categorias,
-                    'imagem': full_image_url,
+                    'imagens': imagens,
             })
 
     except Exception as e:
