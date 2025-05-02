@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     #providers
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.openid_connect',
+    
+    'channels',
 
 ]
 
@@ -103,7 +105,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
+# asgi & channel
+ASGI_APPLICATION = 'backend.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
