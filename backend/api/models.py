@@ -50,11 +50,8 @@ class Innovation(models.Model):
     def __str__(self):
         return self.nome
     
-    def get_image(self):
-        _image = self.images.first()
-        if _image and hasattr(_image.imagem, 'url'):
-            return _image.imagem.url
-        return None
+    def get_all_images(self):
+        return [img.imagem.url for img in self.images.all() if img.imagem]
 
 
 class InnovationImage(models.Model):

@@ -19,30 +19,32 @@ export class SwingComponent implements AfterViewInit {
   title = 'Pitch Cards';
 
   public arrayCards = signal<ICards[]>([]);
-  
+  public cardIndexes: { [idCard: string]: number } = {};
+
   ngOnInit(): void {
     this.authService.getInnovation().subscribe(
       dataResponse => {
-
         const innovations: Innovation[] = dataResponse.data;
-        
-        const cards: ICards[] = innovations.map((innovation: Innovation) => {
-          
-          return {
 
+        const cards: ICards[] = innovations.map((innovation: Innovation) => {
+          return {
             idCard: innovation.id,
-            src: innovation.imagem, 
-            title: innovation.nome, 
+            imagens: innovation.imagens,
+            title: innovation.nome,
             slogan: innovation.descricao,
             categorias: innovation.categorias,
             investimento_minimo: innovation.investimento_minimo,
             porcentagem_cedida: innovation.porcentagem_cedida,
-
           };
         });
-        
+
         this.arrayCards.set(cards);
-        
+
+        // Inicializa os índices dos carrosséis
+        cards.forEach(card => {
+          this.cardIndexes[card.idCard] = 0;
+        });
+
         setTimeout(() => this.initCards(), 0);
       },
       error => {
@@ -51,21 +53,40 @@ export class SwingComponent implements AfterViewInit {
     );
   }
 
+
+  // Avança imagem do carrossel do card específico
+  next(idCard: string) {
+    const card = this.arrayCards().find(c => c.idCard.toString() === idCard);
+    if (card) {
+      const total = card.imagens.length;
+      this.cardIndexes[idCard] = (this.cardIndexes[idCard] + 1) % total;
+    }
+  }
+
+  // Volta imagem do carrossel do card específico
+  prev(idCard: string) {
+    const card = this.arrayCards().find(c => c.idCard.toString() === idCard);
+    if (card) {
+      const total = card.imagens.length;
+      this.cardIndexes[idCard] = (this.cardIndexes[idCard] - 1 + total) % total;
+    }
+  }
+
   ngAfterViewInit(): void {
   }
 
   private initCards(): void {
     const tinderContainer = document.querySelector('.pitch');
-    
+
     if (!tinderContainer) {
       console.error('Pitch container not found');
       return;
     }
-    
+
     const allCards = document.querySelectorAll('.pitch--card');
     const nope = document.getElementById('nope');  // Botão de "Não"
     const love = document.getElementById('love');  // Botão de "Sim"
-    
+
     // Store the component instance for use in event handlers
     const component = this;
 
@@ -94,43 +115,43 @@ export class SwingComponent implements AfterViewInit {
       const card = el as HTMLElement;
       const hammertime = new Hammer(card);
       const tolerance = 250;  // Distância mínima em pixels que o cartão precisa mover para ser removido
-      
+
       // Get the card ID from the element
       const cardId = card.id.replace('card-', '');
-    
+
       hammertime.on('pan', (event) => {
         card.classList.add('moving');
         if (event.deltaX === 0) return;
         if (event.center.x === 0 && event.center.y === 0) return;
-    
+
         // Quando o movimento for para a direita (deltaX > 0), é um "like" (coração)
         card.classList.toggle('pitch_love', event.deltaX > tolerance);
         tinderContainer.classList.toggle('pitch_love_btn', event.deltaX > tolerance);
-        
+
         // Quando o movimento for para a esquerda (deltaX < 0), é um "dislike" (X)
         card.classList.toggle('pitch_nope', event.deltaX < -tolerance);
         tinderContainer.classList.toggle('pitch_nope_btn', event.deltaX < -tolerance);
-    
+
         const xMulti = event.deltaX * 0.03;
         const yMulti = event.deltaY / 80;
         const rotate = xMulti * yMulti;
-    
+
         card.style.transform = `translate(${event.deltaX}px, ${event.deltaY}px) rotate(${rotate}deg)`;
       });
-    
+
       hammertime.on('panend', (event) => {
         card.classList.remove('moving');
         tinderContainer.classList.remove('pitch_love');
         tinderContainer.classList.remove('pitch_nope');
-      
+
         const moveOutWidth = document.body.clientWidth;
-      
+
         // Verifica se o movimento foi suficiente para ultrapassar a margem de tolerância
         const movedEnough = Math.abs(event.deltaX) > tolerance || Math.abs(event.velocityX) > 0.5;
-      
+
         // Se o movimento for suficiente, o cartão é removido
         card.classList.toggle('removed', movedEnough);
-      
+
         // Se o movimento foi suficiente, o cartão sai da tela
         if (movedEnough) {
           const endX = Math.max(Math.abs(event.velocityX) * moveOutWidth, moveOutWidth);
@@ -140,14 +161,14 @@ export class SwingComponent implements AfterViewInit {
           const xMulti = event.deltaX * 0.03;
           const yMulti = event.deltaY / 80;
           const rotate = xMulti * yMulti;
-      
+
           // Aplica a transformação para deslocar o cartão para fora da tela
           card.style.transform = `translate(${toX}px, ${toY + event.deltaY}px) rotate(${rotate}deg)`;
-                    
+
         } else {
           card.style.transform = '';
         }
-      
+
         // Atualiza a posição dos cartões restantes
         initCardsPosition();
       });
