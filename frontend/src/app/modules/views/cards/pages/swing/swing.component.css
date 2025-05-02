@@ -14,7 +14,8 @@
 
 .pitch--status {
     position: absolute;
-    top: 50px; /* Distância do topo */
+    top: 50px;
+    /* Distância do topo */
     width: 100%;
     height: 100px;
     pointer-events: none;
@@ -23,7 +24,8 @@
 
 .pitch--status .nope-icon,
 .pitch--status .love-icon {
-    width: 100px; /* Tamanho reduzido para caber no canto */
+    width: 100px;
+    /* Tamanho reduzido para caber no canto */
     height: 100px;
     opacity: 0;
     transform: scale(0.3) rotate(0deg);
@@ -36,13 +38,15 @@
 
 .pitch--status .nope-icon {
     right: 3rem;
-    transform-origin: right center; /* Ponto de origem para rotação */
+    transform-origin: right center;
+    /* Ponto de origem para rotação */
 }
 
 /* Posiciona o ícone "love" no canto direito */
 .pitch--status .love-icon {
     left: 3rem;
-    transform-origin: left center; /* Ponto de origem para rotação */
+    transform-origin: left center;
+    /* Ponto de origem para rotação */
 }
 
 .pitch_love .love-icon {
@@ -55,12 +59,12 @@
 }
 
 
-.pitch_love_btn .btn-love{
+.pitch_love_btn .btn-love {
     transform: scale(1.3);
     background-color: #229A00;
 }
 
-.pitch_love_btn .btn-love i{
+.pitch_love_btn .btn-love i {
     opacity: 1;
     color: #FFFFFF;
 }
@@ -74,12 +78,12 @@
     height: 150px;
 }
 
-.pitch_nope_btn .btn-nope{
+.pitch_nope_btn .btn-nope {
     transform: scale(1.3);
     background-color: #FF4D4D;
 }
 
-.pitch_nope_btn .btn-nope i{
+.pitch_nope_btn .btn-nope i {
     opacity: 1;
     color: #FFFFFF;
 }
@@ -95,11 +99,15 @@
 
 .pitch--card {
     display: inline-block;
-    width: 90vw; /* 90% da largura da tela */
-    max-width: 400px; /* Largura máxima (para não ficar muito largo em telas grandes) */
-    height: calc(90vw * 1.6); /* Proporção áurea baseada na largura (ajuste 1.6 para sua preferência) */
-    max-height: 640px; /* Altura máxima */
-    background: #FFFFFF;
+    width: 90vw;
+    /* 90% da largura da tela */
+    max-width: 400px;
+    /* Largura máxima (para não ficar muito largo em telas grandes) */
+    height: calc(90vw * 1.6);
+    /* Proporção áurea baseada na largura (ajuste 1.6 para sua preferência) */
+    max-height: 640px;
+    /* Altura máxima */
+    background: #000000;
     border-radius: 8px;
     overflow: hidden;
     position: absolute;
@@ -123,7 +131,8 @@
 }
 
 .pitch--card h3 {
-    font-size: min(6vw, 28px); /* Usa 6vw ou 28px (o menor dos dois) */
+    font-size: min(6vw, 28px);
+    /* Usa 6vw ou 28px (o menor dos dois) */
     padding: 0 16px;
 }
 
@@ -140,10 +149,14 @@
 .pitch--buttons {
     flex: 0 0 100px;
     text-align: center;
-    padding-top: 0; /* Remove o padding superior */
-    position: relative; /* Permite ajustar os botões de forma absoluta */
-    z-index: 3; /* Garante que os botões fiquem acima do card */
-    margin-top: -10px; /* Puxa o container para cima (ajuste o valor conforme necessário) */
+    padding-top: 0;
+    /* Remove o padding superior */
+    position: relative;
+    /* Permite ajustar os botões de forma absoluta */
+    z-index: 3;
+    /* Garante que os botões fiquem acima do card */
+    margin-top: -10px;
+    /* Puxa o container para cima (ajuste o valor conforme necessário) */
 }
 
 .pitch--buttons button {
@@ -154,25 +167,29 @@
     background: #FFFFFF;
     display: inline-block;
     margin: 0 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para destaque */
-    position: relative; /* Permite ajustes finos */
-    top: -20px; /* Puxa o botão para cima (metade dentro, metade fora) */
-    transition: transform 0.2s; /* Efeito ao clicar */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Sombra para destaque */
+    position: relative;
+    /* Permite ajustes finos */
+    top: -20px;
+    /* Puxa o botão para cima (metade dentro, metade fora) */
+    transition: transform 0.2s;
+    /* Efeito ao clicar */
 }
 
-.pitch--buttons button:hover{
+.pitch--buttons button:hover {
     transform: scale(1.3);
 }
 
-.pitch--buttons button:hover i{
+.pitch--buttons button:hover i {
     color: #FFFFFF;
 }
 
-.pitch--buttons .btn-love:hover{
+.pitch--buttons .btn-love:hover {
     background-color: #229A00;
 }
 
-.pitch--buttons .btn-nope:hover{
+.pitch--buttons .btn-nope:hover {
     background-color: #FF4D4D;
 }
 
@@ -197,8 +214,10 @@
 @media (max-width: 600px) {
     .pitch--card {
         width: 85vw;
-        height: calc(85vw * 1.6); /* Mantém a proporção */
+        height: calc(85vw * 1.6);
+        /* Mantém a proporção */
     }
+
     .pitch--buttons button {
         width: 50px;
         line-height: 50px;
@@ -210,3 +229,51 @@
         height: 87vh
     }
 }
+
+
+
+
+.carousel {
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-inner {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+
+.carousel-item {
+    flex: 0 0 100%;
+}
+
+.carousel-item img {
+    width: 100%;
+    display: block;
+    height: 640px;
+}
+
+.nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.nav img {
+    width: 1.2rem;
+    height: 1.2rem;
+    filter: invert(1); /* deixa a imagem branca se for SVG preto */
+}
+
+
