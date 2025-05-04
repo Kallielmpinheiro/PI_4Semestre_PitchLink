@@ -1,7 +1,7 @@
 from typing import List, Optional
 from ninja import NinjaAPI, Schema, Form, File
 from ninja.files import UploadedFile
-
+from uuid import UUID
 # Schemas payloads para requests
 
 class ErrorResponse(Schema):
@@ -41,4 +41,10 @@ class SearchInnovationReq(Schema):
 class ImgInnovationReq(Schema):
     id : int 
     
-    
+
+class CreateRoomRequest(Schema):
+    innovation_id: int
+
+class CreateMessageRequest(Schema):
+    room_id: UUID
+    content: str

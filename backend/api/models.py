@@ -2,6 +2,9 @@ from django.db import models
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models import JSONField
+import uuid
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 # Create your models here.
 
@@ -67,3 +70,75 @@ class InnovationImage(models.Model):
 
     def __str__(self):
         return f"Imagem para a ideia: {self.innovation.nome}"
+     
+class NegotiationRoom(models.Model):
+    idRoom = models.UUIDField(_('ID da Sala'), default=uuid.uuid4, editable=False, unique=True)
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    participants = models.ManyToManyField('User', related_name='negotiation_rooms', blank=True)
+    innovation = models.ForeignKey('Innovation', on_delete=models.CASCADE, related_name='negotiation_rooms')
+    status = models.CharField(_('Status'), max_length=50, choices=[
+        ('open', _('Aberta')),
+        ('closed', _('Fechada')),
+        ('in_progress', _('Em Progresso')),
+    ], default='open')
+    
+    class Meta:
+        verbose_name = _('Sala de Negociação')
+        verbose_name_plural = _('Salas de Negociação')
+
+    def __str__(self):
+        return f"Sala de Negociação: {self.idRoom}"
+    
+    def get_participants(self):
+        return self.participants.all()
+    
+    def get_channel_group_name(self):
+        return f"negotiation_{self.idRoom}"
+    
+    def send_message_to_room(self, message_data):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            self.get_channel_group_name(),
+            {
+                "type": "negotiation.message",
+                "message": message_data
+            }
+        )
+
+class NegotiationMessage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_messages')
+    room = models.ForeignKey(NegotiationRoom, on_delete=models.CASCADE, related_name='messages')
+    content = models.TextField(_('Conteúdo da Mensagem'))
+    is_read = models.BooleanField(_('Lida'), default=False)
+    
+    class Meta:
+        verbose_name = _('Mensagem da Sala de Negociação')
+        verbose_name_plural = _('Mensagens das Salas de Negociação')
+        ordering = ['created']
+
+    def __str__(self):
+        return f"Mensagem de {self.sender.first_name} na sala {self.room.idRoom}"
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        if is_new:
+            self.notify_room()
+    
+    def notify_room(self):
+        message_data = {
+            "id": str(self.id),
+            "content": self.content,
+            "sender_id": self.sender.id,
+            "sender_name": f"{self.sender.first_name} {self.sender.last_name}".strip(),
+            "room_id": str(self.room.idRoom),
+            "created": self.created.isoformat(),
+            "is_read": self.is_read,
+        }
+        
+        self.room.send_message_to_room(message_data)
