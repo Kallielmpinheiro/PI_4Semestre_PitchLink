@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-#n_3bbk9m6@hawgs88p6&^vx62$p-#50iya77mwk^9+#t$55$v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     #providers
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.openid_connect',
+    
+    'channels',
 
 ]
 
@@ -103,7 +105,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
+# asgi & channel
+ASGI_APPLICATION = 'backend.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis_app", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

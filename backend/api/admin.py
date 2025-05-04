@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import User, Innovation,InnovationImage
+from api.models import User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom
 
 # Register your models here.
 
@@ -23,7 +23,15 @@ class InnovationAdmin(admin.ModelAdmin):
     
 admin.site.register(Innovation,InnovationAdmin)
 
+class NegotiationMessageAdmin(admin.ModelAdmin):
+    list_display = ('created','id')
+    
+admin.site.register(NegotiationMessage,NegotiationMessageAdmin)
 
+class NegotiationRoomAdmin(admin.ModelAdmin):
+    list_display = ('created','id','idRoom')
+    
+admin.site.register(NegotiationRoom,NegotiationRoomAdmin)
 
 # admin
 admin.site.site_header = 'PitchLink Admin'

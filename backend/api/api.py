@@ -1,12 +1,12 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import ErrorResponse, SuccessResponse,CreateInnovationReq
+from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse,CreateInnovationReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
 import time
-from api.models import User, Innovation, InnovationImage
+from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -18,6 +18,9 @@ from django.conf import settings
 import jwt
 from django.http import HttpResponse, Http404, JsonResponse, HttpRequest
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 api = NinjaAPI()
 
@@ -318,9 +321,11 @@ def get_innovation(request):
         inv = Innovation.objects.all()
         
         for x in inv:
-            
-            imagem_url = x.get_image()
-            full_image_url = request.build_absolute_uri(imagem_url)
+            imagens = []
+
+            list_imagem_url = x.get_all_images()
+            for imagem_url in list_imagem_url:
+                imagens.append(request.build_absolute_uri(imagem_url))
                 
             data.append({
                     'id': x.id,
@@ -330,7 +335,7 @@ def get_innovation(request):
                     'investimento_minimo': x.investimento_minimo,
                     'porcentagem_cedida': x.porcentagem_cedida,
                     'categorias': x.categorias,
-                    'imagem': full_image_url,
+                    'imagens': imagens,
             })
 
     except Exception as e:
@@ -369,3 +374,60 @@ def search_innovation(request, payload : SearchInnovationReq):
         return 404, {'message': str(e)}
 
     return 200, {'data': data}
+
+# testes
+
+@api.post("/create-room", response={200: dict, 404: dict, 403: dict})
+def create_room(request, data: CreateRoomRequest):
+    user = User.objects.get(id=1)   
+    if not user:
+        return 403, {"detail": "Autenticação necessária"}
+    
+    innovation = get_object_or_404(Innovation, id=data.innovation_id)
+    
+    room, created = NegotiationRoom.objects.get_or_create(innovation_id=data.innovation_id)
+    room.participants.add(user)
+    
+    return 200, {
+        "room_id": str(room.idRoom),
+        "status": room.status,
+        "participants": [u.id for u in room.participants.all()],
+        "created": created
+    }
+
+@api.post("/send-message", response={200: dict, 404: dict, 403: dict})
+def send_message(request, data: CreateMessageRequest):
+    user = User.objects.get(id=1)
+    
+    room = get_object_or_404(NegotiationRoom, idRoom=data.room_id)
+    
+    # if not room.participants.filter(id=user.id).exists():
+    #     return 403, {"detail": "Você não é participante desta sala"}
+
+    message = NegotiationMessage.objects.create(
+        sender=user,
+        room=room,
+        content=data.content
+    )
+
+    message_data = {
+        "id": str(message.id),
+        "content": message.content,
+        "sender_id": message.sender.id,
+        "sender_name": f"{message.sender.first_name} {message.sender.last_name}".strip(),
+        "room_id": str(message.room.idRoom),
+        "created": message.created.isoformat(),
+        "is_read": message.is_read,
+    }
+
+    # Usando o nome do grupo padronizado
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"negotiation_{room.idRoom}",
+        {
+            "type": "negotiation_message",
+            "message": message_data
+        }
+    )
+
+    return 200, message_data
