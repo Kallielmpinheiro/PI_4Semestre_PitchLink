@@ -47,7 +47,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    command: daphne -b 0.0.0.0 -p 8001 backend.asgi:application
+    command: sh -c "until nc -z redis 6379; do sleep 1; done; daphne -b 0.0.0.0 -p 8001 backend.asgi:application"
 
   db:
     image: postgres:13.5
