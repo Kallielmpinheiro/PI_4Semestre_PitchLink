@@ -31,8 +31,7 @@ SECRET_KEY = 'django-insecure-#n_3bbk9m6@hawgs88p6&^vx62$p-#50iya77mwk^9+#t$55$v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -47,6 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'django.contrib.sites',
+    'channels',
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -55,7 +56,6 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.openid_connect',
     
-    'channels',
 
 ]
 
@@ -175,10 +175,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # adicional
 
-SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_STORE_TOKENS = True
 

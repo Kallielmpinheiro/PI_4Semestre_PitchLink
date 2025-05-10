@@ -8,6 +8,7 @@ import { LayoutComponent } from './modules/views/aplicacao/pages/layout/layout.c
 import { authGuardNotFoundGuard } from './core/guards/not-found/auth-guard-not-found.guard';
 import { authGuardSuccessGuard } from './core/guards/success/auth-guard-success.guard';
 import { IdeiaComponent } from './modules/user/pages/ideia/ideia.component';
+import { MensagensComponent } from './modules/views/mensagens/mensagens.component';
 
 export const routes: Routes = [
     {
@@ -34,6 +35,12 @@ export const routes: Routes = [
                 component: PerfilComponent, 
                 data: { hideNav: false },
                 title: 'Meu Perfil | PitchLink'
+            },
+            {
+                path:'mensagens', 
+                component: MensagensComponent, 
+                data: { hideNav: false },
+                title: 'Mensagens | PitchLink'
             }
         ]
     },
