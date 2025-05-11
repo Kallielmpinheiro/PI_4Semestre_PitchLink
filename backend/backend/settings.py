@@ -189,6 +189,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',
         },
         'OAUTH_PKCE_ENABLED': True,
         'APP': {
@@ -211,6 +212,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
                 "userinfo_endpoint": "https://api.linkedin.com/v2/userinfo",
                 "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
+                "default_auth_params": {"prompt": "select_account"},
             },
             'SCOPE': ['openid', 'profile', 'email'],  
         }

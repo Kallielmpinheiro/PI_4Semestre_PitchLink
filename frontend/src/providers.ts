@@ -1,3 +1,5 @@
+import { createComponent, createNgModuleRef } from "@angular/core"
+
 const prefix = '/api'
 
 export const api = {
@@ -11,6 +13,9 @@ export const api = {
     getInnovation: prefix + '/get-innovation',
     postSearchInnovation: prefix + '/post-search-innovation',
     getUser: prefix + '/get-perfil',
+    createRoom: prefix + '/create-room',
+    sendMessage: prefix + '/send-message',
+    getNegociacao: prefix + '/get-negotiation-room',
 }
 
 export const socialAccounts = {

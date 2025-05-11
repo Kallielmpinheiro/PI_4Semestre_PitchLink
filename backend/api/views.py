@@ -7,6 +7,7 @@ from api.models import User
 import jwt
 from datetime import datetime, timedelta
 from django.conf import settings
+from django.contrib.auth import logout
 
 def custom_linkedin_callback(request):
     if request.GET.get('error') in ['user_cancelled_login', 'user_cancelled_authorize']:
@@ -17,6 +18,14 @@ def custom_linkedin_callback(request):
 
     class LinkedInCallbackView(OAuth2CallbackView):
         adapter_class = OpenIDConnectOAuth2Adapter
+
+        def get_client(self, request, app):
+            client = super().get_client(request, app)
+            if "?" in client.authorize_url:
+                client.authorize_url = client.authorize_url + "&prompt=select_account"
+            else:
+                client.authorize_url = client.authorize_url + "?prompt=select_account"
+            return client
 
         def dispatch(self, request, *args, **kwargs):
             response = super().dispatch(request, *args, **kwargs)
@@ -61,9 +70,15 @@ def custom_google_callback(request):
         return redirect('http://localhost:4200/')
 
     adapter = GoogleOAuth2Adapter(request)
+    
 
     class GoogleCallbackView(OAuth2CallbackView):
         adapter_class = GoogleOAuth2Adapter
+
+        def get_client(self, request, app):
+            client = super().get_client(request, app)
+            client.authorize_url = client.authorize_url + "&prompt=select_account"
+            return client
 
         def dispatch(self, request, *args, **kwargs):
             response = super().dispatch(request, *args, **kwargs)
@@ -98,13 +113,15 @@ def custom_google_callback(request):
 
             return response
 
-
     view = GoogleCallbackView()
     view.request = request
     view.adapter = adapter
-
     return view.dispatch(request)
 
 class CustomSocialSignupView(SignupView):
     def dispatch(self, request, *args, **kwargs):
         return redirect('http://localhost:4200/')
+
+def completo_logout(request):
+    logout(request)
+    return redirect('http://localhost:4200/')

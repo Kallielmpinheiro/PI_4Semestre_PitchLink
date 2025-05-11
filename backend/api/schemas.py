@@ -47,4 +47,6 @@ class CreateRoomRequest(Schema):
 
 class CreateMessageRequest(Schema):
     room_id: UUID
+    senderid: int
+    receiver: int
     content: str
