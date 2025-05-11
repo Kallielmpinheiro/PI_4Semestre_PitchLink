@@ -153,6 +153,15 @@ export class AuthService {
       }
     });
   }
+
+  getNegociacao(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getNegociacao}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
   
 
 }

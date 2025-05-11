@@ -228,6 +228,7 @@ def get_user_perfil(request):
         return 404, {'message': 'Conta nao encontrada'}
         
     data = {
+        'id': user.id,
         'first_name':user.first_name if user.first_name else '-',
         'last_name': user.last_name if user.last_name else '-',
         'email': user.email if user.email else '-',
@@ -378,14 +379,21 @@ def search_innovation(request, payload : SearchInnovationReq):
 # testes
 
 @api.post("/create-room", response={200: dict, 404: dict, 403: dict})
-def create_room(request, data: CreateRoomRequest):
-    user = User.objects.get(id=1)   
-    if not user:
-        return 403, {"detail": "Autenticação necessária"}
+def create_room(request, payload: CreateRoomRequest):
     
-    innovation = get_object_or_404(Innovation, id=data.innovation_id)
-    
-    room, created = NegotiationRoom.objects.get_or_create(innovation_id=data.innovation_id)
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        innovation = Innovation.objects.get(id=payload.innovation_id)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+
+
+    room, created = NegotiationRoom.objects.get_or_create(innovation_id=payload.innovation_id)
     room.participants.add(user)
     
     return 200, {
@@ -396,18 +404,24 @@ def create_room(request, data: CreateRoomRequest):
     }
 
 @api.post("/send-message", response={200: dict, 404: dict, 403: dict})
-def send_message(request, data: CreateMessageRequest):
-    user = User.objects.get(id=1)
+def send_message(request, payload: CreateMessageRequest):
     
-    room = get_object_or_404(NegotiationRoom, idRoom=data.room_id)
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
     
-    # if not room.participants.filter(id=user.id).exists():
-    #     return 403, {"detail": "Você não é participante desta sala"}
+    try:
+        room = NegotiationRoom.objects.get(idRoom=payload.room_id)
+    except NegotiationRoom.DoesNotExist:
+        return 404, {'message': 'Sala de negociação não encontrada'}
 
     message = NegotiationMessage.objects.create(
-        sender=user,
         room=room,
-        content=data.content
+        sender=user,
+        receiver=payload.receiver,
+        content=payload.content
     )
 
     message_data = {
@@ -415,6 +429,7 @@ def send_message(request, data: CreateMessageRequest):
         "content": message.content,
         "sender_id": message.sender.id,
         "sender_name": f"{message.sender.first_name} {message.sender.last_name}".strip(),
+        "receiver": message.receiver,
         "room_id": str(message.room.idRoom),
         "created": message.created.isoformat(),
         "is_read": message.is_read,
@@ -431,3 +446,66 @@ def send_message(request, data: CreateMessageRequest):
     )
 
     return 200, message_data
+
+
+
+@api.get('/get-negotiation-room', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_negotiation_room(request):
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    data = []
+
+    try:
+        rooms = NegotiationRoom.objects.all().first()
+        if not rooms:
+            return 404, {'message': 'Nenhuma sala encontrada'}
+        data.append({
+            'id': str(rooms.idRoom),
+            'status': rooms.status,
+            'participants': [{'id': u.id} for u in rooms.participants.all()],
+        })
+
+    except Exception as e:
+        return 404, {'message': str(e)}
+
+    return 200, {'data': data}
+
+@api.post('/get-messages/{room_id}', response={200: dict, 404: dict})
+def get_messages(request, room_id: str):
+
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        room = NegotiationRoom.objects.get(idRoom=room_id)
+    except NegotiationRoom.DoesNotExist:
+        return 404, {'message': 'Sala de negociação não encontrada'}
+    
+    data = []
+
+    try:
+        messages = NegotiationMessage.objects.filter(room=room)
+        if not messages:
+            return 404, {'message': 'Nenhuma mensagem encontrada'}
+        for x in messages:
+            data.append({
+                'id': str(x.id),
+                'sender': x.sender.first_name,
+                'receiver': x.receiver.first_name,
+                'room_id': str(x.room.idRoom),
+                'content': x.content,
+                'created': x.created.isoformat(),
+                'is_read': x.is_read,
+            })
+
+    except Exception as e:
+        return 404, {'message': str(e)}
+
+    return 200, {'data': data}
