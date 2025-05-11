@@ -111,6 +111,7 @@ class NegotiationMessage(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
     modified = models.DateTimeField(_('Alterado em'), auto_now=True)
     sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_messages')
     room = models.ForeignKey(NegotiationRoom, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField(_('Conteúdo da Mensagem'))
     is_read = models.BooleanField(_('Lida'), default=False)
@@ -121,7 +122,7 @@ class NegotiationMessage(models.Model):
         ordering = ['created']
 
     def __str__(self):
-        return f"Mensagem de {self.sender.first_name} na sala {self.room.idRoom}"
+        return f"Mensagem de {self.sender.first_name} para {self.receiver.first_name} na sala {self.room.idRoom}"
     
     def save(self, *args, **kwargs):
         is_new = self.pk is None

@@ -24,12 +24,16 @@ class InnovationAdmin(admin.ModelAdmin):
 admin.site.register(Innovation,InnovationAdmin)
 
 class NegotiationMessageAdmin(admin.ModelAdmin):
-    list_display = ('created','id')
+    list_display = ('created', 'id', 'sender', 'receiver', 'room', 'is_read')
+    list_filter = ('is_read', 'created', 'modified')
+    search_fields = ('content', 'sender__email', 'receiver__email', 'room__idRoom')
     
 admin.site.register(NegotiationMessage,NegotiationMessageAdmin)
 
 class NegotiationRoomAdmin(admin.ModelAdmin):
-    list_display = ('created','id','idRoom')
+    list_display = ('created', 'id', 'idRoom', 'innovation', 'status')
+    list_filter = ('status', 'created', 'modified')
+    search_fields = ('idRoom', 'innovation__nome')
     
 admin.site.register(NegotiationRoom,NegotiationRoomAdmin)
 
