@@ -9,6 +9,8 @@ import { authGuardNotFoundGuard } from './core/guards/not-found/auth-guard-not-f
 import { authGuardSuccessGuard } from './core/guards/success/auth-guard-success.guard';
 import { IdeiaComponent } from './modules/user/pages/ideia/ideia.component';
 import { MensagensComponent } from './modules/views/mensagens/mensagens.component';
+import { SubscriptionComponent } from './modules/views/aplicacao/components/subscription/subscription.component';
+import { PlanosComponent } from './modules/views/aplicacao/components/subscription/planos/planos.component';
 
 export const routes: Routes = [
     {
@@ -39,8 +41,17 @@ export const routes: Routes = [
             {
                 path:'mensagens', 
                 component: MensagensComponent, 
-                data: { hideNav: false },
                 title: 'Mensagens | PitchLink'
+            },
+            {
+                path:'subscription', 
+                component: SubscriptionComponent, 
+                title: 'Minha assinatura | PitchLink',
+            },
+            {
+                path:'subscription/:parametro', 
+                component: PlanosComponent, 
+                title: 'Mensagens | PitchLink',
             }
         ]
     },
