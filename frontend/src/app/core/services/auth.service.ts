@@ -90,7 +90,10 @@ export class AuthService {
     return this.http.post(
       `${this.baseUrl}${api.save}`,
       profileData,
-      this.httpOptions
+      {
+        ...this.httpOptions,
+        observe: 'response' as const
+      }
     ).pipe(
       map((response: any) => {
         if (response.token) {
