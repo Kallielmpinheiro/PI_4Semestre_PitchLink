@@ -10,6 +10,7 @@ import { DateUtils } from '../../../../core/utils/date-utils';
 import { FileUtils } from '../../../../core/utils/file-utils';
 import { UserProfile, ProfileFormData } from '../../../../core/models/model';
 import { CATEGORIES } from '../../../../core/constants/categories';
+import { environment } from '../../../../../environments/environment.prod';
 
 @Component({
   selector: 'app-perfil',
@@ -20,7 +21,7 @@ import { CATEGORIES } from '../../../../core/constants/categories';
     CommonModule,
     ModalComponent,
     AlertFormComponent
-  ],
+],
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.css']
 
@@ -34,6 +35,8 @@ export class PerfilComponent implements OnInit {
   error = signal<string | null>(null);
   submittedForm = signal(false);
   hideNav = signal(true);
+  showModal = false;
+  textModal =""
 
   readonly categories = CATEGORIES;
 
@@ -61,24 +64,47 @@ export class PerfilComponent implements OnInit {
     this.loadUserProfileData();
   }
 
+  closeModal(modal: boolean) {
+    this.showModal = !modal;
+  }
+
   loadUserProfileData(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.authService.getUserProfile().subscribe({
-      next: (response) => {
-        if (response) {
-          this.userProfile.set(this.normalizeProfileData(response));
+    this.authService.getUser().subscribe({
+      next: (response ) => {
+        if( response ) {
+          const { data } = response
+
+       
+          this.userProfile.set( { ...data, categorias: data.categories });
           this.updateFormWithProfileData();
+        } else {
+          this.authService.getUserProfile().subscribe({
+            next: (response) => {
+              if (response) {
+                this.userProfile.set(this.normalizeProfileData(response));
+                this.updateFormWithProfileData();
+              }
+              this.loading.set(false);
+            },
+            error: (err) => {
+              console.error(err);
+              this.error.set(err.error?.message || err.message);
+              this.loading.set(false);
+            }
+          });
         }
-        this.loading.set(false);
       },
       error: (err) => {
         console.error(err);
         this.error.set(err.error?.message || err.message);
         this.loading.set(false);
       }
-    });
+    })
+
+    
   }
 
   private normalizeProfileData(response: any): UserProfile {
@@ -93,7 +119,6 @@ export class PerfilComponent implements OnInit {
   private updateFormWithProfileData(): void {
     const profile = this.userProfile();
     if (!profile) return;
-
     const { firstName, lastName } = this.extractNameInfo(profile);
 
     this.profileForm.patchValue({
@@ -131,6 +156,11 @@ export class PerfilComponent implements OnInit {
       firstName = profile.username;
     }
 
+    if( profile.first_name && profile.last_name ) {
+      firstName = profile.first_name
+      lastName = profile.last_name
+    }
+
     return { firstName, lastName };
   }
 
@@ -142,6 +172,12 @@ export class PerfilComponent implements OnInit {
         this.imageUser.set(profile.provedores['google'].picture);
       }
     }
+
+    if( profile.profile_picture ) 
+      this.imageUser.set( `${environment.getBaseUrl()}/media/${profile.profile_picture}`)
+    
+    if( profile.profile_picture_url ) 
+      this.imageUser.set(  profile.profile_picture_url)
   }
 
   private updateSelectedCategories(selectedCategories: string[]): void {
@@ -228,7 +264,20 @@ export class PerfilComponent implements OnInit {
     this.submittedForm.set(true);
     this.markFormGroupTouched(this.profileForm);
 
-    if (!this.profileForm.valid) {
+    let categorisLenght = this.getSelectedCategories().length 
+    if (!this.profileForm.valid || categorisLenght < 5  ) {
+
+      this.textModal = ""
+
+      if(  categorisLenght < 5  )  this.textModal = "Por favor, selecione no mínimo 5 categorias"
+
+      if( !this.profileForm.value.birthDate || this.profileForm.controls.birthDate.errors === null ) this.textModal = "Por favor, seleciona sua data de aniversário!"
+
+      if( !this.profileForm.value.lastName  || this.profileForm.controls.lastName.errors === null ) this.textModal = "O ultimo nome é obrigatório!"
+
+      if( !this.profileForm.value.firstName || this.profileForm.controls.firstName.errors === null ) this.textModal = "Nome é obrigatório!"
+      this.showModal = true
+      
       return;
     }
 
@@ -248,6 +297,7 @@ export class PerfilComponent implements OnInit {
     this.authService.saveFullProfile(formData).subscribe({
       next: (response) => {
         this.loading.set(false);
+        console.log(response)
         if (response.status === 200) {
           this.updateLocalProfileData(formData);
           this.router.navigate(['/app/recs']);
