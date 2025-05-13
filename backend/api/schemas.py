@@ -1,20 +1,19 @@
-from typing import Optional
-from ninja import Schema
-from typing import List
-
+from typing import List, Optional
+from ninja import NinjaAPI, Schema, Form, File
+from ninja.files import UploadedFile
+from uuid import UUID
+# Schemas payloads para requests
 
 class ErrorResponse(Schema):
     error: bool = True
     result: str = 'error'
     message: str
+    
 class SuccessResponse(Schema):
+    token : str = None
     status: int = 200
     data: list = None
     message: str = None
-
-from ninja import Schema
-from typing import Optional, List
-from datetime import datetime
 
 class SaveReq(Schema):
     first_name: Optional[str] = None
@@ -22,7 +21,32 @@ class SaveReq(Schema):
     email: Optional[str] = None
     profile_picture: Optional[str] = None
     data_nasc: Optional[str] = None
-    categories: Optional[List[str]] = None
+    categories: Optional[List[str]] = None 
     
 class UserReq(Schema):
     email: str
+    
+class CreateInnovationReq(Schema):
+    partners: Optional[str] = None
+    nome: str
+    descricao: str
+    investimento_minimo: float
+    porcentagem_cedida: float
+    categorias: str
+    
+class SearchInnovationReq(Schema):
+    search : str
+    
+    
+class ImgInnovationReq(Schema):
+    id : int 
+    
+
+class CreateRoomRequest(Schema):
+    innovation_id: int
+
+class CreateMessageRequest(Schema):
+    room_id: UUID
+    senderid: int
+    receiver: int
+    content: str

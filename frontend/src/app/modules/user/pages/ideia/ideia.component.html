@@ -92,25 +92,44 @@
                     </form>
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-4 max-sm:grid-cols-2 ">
-                @for (item of teste; track $index) {
-                    <div class="flex justify-center  items-center gap-4 ">
-                        <div 
-                            class="relative w-40 h-60 border-4 border-dashed rounded-xl border-gray-500 flex items-center justify-center"
-                        >
-                            <input type="file" id="imageInput" accept="image/*" class="hidden" >
-        
-                            <!-- Colcoar  -->
-                            <!-- <img 
+            <div class="grid grid-cols-3 gap-4 max-sm:grid-cols-2">
+                @for (preview of previewImages; track $index) {
+                    <div class="flex justify-center items-center gap-4">
+                        <div class="relative w-40 h-60 border-4 rounded-xl border-gray-500 flex items-center justify-center overflow-hidden">
+                            <img 
+                                [src]="preview" 
                                 class="w-full h-full object-cover rounded-xl" 
                                 loading="lazy"
-                            > -->
+                            >
+                            <button 
+                                (click)="removeImage($index)" 
+                                class="absolute -bottom-3 -right-3 bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow cursor-pointer"
+                            >
+                                <svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                }
+            
+                @if (previewImages.length < 6) {
+                    <div class="flex justify-center items-center gap-4">
+                        <div class="relative w-40 h-60 border-4 border-dashed rounded-xl border-gray-500 flex items-center justify-center">
+                            <input 
+                                type="file" 
+                                id="imageInput" 
+                                accept="image/*" 
+                                class="hidden" 
+                                (change)="onFileSelected($event)"
+                                multiple
+                            >
                             <label 
                                 for="imageInput" 
                                 class="absolute -bottom-3 -right-3 bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow cursor-pointer"
                             >
                                 <svg 
-                                    class="w-6 h-6  text-white" 
+                                    class="w-6 h-6 text-white" 
                                     aria-hidden="true" 
                                     xmlns="http://www.w3.org/2000/svg"            
                                     width="24" 
@@ -121,9 +140,19 @@
                                     <path fill-rule="evenodd" d="M19.846 4.318a2.148 2.148 0 0 0-.437-.692 2.014 2.014 0 0 0-.654-.463 1.92 1.92 0 0 0-1.544 0 2.014 2.014 0 0 0-.654.463l-.546.578 2.852 3.02.546-.579a2.14 2.14 0 0 0 .437-.692 2.244 2.244 0 0 0 0-1.635ZM17.45 8.721 14.597 5.7 9.82 10.76a.54.54 0 0 0-.137.27l-.536 2.84c-.07.37.239.696.588.622l2.682-.567a.492.492 0 0 0 .255-.145l4.778-5.06Z" clip-rule="evenodd" />
                                 </svg>
                             </label>
+                            <span class="text-gray-500 text-sm text-center">
+                                Clique para adicionar imagem
+                            </span>
                         </div>
                     </div>
-                }       
+                }
+            
+                @for (item of getRemainingSlots(); track $index) {
+                    <div class="flex justify-center items-center gap-4">
+                        <div class="relative w-40 h-60 border-4 border-dashed rounded-xl border-gray-300 flex items-center justify-center opacity-50">
+                        </div>
+                    </div>
+                }
             </div>
         </div>
         <div class="w-full   mt-4 mb-4">
@@ -166,6 +195,33 @@
             Salvar
         </button>
     </div>
+
+
 </app-modal>
 
+<!-- modal -->
 
+@if (modalVisible) {
+    <div id="popup-modal" tabindex="-1" class="fixed top-0 left-0 right-0 z-50 p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-full max-h-full bg-gray-900 bg-opacity-50 flex justify-center items-center">
+        <div class="relative w-full max-w-md max-h-full">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <button (click)="closeModal()" type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                    <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">Close modal</span>
+                </button>
+                <div class="p-6 text-center">
+                    <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    </svg>
+                    <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">{{ modalText }}</h3>
+                    <button (click)="closeModal()" type="button" class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+  

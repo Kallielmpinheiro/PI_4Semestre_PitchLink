@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output, output } from '@angular/core';
 @Component({
   selector: 'app-alert-form',
   imports: [],
@@ -11,5 +11,11 @@ export class AlertFormComponent  {
 
   @Input() textAlert!: string ;
 
- 
+  showModal = false;
+
+  @Output() showModalEmit = new EventEmitter( false );
+
+  closeModal(){
+    return this.showModalEmit.emit( !this.showModal) 
+  }
 }

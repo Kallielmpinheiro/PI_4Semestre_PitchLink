@@ -1,39 +1,71 @@
 <div class="pitch">
-    <div class="pitch--status">
-        <i class="fa fa-remove"></i>
-        <i class="fa fa-heart"></i>
-    </div>
-
     <div class="pitch--cards">
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/people" />
-            <h3>Demo card 1</h3>
-            <p>This is a demo for pitch like swipe cards</p>
+        @for (item of arrayCards(); track item) {
+        <div class="pitch--card" [id]="item.idCard">
+            <div class="pitch--status">
+                <div class="nope-icon"></div>
+                <div class="love-icon"></div>
+            </div>
+            <figure class="relative cursor-pointer filter transition-transform h-full">
+                <div class="carousel">
+                    <div class="carousel-inner" [style.transform]="'translateX(-' + cardIndexes[item.idCard] * 100 + '%)'">
+                        @for (image of item.imagens; track $index) {
+                        <div class="carousel-item">
+                            <img [src]="image" class="h-full object-cover" alt="Imagem" />
+                        </div>
+                        }
+                    </div>
+                    @if (item.imagens.length > 1) {
+                        <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="prev(item.idCard.toString())">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
+                                <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
+                                </svg>
+                                <span class="sr-only">Previous</span>
+                            </span>
+                        </button>
+                        <button type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="next(item.idCard.toString())">
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
+                                <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                                </svg>
+                                <span class="sr-only">Next</span>
+                            </span>
+                        </button>                  
+                    }
+                </div>
+
+                <figcaption class="absolute px-4 pb-12 text-white w-full bottom-0 text-start bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                    <div class="space-y-1">
+                        <h3 class="text-lg font-bold">{{ item.title }}</h3>
+                        <!-- <p class="text-sm font-medium">{{ item.slogan }}</p> -->
+                        <p class="text-sm">
+                            Invista: <span class="font-semibold">{{ item.investimento_minimo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+                        </p>
+                        <p class="text-sm"> 
+                            por <span class="font-semibold">{{ item.porcentagem_cedida | number:'1.0-0' }} %</span> da empresa
+                        </p>
+                    </div>
+                
+                    <div class="mt-3">
+                        <ul id="categoriesItens" class="flex flex-wrap justify-start gap-2" formArrayName="categories">
+                            @for (item of item.categorias.slice(0, 3); track item) {
+                            <li>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/20">
+                                    {{ item }}
+                                </span>
+                            </li>
+                            }
+                        </ul>
+                    </div>
+                </figcaption>
+            </figure>
         </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/animals" />
-            <h3>Demo card 2</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/nature" />
-            <h3>Demo card 3</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/tech" />
-            <h3>Demo card 4</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
-        <div class="pitch--card">
-            <img src="https://placeimg.com/600/300/arch" />
-            <h3>Demo card 5</h3>
-            <p>This is a demo for pitch like swipe cards</p>
-        </div>
+        }
     </div>
 
     <div class="pitch--buttons">
-        <button id="nope"><i class="fa fa-remove"></i></button>
-        <button id="love"><i class="fa fa-heart"></i></button>
+        <button class="btn-nope" id="nope"><i class="fa fa-remove"></i></button>
+        <button class="btn-love" id="love"><i class="fa fa-dollar"></i></button>
     </div>
 </div>

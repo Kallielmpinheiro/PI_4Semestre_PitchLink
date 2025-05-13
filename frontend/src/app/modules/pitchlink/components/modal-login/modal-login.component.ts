@@ -1,22 +1,52 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-modal-login',
-  imports: [],
   templateUrl: './modal-login.component.html',
-  styleUrl: './modal-login.component.css'
+  styleUrls: ['./modal-login.component.css']
 })
-export class ModalLoginComponent {
-  constructor(private authService: AuthService) {}
+export class ModalLoginComponent implements OnInit {
 
-  loginWithGoogle() {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) 
+  {}
+
+  loginWithGoogle(): void {
     this.authService.loginWithGoogle();
-    console.log('test')
   }
 
-  loginWithLinkedin(){
+  loginWithLinkedin(): void {
     this.authService.loginWithLinkedin();
   }
 
+  ngOnInit(): void {
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const perfilParam = params.get('perfil');
+
+    if (token) {
+      localStorage.setItem('jwt_token', token);
+      this.authService.setToken(token);
+      
+      window.history.replaceState({}, document.title, '/');
+      
+      if (perfilParam === "true") {
+        setTimeout(() => {
+          this.router.navigateByUrl('/perfil');
+        }, 100);
+      } else {
+        setTimeout(() => {
+          this.router.navigateByUrl('/app/recs');
+        }, 100);
+      }
+    }
+  }
+
 }
+
+

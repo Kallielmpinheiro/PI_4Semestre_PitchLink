@@ -7,14 +7,13 @@ export const authGuardSuccessGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Verificando se o usuário está autenticado de forma assíncrona
   return authService.checkAuth().pipe(
-    catchError(() => of(false)), // Retorna 'false' em caso de erro
-    map((response) => { // Definindo o tipo explicitamente
+    catchError(() => of(false)),
+    map((response) => {
       if (response.status === 200) {
         return true;
       } else {
-        router.navigate([''], { replaceUrl: true });
+        router.navigate(['/']);
         return false;
       }
     })

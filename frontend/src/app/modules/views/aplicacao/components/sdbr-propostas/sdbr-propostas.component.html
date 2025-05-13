@@ -1,0 +1,16 @@
+<ul class="flex flex-wrap gap-3">
+    @for (item of arrayPropostas(); track item) {
+        <li class="w-28 h-32">
+            <figure class="relative cursor-pointer filter transition-transform duration-300 ease-in-out hover:scale-110">
+                <a href="#">
+                    <img class="rounded-lg w-28 h-32 object-cover"
+                        [src]="item.src"
+                        alt="Foto do {{item.title}}">
+                </a>
+                <figcaption class="absolute px-3 text-sm text-white bottom-2.5 font-bold">
+                    <p>{{ item.title }}</p>
+                </figcaption>
+            </figure>
+        </li>
+    }
+</ul>

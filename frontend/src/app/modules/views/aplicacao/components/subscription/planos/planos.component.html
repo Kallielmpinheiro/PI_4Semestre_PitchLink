@@ -1,0 +1,218 @@
+<div class="flex flex-col xl:flex-row xl:h-[919px]">
+    <!-- Conteúdo principal (esquerda) -->
+    <div class="bg-gray-900 text-white p-6 space-y-8 flex-1 h-full overflow-y-auto">
+        @for (planoKey of planosKeys; track $index) {
+            <div class="block p-6 rounded-lg shadow-sm bg-black/30 text-center border-4 border-black/0 focus:border-gray-400">
+                <div class="flex items-center justify-center space-x-1">
+                    <img [src]="planos[planoKey].imagem" class="h-7 w-7 rounded-full object-cover"
+                        alt="Foto da Logo" />
+                    <h5 class="text-xl font-bold text-white">
+                        Pitchlink
+                        <span
+                            class="text-base inline-block px-1 bg-gradient-to-r {{ planos[planoKey].corGradiente }} text-white uppercase">
+                            {{ planos[planoKey].nome }}
+                        </span>
+                    </h5>
+                </div>
+            </div>
+        }
+        <div>
+            <table class="table-auto w-full border-collapse">
+                <tbody class="divide-y divide-gray-700">
+
+                    <div class="bg-gray-800 rounded-full inline-block px-4 py-1 mb-2 my-11 text-sm font-medium">
+                        Dê um upgrade nas suas curtidas
+                    </div>
+
+                    <tr>
+                        <td class="p-4 font-semibold">Curtidas ilimitadas</td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[0].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-semibold">Veja quem curtiu você</td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[1].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Curtidas prioritárias</p>
+                            <p class="text-sm text-gray-400">Seus likes serão visualizados mais rápido com as curtidas
+                                prioritárias.</p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[2].status)"></td>
+                        }
+                    </tr>
+
+                    <tr>
+                        <td class="p-4 font-semibold">Use o Voltar quantas vezes quiser</td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[3].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-semibold">1 Boost gratuito por mês</td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[4].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-semibold">3 Super Likes grátis por semana</td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[5].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Mande mensagem antes do match</p>
+                            <p class="text-sm text-gray-400">Mande uma mensagem junto com os Super Likes.</p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].curtidas[6].status)"></td>
+                        }
+                    </tr>
+
+                    <div class="bg-gray-800 rounded-full inline-block px-4 py-1 mb-2 my-11 text-sm font-medium">
+                        Descoberta Premium
+                    </div>
+
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Modo Passaporte ilimitado</p>
+                            <p class="text-sm text-gray-400">Dê Match e converse com pessoas de qualquer lugar do mundo.
+                            </p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].premium[0].status)"></td>
+                        }
+                    </tr>
+
+                    <div class="bg-gray-800 rounded-full inline-block px-4 py-1 mb-2 my-11 text-sm font-medium">
+                        Assuma o controle
+                    </div>
+
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Controle o seu perfil</p>
+                            <p class="text-sm text-gray-400">Mostre apenas o que você quer que as outras pessoas vejam.
+                            </p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].controle[0].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Controle quem vê você</p>
+                            <p class="text-sm text-gray-400">Gerencie quem vê o seu perfil.</p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].controle[1].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Controle quem você vê</p>
+                            <p class="text-sm text-gray-400">Escolha os tipos de pessoas com as quais você quer se
+                                conectar.
+                            </p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].controle[2].status)"></td>
+                        }
+                    </tr>
+                    <tr>
+                        <td class="p-4">
+                            <p class="font-semibold">Oculte anúncios</p>
+                            <p class="text-sm text-gray-400">Remova os anúncios da sua experiência.</p>
+                        </td>
+                        @for (planoKey of planosKeys; track $index) {
+                        <td class="p-4" [innerHTML]="getStatusIcon(planos[planoKey].controle[3].status)"></td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Painel lateral (direita) -->
+    <div class="bg-gray-900 text-white p-6 xl:w-4/12 text-center">
+        <div class="mt-10">
+            <h2 class="text-2xl font-bold">Assinar o Plano Platinum</h2>
+            <p class="text-sm text-gray-400">Uma experiência de encontros de primeira classe</p>
+        </div>
+
+        <!-- Opções de plano -->
+        <div class="space-y-6 my-10">
+            @for (planoKey of planosKeys; track $index) {
+
+            <div class="flex items-center ps-4 justify-between border-2 rounded-lg cursor-pointer hover:bg-gray-700">
+                <input id="bordered-radio-1" type="radio" value="" name="bordered-radio"
+                    class="w-4 h-4 text-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+                <label for="bordered-radio-1" class="w-full py-4 text-xl">
+                    <div class="mb-2">
+                        <span
+                            class="bg-gradient-to-r {{ planos[planoKey].corGradiente }} font-semibold text-xs text-white px-2 py-1 rounded-full">Popular</span>
+                    </div>
+                    <p class="font-semibold">1 semana</p>
+                    <p class="text-base text-gray-400">{{ planos[planoKey].preco.semana.valor |
+                        currency:'BRL':'symbol':'1.2-2':'pt-BR' }}/semana</p>
+                </label>
+            </div>
+
+            <div class="flex items-center ps-4 justify-between border-2 rounded-lg cursor-pointer hover:bg-gray-700">
+                <input id="bordered-radio-2" type="radio" value="" name="bordered-radio"
+                    class="w-4 h-4 text-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+                <label for="bordered-radio-2" class="w-full py-4 text-xl">
+                    <p class="font-semibold">1 mês</p>
+                    <p class="text-base text-gray-400">{{ planos[planoKey].preco.mes.valor|
+                        currency:'BRL':'symbol':'1.2-2':'pt-BR' }}/semana <span class="text-green-400">Economize
+                            {{ planos[planoKey].preco.mes.economia }}</span>
+                    </p>
+
+                </label>
+            </div>
+
+            <div class="flex items-center ps-4 justify-between rounded-lg cursor-pointer border-2 hover:bg-gray-700">
+
+                <input id="bordered-radio-3" checked type="radio" value="" name="bordered-radio"
+                    class="w-4 h-4 text-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+                <label for="bordered-radio-3" class="w-full py-4 text-xl">
+                    <div class="mb-2">
+                        <span
+                            class="bg-gradient-to-r {{ planos[planoKey].corGradiente }} font-semibold text-xs text-white px-2 py-1 rounded-full">Melhor
+                            preço</span>
+                    </div>
+                    <p class="font-semibold">6 meses</p>
+                    <p class="text-base text-gray-400">{{ planos[planoKey].preco.semestre.valor|
+                        currency:'BRL':'symbol':'1.2-2':'pt-BR' }}/semana <span class="text-green-400">Economize {{
+                            planos[planoKey].preco.semestre.economia }}</span>
+                    </p>
+
+                </label>
+
+            </div>
+            }
+        </div>
+
+        <!-- Botões -->
+        @for (planoKey of planosKeys; track $index) {
+        <button
+            class="mb-10 w-full bg-gradient-to-r {{ planos[planoKey].corGradiente }} py-3 rounded-lg font-semibold hover:opacity-90 transition">
+            Continuar
+        </button>
+        }
+
+        <p class="text-xs text-gray-500 text-center">
+            Ao tocar em Continuar, a cobrança será realizada e sua assinatura será renovada automaticamente pelo mesmo
+            preço e duração do pacote até que você efetue o cancelamento nas configurações da conta.
+        </p>
+
+        <a href="/app/perfil">
+            <p class="mt-10 text-center text-sm text-gray-400 underline cursor-pointer">Não, obrigado(a)</p>
+        </a>
+    </div>
+</div>

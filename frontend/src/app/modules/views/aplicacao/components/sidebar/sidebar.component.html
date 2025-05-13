@@ -9,7 +9,7 @@
 </button>
 
 <aside id="logo-sidebar"
-    class="border-r border-gray-700 fixed top-0 left-0 z-40 w-96 h-screen transition-transform -translate-x-full sm:translate-x-0"
+    class="border-r border-gray-700 fixed top-0 left-0 z-40 w-[394px] h-screen transition-transform -translate-x-full sm:translate-x-0"
     aria-label="Sidebar">
     <div class="h-full overflow-y-auto bg-gray-800">
         <div
@@ -19,24 +19,23 @@
             <div class="flex items-center gap-2">
                 @if (isRecs) {
                 <a href="/app/perfil" class="flex items-center rounded-full hover:bg-gray-800/50 p-2 pr-4">
-                    <img [src]="imagem" class="h-10 me-2 rounded-full object-cover" alt="Foto do {{ nome }}" />
-                    <span class="text-sm font-semibold whitespace-nowrap text-white">Você</span>
+                    <img [src]="imagem ? imagem : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'"
+                        class="h-10 me-2 rounded-full object-cover" alt="Foto do {{ nome }}" />
+                    <span class="text-sm font-semibold whitespace-nowrap text-white">{{ nome }}</span>
                 </a>
                 }
 
                 @if (isPerfil) {
                 <a href="/app/recs"
                     class="flex items-center rounded-full bg-gray-800/50 p-2 transform transition duration-300 ease-in-out hover:scale-110 hover:shadow-lg">
-                    <img src="assets/imgs/pitchlink.png" class="h-9 w-9 rounded-full object-cover" alt="Foto da Logo" />
+                    <img src="assets/imgs/pitchlink2.png" class="h-9 w-9 rounded-full object-cover" alt="Foto da Logo" />
                 </a>
                 }
             </div>
 
-            <!-- Lado direito: botão e botão de fechar -->
             <div class="flex items-center gap-3">
                 <button class="text-white bg-purple-700 hover:bg-purple-800 rounded px-3 py-1 text-sm">Botão 3</button>
 
-                <!-- Botão de fechar (visível em telas pequenas, ajustado para não sobrepor) -->
                 <button type="button" data-drawer-hide="logo-sidebar" aria-controls="drawer-navigation"
                     class="text-white sm:hidden bg-transparent hover:bg-gray-800/50 rounded-lg text-sm p-1.5">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -49,8 +48,6 @@
             </div>
 
         </div>
-
-
 
         @if (isRecs) {
         <app-mensagens-proposta />

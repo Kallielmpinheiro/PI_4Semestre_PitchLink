@@ -1,0 +1,21 @@
+<ul class="">
+    @for (item of arrayMensagens(); track $index) {
+        <li class="pb-5 sm:pb-6">
+            <a href="">
+                <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                    <div class="shrink-0">
+                        <img class="w-14 h-14 rounded-full object-cover" [src]="item.src" [alt]="item.name">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-base font-medium truncate text-white">
+                            {{ item.name }}
+                        </p>
+                        <p class="text-base truncate text-gray-400">
+                            ↩ {{ item.mensagen }}
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </li>
+    }
+</ul>

@@ -33,7 +33,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -47,6 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'django.contrib.sites',
+    'channels',
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     #providers
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.openid_connect',
+    
 
 ]
 
@@ -69,6 +71,8 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -101,7 +105,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
+# asgi & channel
+ASGI_APPLICATION = 'backend.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis_app", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -162,10 +175,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # adicional
 
-SOCIALACCOUNT_AUTO_SIGNUP = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_STORE_TOKENS = True
 
@@ -177,6 +189,7 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
+            'prompt': 'select_account',
         },
         'OAUTH_PKCE_ENABLED': True,
         'APP': {
@@ -199,6 +212,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 "token_endpoint": "https://www.linkedin.com/oauth/v2/accessToken",
                 "userinfo_endpoint": "https://api.linkedin.com/v2/userinfo",
                 "jwks_uri": "https://www.linkedin.com/oauth/openid/jwks",
+                "default_auth_params": {"prompt": "select_account"},
             },
             'SCOPE': ['openid', 'profile', 'email'],  
         }
