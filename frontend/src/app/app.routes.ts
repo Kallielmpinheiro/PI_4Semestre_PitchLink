@@ -52,15 +52,14 @@ export const routes: Routes = [
                 path:'subscription/:parametro', 
                 component: PlanosComponent, 
                 title: 'Mensagens | PitchLink',
-            }
+            },
+            { 
+                path: 'ideia', 
+                component: IdeiaComponent
+            },
         ]
     },
-    
-
-    { 
-        path: 'ideia', 
-        component: IdeiaComponent
-    },
+        
     {
         path: '**',
         redirectTo: '',
