@@ -5,7 +5,7 @@
 <div class="h-full bg-azul-profundo flex flex-col justify-center items-center">
     <div class="flex flex-grow items-center  flex-col h-full bg-azul-profundo w-full mt-28 ">
         <h1 class="text-white font-bold text-4xl mb-5">Criar uma conta </h1>
-        <div class="flex justify-center w-full max-sm:flex-col-reverse  ">
+        <div class="flex justify-center w-full max-lg:flex-col-reverse max-lg:items-center ">
             <div class=" w-full max-w-80">
                 <form [formGroup]="profileForm">
                     <div class="w-full mb-4">
@@ -20,9 +20,6 @@
                                 placeholder="Nome" 
                             />
 
-                            @if (submittedForm() && !profileForm.controls.firstName.valid) {
-                                <app-alert-form textAlert="Campo obrigatório" />
-                            }
 
                         </div>
                         <div class="mb-2">
@@ -30,9 +27,6 @@
                             <input type="text" id="lastName" formControlName="lastName"
                                 class="border text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Último Nome" />
-                            @if (submittedForm() && !profileForm.controls.lastName.valid) {
-                                <app-alert-form textAlert="Campo obrigatório" />
-                            }
                         </div>
                         <div class="mb-2">
                             <label for="data" class="block mb-2 text-sm font-medium text-white">Data de Nascimento</label>
@@ -57,12 +51,6 @@
                                 (focusout)="syncDatepickerValue()"
                                 maxlength="10">
                             </div>
-                            @if (submittedForm() && profileForm.controls.birthDate.errors?.['invalidFormat']) {
-                              <app-alert-form textAlert="Formato inválido. Use dd/mm/aaaa" />
-                            }
-                            @if (submittedForm() && profileForm.controls.birthDate.errors?.['invalidDate']) {
-                              <app-alert-form textAlert="Data inválida" />
-                            }
                           </div>
 
                     </div>
@@ -135,3 +123,10 @@
         </button>
     </div>
 </app-modal>
+
+
+@if( showModal ) {
+    <app-alert-form  (showModalEmit)="closeModal($event)"  textAlert={{textModal}} ></app-alert-form>
+}
+
+
