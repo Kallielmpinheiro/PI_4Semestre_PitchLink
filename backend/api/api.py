@@ -232,8 +232,8 @@ def get_user_perfil(request):
         'first_name':user.first_name if user.first_name else '-',
         'last_name': user.last_name if user.last_name else '-',
         'email': user.email if user.email else '-',
-        'profile_picture': str(user.profile_picture) if user.profile_picture else '-',
-        'profile_picture_url': user.profile_picture_url if user.profile_picture else '-',
+        'profile_picture': str(user.profile_picture) if user.profile_picture else '',
+        'profile_picture_url': user.profile_picture_url if user.profile_picture_url else '',
         'data_nasc': user.data_nasc if user.data_nasc else '-',
         'categories': user.categories if user.categories else '-'
     }
