@@ -64,9 +64,7 @@ export class PerfilComponent implements OnInit {
     this.loadUserProfileData();
   }
 
-  closeModal(modal: boolean) {
-    this.showModal = !modal;
-  }
+
 
   loadUserProfileData(): void {
     this.loading.set(true);
@@ -265,21 +263,7 @@ export class PerfilComponent implements OnInit {
     this.markFormGroupTouched(this.profileForm);
 
     let categorisLenght = this.getSelectedCategories().length 
-    if (!this.profileForm.valid || categorisLenght < 5  ) {
-
-      this.textModal = ""
-
-      if(  categorisLenght < 5  )  this.textModal = "Por favor, selecione no mínimo 5 categorias"
-
-      if( !this.profileForm.value.birthDate || this.profileForm.controls.birthDate.errors === null ) this.textModal = "Por favor, seleciona sua data de aniversário!"
-
-      if( !this.profileForm.value.lastName  || this.profileForm.controls.lastName.errors === null ) this.textModal = "O ultimo nome é obrigatório!"
-
-      if( !this.profileForm.value.firstName || this.profileForm.controls.firstName.errors === null ) this.textModal = "Nome é obrigatório!"
-      this.showModal = true
-      
-      return;
-    }
+    
 
     this.loading.set(true);
 
@@ -295,17 +279,17 @@ export class PerfilComponent implements OnInit {
       profile_picture: this.imageUser()
     };
     this.authService.saveFullProfile(formData).subscribe({
-      next: (response) => {
+      next: (response) => { 
         this.loading.set(false);
-        console.log(response)
-        if (response.status === 200) {
-          this.updateLocalProfileData(formData);
-          this.router.navigate(['/app/recs']);
-        }
+        
+        this.updateLocalProfileData(formData);
+        this.openModal(response.body.message);
+        
       },
       error: (err) => {
         console.error(err);
         this.loading.set(false);
+        this.openModal(err?.error?.message);
       }
     });
   }
@@ -352,6 +336,18 @@ export class PerfilComponent implements OnInit {
 
       }
     }, 50);
+  }
+
+  modalText: string = '';
+  modalVisible: boolean = false;
+
+  openModal(text: string) {
+    this.modalText = text;
+    this.modalVisible = true;
+  }
+
+  closeModal() {
+    this.modalVisible = false;
   }
 
 
