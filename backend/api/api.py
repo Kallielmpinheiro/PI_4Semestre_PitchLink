@@ -21,6 +21,13 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 api = NinjaAPI()
 
@@ -48,9 +55,22 @@ def custom_logout(request):
     logout(request)
     return 200, {"message": "Logout feito com sucesso!"}
 
-@api.post("/full-profile")
+@api.post("/full-profile", response={200: dict, 404: dict, 401: dict})
 def register(request, payload: SaveReq):
- 
+
+    if not payload.first_name:
+        return 404, {"message": "O Primeiro nome é obrigatório para identificação do usuário no sistema!"}
+    if not payload.last_name:
+        return 404, {"message": "O Sobrenome é obrigatório para completar seu perfil corretamente!"}
+    if not payload.categories:
+        return 404, {"message": "A Categoria é obrigatória para personalizar sua experiência e conectá-lo com inovações relevantes!"}
+    if not payload.data_nasc:
+        return 404, {"message": "A Data de Nascimento é obrigatória para verificação de idade e conformidade com os termos de serviço!"}
+    if not payload.profile_picture:
+        return 404, {"message": "A Imagem de Perfil é obrigatória para que outros usuários possam identificá-lo visualmente na plataforma!"}
+
+
+    logging.info(payload)
     try:
         profile_picture = None
         profile_picture_url = None
@@ -232,8 +252,8 @@ def get_user_perfil(request):
         'first_name':user.first_name if user.first_name else '-',
         'last_name': user.last_name if user.last_name else '-',
         'email': user.email if user.email else '-',
-        'profile_picture': str(user.profile_picture) if user.profile_picture else '-',
-        'profile_picture_url': user.profile_picture_url if user.profile_picture else '-',
+        'profile_picture': str(user.profile_picture) if user.profile_picture else '',
+        'profile_picture_url': user.profile_picture_url if user.profile_picture_url else '',
         'data_nasc': user.data_nasc if user.data_nasc else '-',
         'categories': user.categories if user.categories else '-'
     }

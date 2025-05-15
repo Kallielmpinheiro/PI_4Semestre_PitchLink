@@ -10,6 +10,7 @@ import { DateUtils } from '../../../../core/utils/date-utils';
 import { FileUtils } from '../../../../core/utils/file-utils';
 import { UserProfile, ProfileFormData } from '../../../../core/models/model';
 import { CATEGORIES } from '../../../../core/constants/categories';
+import { environment } from '../../../../../environments/environment.prod';
 
 @Component({
   selector: 'app-perfil',
@@ -20,7 +21,7 @@ import { CATEGORIES } from '../../../../core/constants/categories';
     CommonModule,
     ModalComponent,
     AlertFormComponent
-  ],
+],
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.css']
 
@@ -34,6 +35,8 @@ export class PerfilComponent implements OnInit {
   error = signal<string | null>(null);
   submittedForm = signal(false);
   hideNav = signal(true);
+  showModal = false;
+  textModal =""
 
   readonly categories = CATEGORIES;
 
@@ -61,24 +64,45 @@ export class PerfilComponent implements OnInit {
     this.loadUserProfileData();
   }
 
+
+
   loadUserProfileData(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.authService.getUserProfile().subscribe({
-      next: (response) => {
-        if (response) {
-          this.userProfile.set(this.normalizeProfileData(response));
+    this.authService.getUser().subscribe({
+      next: (response ) => {
+        if( response ) {
+          const { data } = response
+
+       
+          this.userProfile.set( { ...data, categorias: data.categories });
           this.updateFormWithProfileData();
+        } else {
+          this.authService.getUserProfile().subscribe({
+            next: (response) => {
+              if (response) {
+                this.userProfile.set(this.normalizeProfileData(response));
+                this.updateFormWithProfileData();
+              }
+              this.loading.set(false);
+            },
+            error: (err) => {
+              console.error(err);
+              this.error.set(err.error?.message || err.message);
+              this.loading.set(false);
+            }
+          });
         }
-        this.loading.set(false);
       },
       error: (err) => {
         console.error(err);
         this.error.set(err.error?.message || err.message);
         this.loading.set(false);
       }
-    });
+    })
+
+    
   }
 
   private normalizeProfileData(response: any): UserProfile {
@@ -93,7 +117,6 @@ export class PerfilComponent implements OnInit {
   private updateFormWithProfileData(): void {
     const profile = this.userProfile();
     if (!profile) return;
-
     const { firstName, lastName } = this.extractNameInfo(profile);
 
     this.profileForm.patchValue({
@@ -131,6 +154,11 @@ export class PerfilComponent implements OnInit {
       firstName = profile.username;
     }
 
+    if( profile.first_name && profile.last_name ) {
+      firstName = profile.first_name
+      lastName = profile.last_name
+    }
+
     return { firstName, lastName };
   }
 
@@ -142,6 +170,12 @@ export class PerfilComponent implements OnInit {
         this.imageUser.set(profile.provedores['google'].picture);
       }
     }
+
+    if( profile.profile_picture ) 
+      this.imageUser.set( `${environment.getBaseUrl()}/media/${profile.profile_picture}`)
+    
+    if( profile.profile_picture_url ) 
+      this.imageUser.set(  profile.profile_picture_url)
   }
 
   private updateSelectedCategories(selectedCategories: string[]): void {
@@ -228,9 +262,8 @@ export class PerfilComponent implements OnInit {
     this.submittedForm.set(true);
     this.markFormGroupTouched(this.profileForm);
 
-    if (!this.profileForm.valid) {
-      return;
-    }
+    let categorisLenght = this.getSelectedCategories().length 
+    
 
     this.loading.set(true);
 
@@ -246,16 +279,17 @@ export class PerfilComponent implements OnInit {
       profile_picture: this.imageUser()
     };
     this.authService.saveFullProfile(formData).subscribe({
-      next: (response) => {
+      next: (response) => { 
         this.loading.set(false);
-        if (response.status === 200) {
-          this.updateLocalProfileData(formData);
-          this.router.navigate(['/app/recs']);
-        }
+        
+        this.updateLocalProfileData(formData);
+        this.openModal(response.body.message);
+        
       },
       error: (err) => {
         console.error(err);
         this.loading.set(false);
+        this.openModal(err?.error?.message);
       }
     });
   }
@@ -302,6 +336,18 @@ export class PerfilComponent implements OnInit {
 
       }
     }, 50);
+  }
+
+  modalText: string = '';
+  modalVisible: boolean = false;
+
+  openModal(text: string) {
+    this.modalText = text;
+    this.modalVisible = true;
+  }
+
+  closeModal() {
+    this.modalVisible = false;
   }
 
 

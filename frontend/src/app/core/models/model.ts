@@ -6,6 +6,7 @@ export interface UserProfile {
     data_nasc?: string;
     categorias?: string[];
     profile_picture?: string | null;
+    profile_picture_url?: string | null;
     provedores?: {
       'linkedin-server'?: {
         given_name?: string;
