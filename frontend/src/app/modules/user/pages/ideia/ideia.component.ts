@@ -5,6 +5,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
 import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CATEGORIES } from '../../../../core/constants/categories';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ideia',
@@ -19,26 +20,16 @@ import { CATEGORIES } from '../../../../core/constants/categories';
 })
 export class IdeiaComponent {
 
-  /*
-  TODO: 
-    AJUSTAR ALERTAS
-    ADICIONAR GRID DE IMAGES
-
-  */
-
   submitForm = false;
-
   categories = CATEGORIES
-
   selectedFiles: File[] = [];
   previewImages: string[] = [];
 
   private formBuilderService = inject(FormBuilder);
   private authService = inject(AuthService)
-
+  private readonly router = inject(Router);
 
   // form
-
   protected formNewIdea = this.formBuilderService.group({
     nameIdeia: ["", [Validators.required]],
     descriptionIdeia: ["", [Validators.required, Validators.minLength(30)]],
@@ -48,9 +39,7 @@ export class IdeiaComponent {
   });
 
   // nomes tratados para callback
-
   protected formFieldNames: { [key: string]: string } = {
-
     nameIdeia: "Nome da Ideia",
     descriptionIdeia: "Descrição da Ideia",
     valueInvestment: "Valor do Investimento",
@@ -60,9 +49,7 @@ export class IdeiaComponent {
   };
   
   // slots das img
-
   getRemainingSlots(): number[] {
-    
     const uploadButtonSlot = this.previewImages.length < 6 ? 1 : 0;
     const totalSlots = 6;
     const usedSlots = this.previewImages.length + uploadButtonSlot;
@@ -72,7 +59,6 @@ export class IdeiaComponent {
   }
 
   // categorias
-
   private getSelectedCategories(): string[] {
     const selected = (this.formNewIdea.get('categoriesItens') as FormArray).controls
       .map((control, index) => control.value ? this.categories[index] : null)
@@ -85,10 +71,9 @@ export class IdeiaComponent {
     return this.formBuilderService.array(values, [Validators.required]);
   }
 
-  // ---------------
+  // ------------------------------
 
   // tratamento das img
-
   onFileSelected(event: any) {
     const files = event.target.files;
     if (files) {
@@ -120,9 +105,6 @@ export class IdeiaComponent {
   // --------------------------
 
   
-
-  // submit do form  
-
   submitFomr() {
     if (this.formNewIdea.valid) {
       this.submitForm = true;
@@ -143,6 +125,8 @@ export class IdeiaComponent {
           this.submitForm = false;
           this.openModal(response.message);
           this.resetForm();
+          this.router.navigate(['/app/recs'])
+          
         },
         error: (error) => {
           console.log(error.error?.message || error.message);
@@ -183,7 +167,6 @@ export class IdeiaComponent {
   }
 
   // modal
-
   modalText: string = '';
   modalVisible: boolean = false;
 
@@ -197,7 +180,6 @@ export class IdeiaComponent {
   }
 
   // valida porcentagem
-
   validationPercent() {
     const value = this.formNewIdea.value.valueIPercentInvestment || 0;
     if (value < 0 || value > 100) {
@@ -206,7 +188,6 @@ export class IdeiaComponent {
       })
     }
   }
-
 
   resetForm() {
     this.formNewIdea.reset();

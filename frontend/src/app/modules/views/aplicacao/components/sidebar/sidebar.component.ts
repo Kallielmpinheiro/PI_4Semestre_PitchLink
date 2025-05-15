@@ -53,7 +53,7 @@ export class SidebarComponent implements OnInit {
     // Também define uma vez no carregamento inicial
     const url = this.router.url;
     this.isRecs = url.includes('/app/recs') || url.includes('/app/mensagens');
-    this.isPerfil = url.includes('/app/perfil') || url.includes('/app/subscription');
+    this.isPerfil = url.includes('/app/perfil') || url.includes('/app/subscription')  || url.includes( '/app/ideia');
 
     // Dados do usuário
     this.authService.image().subscribe(

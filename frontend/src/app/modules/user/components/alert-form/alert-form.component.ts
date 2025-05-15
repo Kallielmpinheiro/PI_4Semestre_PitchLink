@@ -6,7 +6,6 @@ import { Component, EventEmitter, Input, Output, output } from '@angular/core';
   styleUrl: './alert-form.component.css'
 })
 
-
 export class AlertFormComponent  {
 
   @Input() textAlert!: string ;
