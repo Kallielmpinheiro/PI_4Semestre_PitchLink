@@ -45,6 +45,7 @@ export class SwingComponent implements AfterViewInit {
         cards.forEach(card => {
           this.cardIndexes[card.idCard] = 0;
         });
+        
       },
       error => {
         console.log(error);
