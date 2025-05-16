@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, signal } from '@angular/core';
+import { AfterViewInit, Component, signal, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import Hammer from 'hammerjs';
 import { ICards, Innovation } from '../interface/ICards.interface';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -20,6 +20,7 @@ export class SwingComponent implements AfterViewInit {
 
   public arrayCards = signal<ICards[]>([]);
   public cardIndexes: { [idCard: string]: number } = {};
+  @ViewChildren('pitchCardRef') cardsElements!: QueryList<ElementRef>;
 
   ngOnInit(): void {
     this.authService.getInnovation().subscribe(
@@ -44,8 +45,6 @@ export class SwingComponent implements AfterViewInit {
         cards.forEach(card => {
           this.cardIndexes[card.idCard] = 0;
         });
-
-        setTimeout(() => this.initCards(), 0);
       },
       error => {
         console.log(error);
@@ -73,6 +72,11 @@ export class SwingComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.cardsElements.changes.subscribe(() => {
+      if (this.cardsElements.length) {
+        this.initCards();
+      }
+    });
   }
 
   private initCards(): void {
@@ -83,7 +87,7 @@ export class SwingComponent implements AfterViewInit {
       return;
     }
 
-    const allCards = document.querySelectorAll('.pitch--card');
+    const allCards = this.cardsElements.map(ref => ref.nativeElement);
     const nope = document.getElementById('nope');  // Botão de "Não"
     const love = document.getElementById('love');  // Botão de "Sim"
 
