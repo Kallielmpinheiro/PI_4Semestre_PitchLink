@@ -1,7 +1,7 @@
 <div class="pitch">
     <div class="pitch--cards">
         @for (item of arrayCards(); track item) {
-        <div class="pitch--card" [id]="item.idCard">
+        <div class="pitch--card" #pitchCardRef [id]="item.idCard">
             <div class="pitch--status">
                 <div class="nope-icon"></div>
                 <div class="love-icon"></div>
