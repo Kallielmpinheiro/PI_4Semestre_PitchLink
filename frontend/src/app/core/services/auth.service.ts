@@ -167,4 +167,40 @@ export class AuthService {
   }
   
 
+  postCreateProposalInnovation(payload: any): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postCreateProposalInnovation}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  getProposalInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getProposalInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  postSearchProposalInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postSearchProposalInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  userProposalsInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.userProposalsInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
 }

@@ -50,3 +50,14 @@ class CreateMessageRequest(Schema):
     senderid: int
     receiver: int
     content: str
+
+
+class ProposalInnovationReq(Schema):
+    sponsored : int
+    innovation : int
+    descricao : str
+    investimento_minimo : float
+    porcentagem_cedida : float
+    
+class SearchroposalInnovationReq(Schema):
+    id: int

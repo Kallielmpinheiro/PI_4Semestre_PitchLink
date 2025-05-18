@@ -16,6 +16,10 @@ export const api = {
     createRoom: prefix + '/create-room',
     sendMessage: prefix + '/send-message',
     getNegociacao: prefix + '/get-negotiation-room',
+    postCreateProposalInnovation: prefix+ "/post-create-proposal-innovation",
+    getProposalInnovations: prefix + '/get-proposal-innovations',
+    postSearchProposalInnovations: prefix + '/post-search-proposal-innovations',
+    userProposalsInnovations : prefix + '/get-user-proposals-innovations',
 }
 
 export const socialAccounts = {

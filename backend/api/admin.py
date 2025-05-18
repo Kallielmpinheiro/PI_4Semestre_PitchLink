@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom
+from api.models import User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom, ProposalInnovation
 
 # Register your models here.
 
@@ -36,6 +36,14 @@ class NegotiationRoomAdmin(admin.ModelAdmin):
     search_fields = ('idRoom', 'innovation__nome')
     
 admin.site.register(NegotiationRoom,NegotiationRoomAdmin)
+
+class ProposalInnovationAdmin(admin.ModelAdmin):
+    list_display = ('created', 'id', 'investor', 'sponsored', 'innovation', 'investimento_minimo', 'porcentagem_cedida', 'status')
+    list_filter = ('status', 'accepted', 'created', 'modified')
+    search_fields = ('investor__first_name', 'sponsored__first_name', 'innovation__nome', 'descricao')
+
+admin.site.register(ProposalInnovation, ProposalInnovationAdmin)
+
 
 # admin
 admin.site.site_header = 'PitchLink Admin'

@@ -22,13 +22,58 @@ export class SwingComponent implements AfterViewInit {
   public cardIndexes: { [idCard: string]: number } = {};
   @ViewChildren('pitchCardRef') cardsElements!: QueryList<ElementRef>;
 
+  CreatePro() {
+    // Obter o card atualmente selecionado (primeiro card não removido)
+    const selectedCardElement = document.querySelector('.pitch--card:not(.removed)') as HTMLElement;
+    
+    if (!selectedCardElement) {
+      console.error('Nenhum card selecionado');
+      return;
+    }
+    
+    // Extrair o ID do card do elemento
+    const cardId = selectedCardElement.id.replace('card-', '');
+    
+    // Encontrar os dados do card correspondente
+    const selectedCard = this.arrayCards().find(card => card.idCard.toString() === cardId);
+    
+    if (!selectedCard) {
+      console.error('Dados do card não encontrados');
+      return;
+    }
+    
+    const payload = {
+      sponsored: parseInt(selectedCard.owner_id.toString()), // Garantir que é número
+      innovation: parseInt(selectedCard.idCard.toString()),
+      descricao: selectedCard.slogan,
+      investimento_minimo: parseFloat(selectedCard.investimento_minimo.toString()), // Converter para float
+      porcentagem_cedida: parseFloat(selectedCard.porcentagem_cedida.toString())  // Converter para float
+    };
+    console.log(payload);
+    
+    this.authService.postCreateProposalInnovation(payload).subscribe(
+      response => {
+        console.log('Proposta criada com sucesso:', response);
+        // Adicione aqui um feedback visual para o usuário
+      },
+      error => {
+        console.error('Erro ao criar proposta:', error);
+        // Exiba uma mensagem de erro para o usuário
+        if (error.status === 422 && error.error?.detail) {
+          console.log('Detalhes do erro de validação:', error.error.detail);
+        }
+      }
+    );
+  }
+
   ngOnInit(): void {
     this.authService.getInnovation().subscribe(
       dataResponse => {
         const innovations: Innovation[] = dataResponse.data;
-
         const cards: ICards[] = innovations.map((innovation: Innovation) => {
+
           return {
+            owner_id: innovation.owner_id,
             idCard: innovation.id,
             imagens: innovation.imagens,
             title: innovation.nome,

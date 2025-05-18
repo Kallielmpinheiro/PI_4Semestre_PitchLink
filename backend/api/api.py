@@ -1,12 +1,12 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse,CreateInnovationReq
-from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq
+from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse, CreateInnovationReq
+from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq
+from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage, ProposalInnovation
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
 import time
-from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -338,8 +338,7 @@ def get_innovation(request):
     data = []
 
     try:
-        
-        inv = Innovation.objects.all()
+        inv = Innovation.objects.exclude(owner=user)
         
         for x in inv:
             imagens = []
@@ -350,6 +349,7 @@ def get_innovation(request):
                 
             data.append({
                     'id': x.id,
+                    'owner_id': x.owner.id,
                     'owner': x.owner.first_name,
                     'nome': x.nome,
                     'descricao': x.descricao,
@@ -529,3 +529,142 @@ def get_messages(request, room_id: str):
         return 404, {'message': str(e)}
 
     return 200, {'data': data}
+
+
+@api.post('/post-create-proposal-innovation', auth=AuthBearer() ,response={200: dict, 404: dict})
+def post_create_proposal_innovation(request, payload : ProposalInnovationReq):
+    
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    logging.info(payload.__dict__) 
+    
+    try:
+        sponsored = User.objects.get(id=payload.sponsored)
+    except User.DoesNotExist:
+        return 404, {'message': 'sponsored não encontrada'}
+    
+    try:
+        innovation = Innovation.objects.get(id=payload.innovation)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+    
+    
+    logging.info(f"Sponsored: {sponsored}, Innovation: {innovation}")
+    try:
+        with transaction.atomic():
+            ppc = ProposalInnovation(
+                investor = user,
+                sponsored = sponsored,
+                innovation= innovation,
+                descricao = payload.descricao,
+                investimento_minimo = payload.investimento_minimo,
+                porcentagem_cedida = payload.porcentagem_cedida
+            )
+            ppc.save()
+            
+    except Exception as e:
+        return 404, {'erro': f"{e}"}
+    
+    
+    return 200, {'message': 'criado'}
+
+
+@api.get('/get-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_innovation(request):
+    try:
+        # user = request.auth
+        user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.all()
+    
+    data = []
+    for x in ppi:
+        
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
+
+@api.post('/post-search-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request, payload : SearchroposalInnovationReq):
+    
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(id=payload.id)
+    
+    data = []
+    for x in ppi:
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
+@api.get('/get-user-proposals-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request):
+    
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(investor=user) | ProposalInnovation.objects.filter(sponsored=user)
+    
+    if not ppi.exists():
+        return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
+        
+    data = []
+    for x in ppi:
+        profile_picture = None
+        if x.investor.profile_picture:
+            profile_picture = str(x.investor.profile_picture)
+            
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'investor_nome': x.investor.first_name,
+            'investor_profile_picture': profile_picture,
+            'investor_profile_picture_url': x.investor.profile_picture_url,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'innovation_nome': x.innovation.nome,
+            'innovation_categorias': x.innovation.categorias,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
