@@ -47,8 +47,10 @@
                 
                 <div *ngIf="msg.sender_id !== senderId" class="flex justify-start">
                     <div class="relative h-8 w-8 overflow-hidden rounded-full mr-2 mt-2 flex-shrink-0">
-                        <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600">
-                            <span class="font-medium text-xs">{{msg.sender_name?.charAt(0) || 'U'}}</span>
+                        <img *ngIf="msg.sender_img_url" [src]="msg.sender_img_url" alt="Foto perfil" 
+                             class="h-full w-full object-cover">
+                        <div *ngIf="!msg.sender_img_url" class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600">
+                            <span class="font-medium text-xs">{{msg.sender?.charAt(0) || 'U'}}</span>
                         </div>
                     </div>
                     
@@ -57,7 +59,7 @@
                             <p class="text-gray-800 leading-relaxed">{{ msg.content }}</p>
                         </div>
                         <span class="text-xs text-gray-500 mt-2 flex items-center">
-                            <span class="font-medium">{{ msg.sender_name || 'Usuário ' + msg.sender_id }}</span>
+                            <span class="font-medium">{{ msg.sender || 'Usuário ' + msg.sender_id }}</span>
                             <span class="mx-1.5">•</span>
                             <span>{{ msg.created | date:'shortTime' }}</span>
                         </span>

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../../core/services/auth.service';
-import { environment } from '../../../../../../environments/environment.prod';
+import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-sdbr-propostas',
@@ -12,47 +12,113 @@ import { environment } from '../../../../../../environments/environment.prod';
 })
 export class SdbrPropostasComponent implements OnInit {
   private authService = inject(AuthService);
-  baseUrl = environment.getBaseUrl();
+  
+  baseUrl = environment.baseUrl;
   
   propostas: any[] = [];
   loading = false;
   error: string | null = null;
   
-  // Variáveis para controle do modal
   mostrarModal = false;
   propostaSelecionada: any = null;
 
   ngOnInit(): void {
-    this.getpropostas();
+    this.carregarPropostas();
+    this.baseUrl
   }
 
-  getpropostas() {
+  carregarPropostas() {
     this.loading = true;
     this.authService.userProposalsInnovations().subscribe({
       next: (response) => {
-        console.log(response);
-        this.propostas = response.message || [];
+        console.log('Resposta da API:', response);
+        this.propostas = response.message || [];        
+        
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error fetching propostas:', error);
+        console.error(error);
         this.error = 'Não foi possível carregar as propostas';
         this.loading = false;
       }
     });
   }
   
-  formatMoney(value: string): string {
-    const numVal = parseFloat(value);
+
+  getImageUrl(proposta: any): string {
+    if (proposta.investor_profile_picture_url) {
+      return proposta.investor_profile_picture_url;
+    }
+    
+    if (proposta.investor_profile_picture) {
+      if (proposta.investor_profile_picture.startsWith('http://') || 
+          proposta.investor_profile_picture.startsWith('https://')) {
+        return proposta.investor_profile_picture;
+      }
+      
+      return `${this.baseUrl}/media/${proposta.investor_profile_picture.replace(/^\//, '')}`;
+    }
+    
+    return 'assets/images/default-avatar.png';
+  }
+
+  formatMoneyCompact(value: any): string {
+    if (value === null || value === undefined) {
+      return 'R$ 0';
+    }
+    
+    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+    if (isNaN(numVal)) return 'R$ 0';
+    
+    if (numVal >= 1000000) {
+      return `R$ ${(numVal / 1000000).toFixed(1)}M`;
+    }
+    else if (numVal >= 1000) {
+      return `R$ ${(numVal / 1000).toFixed(1)}K`;
+    } 
+    else {
+      return `R$ ${numVal.toFixed(0)}`;
+    }
+  }
+
+  // Método para formatar valores monetários completos
+  formatMoney(value: any): string {
+    if (value === null || value === undefined) {
+      return 'R$ 0';
+    }
+    
+    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+    if (isNaN(numVal)) return 'R$ 0';
+    
     return numVal.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 0
     });
   }
 
+  getFormattedDisplayValue(value: any): string {
+    if (value === null || value === undefined) {
+      return 'R$ 0';
+    }
+    
+    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+    if (isNaN(numVal)) return 'R$ 0';
+    
+    const formattedValue = numVal.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0
+    });
+    
+    if (formattedValue.length > 15) {
+      return this.formatMoneyCompact(value);
+    }
+    
+    return formattedValue;
+  }
+
   handlePropostaClick(proposta: any) {
-    console.log('Proposta clicada:', proposta);
     this.propostaSelecionada = proposta;
     this.mostrarModal = true;
   }

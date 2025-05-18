@@ -31,11 +31,16 @@ class NegotiationMessageAdmin(admin.ModelAdmin):
 admin.site.register(NegotiationMessage,NegotiationMessageAdmin)
 
 class NegotiationRoomAdmin(admin.ModelAdmin):
-    list_display = ('created', 'id', 'idRoom', 'innovation', 'status')
+    list_display = ('created', 'id', 'idRoom', 'innovation', 'status', 'get_participants_count')
     list_filter = ('status', 'created', 'modified')
-    search_fields = ('idRoom', 'innovation__nome')
+    search_fields = ('idRoom', 'innovation__nome', 'participants__email', 'participants__first_name')
+    filter_horizontal = ('participants',)
     
-admin.site.register(NegotiationRoom,NegotiationRoomAdmin)
+    def get_participants_count(self, obj):
+        return obj.participants.count()
+    get_participants_count.short_description = 'Participants Count'
+    
+admin.site.register(NegotiationRoom, NegotiationRoomAdmin)
 
 class ProposalInnovationAdmin(admin.ModelAdmin):
     list_display = ('created', 'id', 'investor', 'sponsored', 'innovation', 'investimento_minimo', 'porcentagem_cedida', 'status')

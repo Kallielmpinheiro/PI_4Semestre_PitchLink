@@ -26,22 +26,34 @@
         (keydown.enter)="handlePropostaClick(proposta)"
         [attr.aria-label]="'Proposta de ' + proposta.investor_nome">
       
-      <div class="flex items-center mb-2">
-        <div class="mr-3">
-          <div *ngIf="proposta.investor_profile_picture" class="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500">
-            <img [src]="baseUrl + '/media/' + proposta.investor_profile_picture" 
-                 alt="Foto de perfil do investidor"
-                 class="w-full h-full object-cover">
+      <!-- Cabeçalho do card com informações do investidor e status -->
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center">
+          <div class="mr-3">
+            <div *ngIf="proposta.investor_profile_picture_url || proposta.investor_profile_picture" class="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500">
+              <img [src]="getImageUrl(proposta)" 
+                   alt="Foto de perfil do investidor"
+                   class="w-full h-full object-cover"
+                   (error)="proposta.investor_profile_picture = null; proposta.investor_profile_picture_url = null">
+            </div>
+            <div *ngIf="!proposta.investor_profile_picture_url && !proposta.investor_profile_picture" class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold border-2 border-blue-400">
+              {{ proposta.investor_nome.charAt(0) }}
+            </div>
           </div>
-          <div *ngIf="!proposta.investor_profile_picture" class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold border-2 border-blue-400">
-            {{ proposta.investor_nome.charAt(0) }}
+          <div>
+            <h4 class="font-semibold text-white">{{ proposta.investor_nome }}</h4>
+            <div class="flex flex-col sm:flex-row sm:items-center text-sm">
+              <!-- Exibição resumida do valor no cabeçalho do card -->
+              <span class="text-gray-400">{{ proposta.created | date:'dd/MM/yyyy' }}</span>
+              <span class="text-blue-300 sm:ml-2 font-medium block sm:inline max-w-[140px] truncate">
+                <span class="hidden sm:inline">•</span> 
+                {{ formatMoneyCompact(proposta.investimento_minimo) }}
+              </span>
+            </div>
           </div>
         </div>
-        <div>
-          <h4 class="font-semibold text-white">{{ proposta.investor_nome }}</h4>
-          <p class="text-sm text-gray-400">{{ proposta.created | date:'dd/MM/yyyy' }}</p>
-        </div>
-        <div class="ml-auto px-3 py-1 rounded-full text-sm font-medium"
+        
+        <div class="px-3 py-1 rounded-full text-sm font-medium"
              [ngClass]="{
                'bg-yellow-800 text-yellow-200': proposta.status === 'pending',
                'bg-green-800 text-green-200': proposta.status === 'accepted',
@@ -52,38 +64,57 @@
         </div>
       </div>
       
-      <div class="bg-gray-700 p-3 rounded my-2 hover:bg-gray-650 transition-colors duration-200">
-        <p class="text-gray-200">{{ proposta.descricao }}</p>
+      <!-- Resumo dos valores financeiros - Com ajustes para evitar transbordamentos -->
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-gray-750 p-2 rounded-lg overflow-hidden">
+          <div class="text-sm text-gray-400 mb-1 font-medium flex items-center">
+            <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="flex-shrink-0">Investimento:</span>
+          </div>
+          <div class="text-blue-300 font-medium text-sm break-words">
+            {{ getFormattedDisplayValue(proposta.investimento_minimo) }}
+          </div>
+        </div>
+        
+        <div class="bg-gray-750 p-2 rounded-lg overflow-hidden">
+          <div class="text-sm text-gray-400 mb-1 font-medium flex items-center">
+            <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="flex-shrink-0">Porcentagem:</span>
+          </div>
+          <div class="text-blue-300 font-medium text-sm break-words">
+            {{ proposta.porcentagem_cedida }}%
+          </div>
+        </div>
       </div>
       
-      <div class="flex justify-between mt-2">
-        <div class="text-gray-400 bg-gray-750 p-2 rounded flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
-          </svg>
-          <span>Investimento:</span>
-          <span class="text-white font-semibold ml-2">R$ {{ proposta.investimento_minimo }}</span>
-        </div>
-        <div class="text-gray-400 bg-gray-750 p-2 rounded flex items-center">
-          <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-          </svg>
-          <span>Porcentagem:</span>
-          <span class="text-white font-semibold ml-2">{{ proposta.porcentagem_cedida }}%</span>
-        </div>
+      <!-- Descrição com limite de caracteres e quebra de linha melhorada -->
+      <div class="bg-gray-700 p-3 rounded my-3 hover:bg-gray-650 transition-colors duration-200">
+        <p class="text-gray-200 break-words whitespace-pre-line">
+          {{ (proposta.descricao?.length > 150) ? (proposta.descricao | slice:0:150) + '...' : proposta.descricao }}
+          <button *ngIf="proposta.descricao?.length > 150" 
+                  class="text-blue-400 text-sm ml-2 cursor-pointer font-medium hover:underline focus:outline-none focus:underline"
+                  (click)="$event.stopPropagation(); handlePropostaClick(proposta)">
+            Ver mais
+          </button>
+        </p>
       </div>
-
-      <!-- Botões de ação para propostas pendentes -->
-      <div *ngIf="proposta.status === 'pending'" class="flex justify-end gap-3 mt-4">
-        <button class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+      
+      <!-- Botões de ação para propostas pendentes - Espaçamento melhorado -->
+      <div *ngIf="proposta.status === 'pending'" class="flex justify-between gap-4 mt-4">
+        <button class="inline-flex items-center justify-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 shadow-md"
                 (click)="$event.stopPropagation(); rejeitarProposta(proposta.id)">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
           Rejeitar
         </button>
-        <button class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+        
+        <button class="inline-flex items-center justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 shadow-md"
                 (click)="$event.stopPropagation(); aceitarProposta(proposta.id)">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -119,7 +150,7 @@
     </div>
   </div>
 
-  <!-- Modal de detalhes da proposta -->
+  <!-- Modal de detalhes da proposta - revisado e garantido que seja exibido -->
   <div *ngIf="mostrarModal && propostaSelecionada" 
        class="fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center"
        (click)="fecharModal()">
@@ -155,12 +186,13 @@
         <!-- Informações do investidor -->
         <div class="flex items-center mb-6">
           <div class="mr-4">
-            <div *ngIf="propostaSelecionada.investor_profile_picture" class="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500">
-              <img [src]="baseUrl + '/media/' + propostaSelecionada.investor_profile_picture" 
+            <div *ngIf="propostaSelecionada.investor_profile_picture_url || propostaSelecionada.investor_profile_picture" class="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500">
+              <img [src]="getImageUrl(propostaSelecionada)" 
                    alt="Foto de perfil do investidor"
-                   class="w-full h-full object-cover">
+                   class="w-full h-full object-cover"
+                   (error)="propostaSelecionada.investor_profile_picture = null; propostaSelecionada.investor_profile_picture_url = null">
             </div>
-            <div *ngIf="!propostaSelecionada.investor_profile_picture" class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-400">
+            <div *ngIf="!propostaSelecionada.investor_profile_picture_url && !propostaSelecionada.investor_profile_picture" class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-400">
               {{ propostaSelecionada.investor_nome.charAt(0) }}
             </div>
           </div>
@@ -185,11 +217,13 @@
           </div>
         </div>
         
-        <!-- Detalhes financeiros -->
+        <!-- Detalhes financeiros - Com formatação corrigida -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="bg-gray-700 p-4 rounded-lg">
             <h5 class="text-sm font-medium text-gray-400 mb-1">Investimento Proposto</h5>
-            <p class="text-xl font-bold text-white">R$ {{ propostaSelecionada.investimento_minimo }}</p>
+            <p class="text-xl font-bold text-white break-all">
+              {{ formatMoney(propostaSelecionada.investimento_minimo) }}
+            </p>
           </div>
           
           <div class="bg-gray-700 p-4 rounded-lg">
@@ -198,59 +232,51 @@
           </div>
         </div>
         
-        <!-- Descrição completa -->
+        <!-- Descrição completa com quebra de linha adequada -->
         <div class="mb-6">
           <h5 class="text-sm font-medium text-gray-400 mb-2">Descrição da Proposta</h5>
           <div class="bg-gray-700 p-4 rounded-lg">
-            <p class="text-gray-200">{{ propostaSelecionada.descricao }}</p>
+            <p class="text-gray-200 break-words whitespace-pre-line">{{ propostaSelecionada.descricao }}</p>
           </div>
         </div>
         
-        <!-- Informações adicionais -->
+        <!-- Informações adicionais com quebra de linha adequada -->
         <div *ngIf="propostaSelecionada.termos_adicionais" class="mb-6">
           <h5 class="text-sm font-medium text-gray-400 mb-2">Termos Adicionais</h5>
           <div class="bg-gray-700 p-4 rounded-lg">
-            <p class="text-gray-200">{{ propostaSelecionada.termos_adicionais }}</p>
+            <p class="text-gray-200 break-words whitespace-pre-line">{{ propostaSelecionada.termos_adicionais }}</p>
           </div>
-        </div>
-        
-        <!-- Timeline ou histórico -->
-        <div class="mb-6" *ngIf="propostaSelecionada.historico?.length">
-          <h5 class="text-sm font-medium text-gray-400 mb-2">Histórico da Proposta</h5>
-          <ol class="relative border-l border-gray-600">
-            <li class="mb-4 ml-6" *ngFor="let evento of propostaSelecionada.historico">
-              <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-900 rounded-full -left-3 ring-8 ring-gray-800">
-                <svg class="w-3 h-3 text-blue-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-                </svg>
-              </span>
-              <h3 class="flex items-center mb-1 text-lg font-semibold text-white">
-                {{ evento.titulo }}
-              </h3>
-              <time class="block mb-2 text-sm font-normal text-gray-400">{{ evento.data | date:'dd/MM/yyyy HH:mm' }}</time>
-              <p class="text-base font-normal text-gray-300">{{ evento.descricao }}</p>
-            </li>
-          </ol>
         </div>
       </div>
       
+      <!-- Botões do modal - Corrigidos -->
       <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-700">
-        <button type="button" 
-                class="text-gray-300 bg-gray-700 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-500 font-medium rounded-lg text-sm px-5 py-2.5"
-                (click)="fecharModal()">
-          Fechar
-        </button>
-        
         <ng-container *ngIf="propostaSelecionada.status === 'pending'">
+          <div class="flex items-center justify-between w-full">
+            <button type="button" 
+                    class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-500 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center justify-center min-w-[120px]"
+                    (click)="rejeitarProposta(propostaSelecionada.id); fecharModal()">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              Rejeitar
+            </button>
+            <button type="button" 
+                    class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-500 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center justify-center min-w-[120px]"
+                    (click)="aceitarProposta(propostaSelecionada.id); fecharModal()">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Aceitar
+            </button>
+          </div>
+        </ng-container>
+        
+        <ng-container *ngIf="propostaSelecionada.status !== 'pending'">
           <button type="button" 
-                  class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-500 font-medium rounded-lg text-sm px-5 py-2.5"
-                  (click)="rejeitarProposta(propostaSelecionada.id); fecharModal()">
-            Rejeitar Proposta
-          </button>
-          <button type="button" 
-                  class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-500 font-medium rounded-lg text-sm px-5 py-2.5"
-                  (click)="aceitarProposta(propostaSelecionada.id); fecharModal()">
-            Aceitar Proposta
+                  class="text-gray-300 bg-gray-700 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-500 font-medium rounded-lg text-sm px-5 py-2.5"
+                  (click)="fecharModal()">
+            Fechar
           </button>
         </ng-container>
       </div>

@@ -61,3 +61,10 @@ class ProposalInnovationReq(Schema):
     
 class SearchroposalInnovationReq(Schema):
     id: int
+    
+    
+class EnterNegotiationRomReq(Schema):
+    id: str
+    
+class SearchMensagensRelatedReq(Schema):
+    id: str

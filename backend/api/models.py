@@ -91,7 +91,15 @@ class NegotiationRoom(models.Model):
         return f"Sala de Negociação: {self.idRoom}"
     
     def get_participants(self):
-        return self.participants.all()
+        participants_data = []
+        for participant in self.participants.all():
+            participants_data.append({
+                'id': participant.id,
+                'name': f"{participant.first_name} {participant.last_name}".strip(),
+                'email': participant.email,
+                'profile_picture': participant.get_profile_picture,
+            })
+        return participants_data
     
     def get_channel_group_name(self):
         return f"negotiation_{self.idRoom}"

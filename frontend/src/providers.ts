@@ -16,10 +16,14 @@ export const api = {
     createRoom: prefix + '/create-room',
     sendMessage: prefix + '/send-message',
     getNegociacao: prefix + '/get-negotiation-room',
+    getMensagens: prefix + '/get-messages',
     postCreateProposalInnovation: prefix+ "/post-create-proposal-innovation",
     getProposalInnovations: prefix + '/get-proposal-innovations',
     postSearchProposalInnovations: prefix + '/post-search-proposal-innovations',
     userProposalsInnovations : prefix + '/get-user-proposals-innovations',
+    postEnterNegotiationRoom: prefix + '/post-enter-negotiation-room',
+    getAllRooms: prefix+'/get-all-rooms',
+    postSearchMensagensRelated :prefix+'/post-search-mensagens-related',
 }
 
 export const socialAccounts = {
