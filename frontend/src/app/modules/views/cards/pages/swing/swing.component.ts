@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, signal } from '@angular/core';
+import { AfterViewInit, Component, signal, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import Hammer from 'hammerjs';
 import { ICards, Innovation } from '../interface/ICards.interface';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -20,14 +20,60 @@ export class SwingComponent implements AfterViewInit {
 
   public arrayCards = signal<ICards[]>([]);
   public cardIndexes: { [idCard: string]: number } = {};
+  @ViewChildren('pitchCardRef') cardsElements!: QueryList<ElementRef>;
+
+  CreatePro() {
+    // Obter o card atualmente selecionado (primeiro card não removido)
+    const selectedCardElement = document.querySelector('.pitch--card:not(.removed)') as HTMLElement;
+    
+    if (!selectedCardElement) {
+      console.error('Nenhum card selecionado');
+      return;
+    }
+    
+    // Extrair o ID do card do elemento
+    const cardId = selectedCardElement.id.replace('card-', '');
+    
+    // Encontrar os dados do card correspondente
+    const selectedCard = this.arrayCards().find(card => card.idCard.toString() === cardId);
+    
+    if (!selectedCard) {
+      console.error('Dados do card não encontrados');
+      return;
+    }
+    
+    const payload = {
+      sponsored: parseInt(selectedCard.owner_id.toString()), // Garantir que é número
+      innovation: parseInt(selectedCard.idCard.toString()),
+      descricao: selectedCard.slogan,
+      investimento_minimo: parseFloat(selectedCard.investimento_minimo.toString()), // Converter para float
+      porcentagem_cedida: parseFloat(selectedCard.porcentagem_cedida.toString())  // Converter para float
+    };
+    console.log(payload);
+    
+    this.authService.postCreateProposalInnovation(payload).subscribe(
+      response => {
+        console.log('Proposta criada com sucesso:', response);
+        // Adicione aqui um feedback visual para o usuário
+      },
+      error => {
+        console.error('Erro ao criar proposta:', error);
+        // Exiba uma mensagem de erro para o usuário
+        if (error.status === 422 && error.error?.detail) {
+          console.log('Detalhes do erro de validação:', error.error.detail);
+        }
+      }
+    );
+  }
 
   ngOnInit(): void {
     this.authService.getInnovation().subscribe(
       dataResponse => {
         const innovations: Innovation[] = dataResponse.data;
-
         const cards: ICards[] = innovations.map((innovation: Innovation) => {
+
           return {
+            owner_id: innovation.owner_id,
             idCard: innovation.id,
             imagens: innovation.imagens,
             title: innovation.nome,
@@ -44,8 +90,7 @@ export class SwingComponent implements AfterViewInit {
         cards.forEach(card => {
           this.cardIndexes[card.idCard] = 0;
         });
-
-        setTimeout(() => this.initCards(), 0);
+        
       },
       error => {
         console.log(error);
@@ -73,6 +118,11 @@ export class SwingComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    this.cardsElements.changes.subscribe(() => {
+      if (this.cardsElements.length) {
+        this.initCards();
+      }
+    });
   }
 
   private initCards(): void {
@@ -83,7 +133,7 @@ export class SwingComponent implements AfterViewInit {
       return;
     }
 
-    const allCards = document.querySelectorAll('.pitch--card');
+    const allCards = this.cardsElements.map(ref => ref.nativeElement);
     const nope = document.getElementById('nope');  // Botão de "Não"
     const love = document.getElementById('love');  // Botão de "Sim"
 

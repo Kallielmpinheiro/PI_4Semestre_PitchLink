@@ -91,7 +91,15 @@ class NegotiationRoom(models.Model):
         return f"Sala de Negociação: {self.idRoom}"
     
     def get_participants(self):
-        return self.participants.all()
+        participants_data = []
+        for participant in self.participants.all():
+            participants_data.append({
+                'id': participant.id,
+                'name': f"{participant.first_name} {participant.last_name}".strip(),
+                'email': participant.email,
+                'profile_picture': participant.get_profile_picture,
+            })
+        return participants_data
     
     def get_channel_group_name(self):
         return f"negotiation_{self.idRoom}"
@@ -143,3 +151,29 @@ class NegotiationMessage(models.Model):
         }
         
         self.room.send_message_to_room(message_data)
+
+
+class ProposalInnovation(models.Model):
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    investor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="proposalinnovation_investor")
+    sponsored = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Proposalinnovation_sponsored")
+    innovation = models.ForeignKey(Innovation, on_delete=models.CASCADE, related_name='proposalinnovation_innovation')
+    descricao = models.CharField(_('Descrição'), max_length=255, blank=True, null=True)
+    investimento_minimo = models.CharField(_('Investimento Mínimo'), max_length=255, blank=True, null=True)
+    porcentagem_cedida = models.CharField(_('Porcentagem Cedida'), max_length=255, blank=True, null=True)
+    accepted = models.BooleanField('Aceito', default=False)
+    status = models.CharField(_('Status'), max_length=50, choices=[
+        ('pending', _('Pendente')),
+        ('accepted', _('Aceita')),
+        ('rejected', _('Rejeitada')),
+        ('negotiating', _('Em negociação')),
+    ], default='pending')    
+    
+    class Meta:
+        verbose_name = _('Proposta de Inovação')
+        verbose_name_plural = _('Propostas de Inovação')
+        ordering = ['created']
+
+    def __str__(self):
+            return f"Proposta de {self.investor.first_name} para {self.innovation.nome}"

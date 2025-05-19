@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Plano } from '../../../interface/IPlanos.interface';
 import { DomSanitizer } from '@angular/platform-browser';
 import { PLANOS } from '../../../data/planos';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
+import { HeaderComponent } from '../../../../../pitchlink/components/header/header.component';
+import { ModalLoginComponent } from '../../../../../pitchlink/components/modal-login/modal-login.component';
 
 @Component({
   selector: 'app-planos',
-  imports: [CommonModule],
+  imports: [HeaderComponent, NgClass, CommonModule, ModalLoginComponent],
   templateUrl: './planos.component.html',
   styleUrls: ['./planos.component.css']
 })
@@ -15,13 +17,17 @@ export class PlanosComponent {
   planosKeys: string[] = [];
   planos: Record<string, Plano> = PLANOS;
 
-  constructor(private route: ActivatedRoute, private sanitizer: DomSanitizer) {}
+  constructor(private route: ActivatedRoute, private sanitizer: DomSanitizer, private router: Router) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       const keysParam = params.get('parametro');
       this.planosKeys = keysParam ? keysParam.split(',') : [];
     });
+  }
+
+  isInAppRoute(): boolean {
+    return this.router.url.includes('/app');
   }
 
   getStatusIcon(status: boolean) {

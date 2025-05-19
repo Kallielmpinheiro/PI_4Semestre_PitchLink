@@ -11,11 +11,56 @@ import { IdeiaComponent } from './modules/user/pages/ideia/ideia.component';
 import { MensagensComponent } from './modules/views/mensagens/mensagens.component';
 import { SubscriptionComponent } from './modules/views/aplicacao/components/subscription/subscription.component';
 import { PlanosComponent } from './modules/views/aplicacao/components/subscription/planos/planos.component';
+import { SobreComponent } from './modules/pitchlink/pages/sobre/sobre.component';
+import { ContatoComponent } from './modules/pitchlink/pages/contato/contato.component';
+import { PoliticasPrivacidadeComponent } from './modules/pitchlink/pages/politicas-privacidade/politicas-privacidade.component';
+import { LicenciamentoComponent } from './modules/pitchlink/pages/licenciamento/licenciamento.component';
+import { TermosCondicoesComponent } from './modules/pitchlink/pages/termos-condicoes/termos-condicoes.component';
 
 export const routes: Routes = [
     {
         path: '',
-        component: HomeComponent
+        component: HomeComponent,
+    },
+    {
+        path: 'empresa',
+        children: [
+            {
+                path: 'sobre',
+                component: SobreComponent,
+                title: 'Sobre Nós | PitchLink'
+            },
+            {
+                path: 'contato',
+                component: ContatoComponent,
+                title: 'Contato | PitchLink'
+            },
+            {
+                path: 'politicas',
+                component: PoliticasPrivacidadeComponent,
+                title: 'Políticas de Privacidade | PitchLink'
+            },
+            {
+                path: 'licenciamento',
+                component: LicenciamentoComponent,
+                title: 'Licenciamento | PitchLink'
+            },
+            {
+                path: 'termos',
+                component: TermosCondicoesComponent,
+                title: 'Termos e Condições | PitchLink'
+            },
+        ]
+    },
+    {
+        path:'subscription', 
+        component: SubscriptionComponent, 
+        title: 'Minha assinatura | PitchLink',
+    },
+    {
+        path:'subscription/:parametro', 
+        component: PlanosComponent, 
+        title: 'Planos | PitchLink',
     },
     {
         path: 'perfil',
@@ -52,15 +97,14 @@ export const routes: Routes = [
                 path:'subscription/:parametro', 
                 component: PlanosComponent, 
                 title: 'Mensagens | PitchLink',
-            }
+            },
+            { 
+                path: 'ideia', 
+                component: IdeiaComponent
+            },
         ]
     },
-    
-
-    { 
-        path: 'ideia', 
-        component: IdeiaComponent
-    },
+        
     {
         path: '**',
         redirectTo: '',

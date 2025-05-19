@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom
+from api.models import User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom, ProposalInnovation
 
 # Register your models here.
 
@@ -31,11 +31,24 @@ class NegotiationMessageAdmin(admin.ModelAdmin):
 admin.site.register(NegotiationMessage,NegotiationMessageAdmin)
 
 class NegotiationRoomAdmin(admin.ModelAdmin):
-    list_display = ('created', 'id', 'idRoom', 'innovation', 'status')
+    list_display = ('created', 'id', 'idRoom', 'innovation', 'status', 'get_participants_count')
     list_filter = ('status', 'created', 'modified')
-    search_fields = ('idRoom', 'innovation__nome')
+    search_fields = ('idRoom', 'innovation__nome', 'participants__email', 'participants__first_name')
+    filter_horizontal = ('participants',)
     
-admin.site.register(NegotiationRoom,NegotiationRoomAdmin)
+    def get_participants_count(self, obj):
+        return obj.participants.count()
+    get_participants_count.short_description = 'Participants Count'
+    
+admin.site.register(NegotiationRoom, NegotiationRoomAdmin)
+
+class ProposalInnovationAdmin(admin.ModelAdmin):
+    list_display = ('created', 'id', 'investor', 'sponsored', 'innovation', 'investimento_minimo', 'porcentagem_cedida', 'status')
+    list_filter = ('status', 'accepted', 'created', 'modified')
+    search_fields = ('investor__first_name', 'sponsored__first_name', 'innovation__nome', 'descricao')
+
+admin.site.register(ProposalInnovation, ProposalInnovationAdmin)
+
 
 # admin
 admin.site.site_header = 'PitchLink Admin'

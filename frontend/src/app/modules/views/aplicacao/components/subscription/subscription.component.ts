@@ -2,11 +2,15 @@ import { Component } from '@angular/core';
 import { Plano } from '../../interface/IPlanos.interface';
 import { PLANOS } from '../../data/planos';
 import { DomSanitizer } from '@angular/platform-browser';
+import { HeaderComponent } from '../../../../pitchlink/components/header/header.component';
+import { Router } from '@angular/router';
+import { NgClass } from '@angular/common';
+import { ModalLoginComponent } from '../../../../pitchlink/components/modal-login/modal-login.component';
 
 
 @Component({
   selector: 'app-subscription',
-  imports: [],
+  imports: [HeaderComponent, NgClass, ModalLoginComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.css'
 })
@@ -14,7 +18,11 @@ export class SubscriptionComponent {
   planos: Record<string, Plano> = PLANOS;
   planosKeys = Object.keys(this.planos);
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private sanitizer: DomSanitizer, private router: Router) {}
+
+  isInAppRoute(): boolean {
+    return this.router.url.includes('/app');
+  }
 
   getStatusIcon(status: boolean) {
     let svg;

@@ -1,12 +1,12 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse,CreateInnovationReq
-from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq
+from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq
+from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
+from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage, ProposalInnovation
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
 import time
-from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage
 from ninja import NinjaAPI
 from typing import Any
 import requests
@@ -336,20 +336,27 @@ def get_innovation(request):
         return 404, {'message': 'Conta não encontrada'}
 
     data = []
-
+    
+    # Obtenha o domínio base da requisição
+    base_url = f"{request.scheme}://{request.get_host()}"
+    
     try:
-        
-        inv = Innovation.objects.all()
+        inv = Innovation.objects.exclude(owner=user)
         
         for x in inv:
             imagens = []
 
             list_imagem_url = x.get_all_images()
             for imagem_url in list_imagem_url:
-                imagens.append(request.build_absolute_uri(imagem_url))
+                # Construa a URL completa para media
+                if imagem_url.startswith('/media/'):
+                    imagens.append(f"{base_url}{imagem_url}")
+                else:
+                    imagens.append(imagem_url)
                 
             data.append({
                     'id': x.id,
+                    'owner_id': x.owner.id,
                     'owner': x.owner.first_name,
                     'nome': x.nome,
                     'descricao': x.descricao,
@@ -450,6 +457,7 @@ def send_message(request, payload: CreateMessageRequest):
         "sender_id": message.sender.id,
         "sender_name": f"{message.sender.first_name} {message.sender.last_name}".strip(),
         "receiver": message.receiver,
+        "receiver_name": f"{message.receiver.first_name} {message.receiver.last_name}".strip(),
         "room_id": str(message.room.idRoom),
         "created": message.created.isoformat(),
         "is_read": message.is_read,
@@ -494,38 +502,325 @@ def get_negotiation_room(request):
 
     return 200, {'data': data}
 
-@api.post('/get-messages/{room_id}', response={200: dict, 404: dict})
-def get_messages(request, room_id: str):
-
+@api.post('/post-enter-negotiation-room', auth=AuthBearer(), response={200: dict, 404: dict})
+def post_enter_negotiation_room(request, payload: EnterNegotiationRomReq):
+    
     try:
         user = request.auth
-        # user = User.objects.get(id=1)
+        # user = User.objects.get(id=1)   
     except User.DoesNotExist:
-        return 404, {'message': 'Conta não encontrada'}
+        return 404, {'message': 'Conta não encontrada'} 
 
     try:
-        room = NegotiationRoom.objects.get(idRoom=room_id)
+        room = NegotiationRoom.objects.get(idRoom=payload.id)
+        
+        room_data = {
+            'id': str(room.idRoom),
+            'status': room.status,
+            'participants': [{'id': u.id} for u in room.participants.all()],
+        }
+
     except NegotiationRoom.DoesNotExist:
-        return 404, {'message': 'Sala de negociação não encontrada'}
-    
-    data = []
-
-    try:
-        messages = NegotiationMessage.objects.filter(room=room)
-        if not messages:
-            return 404, {'message': 'Nenhuma mensagem encontrada'}
-        for x in messages:
-            data.append({
-                'id': str(x.id),
-                'sender': x.sender.first_name,
-                'receiver': x.receiver.first_name,
-                'room_id': str(x.room.idRoom),
-                'content': x.content,
-                'created': x.created.isoformat(),
-                'is_read': x.is_read,
-            })
-
+        return 404, {'message': 'Sala não encontrada'}
     except Exception as e:
         return 404, {'message': str(e)}
 
-    return 200, {'data': data}
+    return 200, {'data': room_data}
+
+
+@api.get('/get-messages', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_messages(request):
+    
+    try:
+        user = request.auth
+        
+        logging.info(user.id)
+        logging.info(user.first_name)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    
+    try:
+        salas = NegotiationRoom.objects.all()
+        rooms = []
+        for sala in salas:
+            if user in sala.participants.all():
+                rooms.append({
+                    'id': str(sala.idRoom),
+                    'status': sala.status,
+                    'innovation_id': sala.innovation.id,
+                    'innovation_name': sala.innovation.nome,
+                    'participants': [{'id': p.id, 'name': p.first_name} for p in sala.participants.all()],
+                    'created': sala.created.isoformat()
+                })
+            
+        if not rooms:
+            return 404, {'message': 'Você não participa de nenhuma sala de negociação'}
+            
+        room = NegotiationRoom.objects.get(idRoom=rooms[0]['id'])
+        
+        messages = NegotiationMessage.objects.filter(room=room)
+        
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
+        message_data = []
+        for message in messages:
+            receiver_data = None
+            if isinstance(message.receiver, User):
+                receiver_data = message.receiver.id
+                logging.info(receiver_data)
+            else:
+                receiver_data = message.receiver
+            
+            sender_img_path = str(message.sender.profile_picture) if message.sender.profile_picture else None
+                
+            sender_img_url = None
+            if message.sender.profile_picture_url:
+                sender_img_url = message.sender.profile_picture_url
+            elif sender_img_path:
+                sender_img_url = f"{base_url}/media/{sender_img_path}"
+            
+            message_data.append({
+                'id': str(message.id),
+                'sender': message.sender.first_name,
+                'sender_id': message.sender.id,
+                'sender_img_url': sender_img_url,
+                'sender_img': sender_img_path,
+                'receiver_id': receiver_data,
+                "receiver_name": f"{message.receiver.first_name} {message.receiver.last_name}".strip(),
+                'room_id': str(message.room.idRoom),
+                'content': message.content,
+                'created': message.created.isoformat(),
+                'is_read': message.is_read,
+            })
+        
+        return 200, {'rooms': rooms, 'messages': message_data}
+        
+    except Exception as e:
+        return 404, {'message': f'Erro ao buscar mensagens: {str(e)}'}
+
+
+@api.post('/post-create-proposal-innovation', auth=AuthBearer() ,response={200: dict, 404: dict})
+def post_create_proposal_innovation(request, payload : ProposalInnovationReq):
+    
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    logging.info(payload.__dict__) 
+    
+    try:
+        sponsored = User.objects.get(id=payload.sponsored)
+    except User.DoesNotExist:
+        return 404, {'message': 'sponsored não encontrada'}
+    
+    try:
+        innovation = Innovation.objects.get(id=payload.innovation)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+    
+    
+    logging.info(f"Sponsored: {sponsored}, Innovation: {innovation}")
+    try:
+        with transaction.atomic():
+            ppc = ProposalInnovation(
+                investor = user,
+                sponsored = sponsored,
+                innovation= innovation,
+                descricao = payload.descricao,
+                investimento_minimo = payload.investimento_minimo,
+                porcentagem_cedida = payload.porcentagem_cedida
+            )
+            ppc.save()
+            
+    except Exception as e:
+        return 404, {'erro': f"{e}"}
+    
+    
+    return 200, {'message': 'criado'}
+
+
+@api.get('/get-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_innovation(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.all()
+    
+    data = []
+    for x in ppi:
+        
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
+
+@api.post('/post-search-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request, payload : SearchroposalInnovationReq):
+    
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(id=payload.id)
+    
+    data = []
+    for x in ppi:
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
+@api.get('/get-user-proposals-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request):
+    
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(investor=user) | ProposalInnovation.objects.filter(sponsored=user)
+    
+    if not ppi.exists():
+        return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
+        
+    data = []
+    for x in ppi:
+        profile_picture = None
+        if x.investor.profile_picture:
+            profile_picture = str(x.investor.profile_picture)
+            
+        data.append({
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'investor_nome': x.investor.first_name,
+            'investor_profile_picture': profile_picture,
+            'investor_profile_picture_url': x.investor.profile_picture_url,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'innovation_nome': x.innovation.nome,
+            'innovation_categorias': x.innovation.categorias,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+        
+    return 200 ,{ "message": data}
+
+
+
+@api.get('/get-all-rooms', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_all_rooms(request):
+    try:
+        user = request.auth
+        
+        logging.info(user.id)
+        logging.info(user.first_name)
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    
+    try:
+        salas = NegotiationRoom.objects.filter(participants=user)
+        rooms = []
+        for sala in salas:
+            rooms.append({
+                'id': str(sala.idRoom),
+                'status': sala.status,
+                'innovation_id': sala.innovation.id,
+                'innovation_name': sala.innovation.nome,
+                'participants': [{'id': p.id, 'name': p.first_name} for p in sala.participants.all()],
+                'created': sala.created.isoformat()
+            })
+            
+        if not rooms:
+            return 404, {'message': 'Você não participa de nenhuma sala de negociação'}
+            
+        return 200, {'data': rooms}
+    except Exception as e:
+        return 404, {'message': f'Erro ao buscar salas: {str(e)}'}
+    
+    
+@api.post('/post-search-mensagens-related', auth=AuthBearer(), response={200: dict, 404: dict})
+def post_search_mensagens_related(request, payload : SearchMensagensRelatedReq):
+    try:
+        user = request.auth
+        
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        
+        try:
+            room = NegotiationRoom.objects.get(idRoom=payload.id)
+        except NegotiationRoom.DoesNotExist:
+            return 404, {'message': 'Sala de negociação não encontrada'}
+        
+        if user not in room.participants.all():
+            return 403, {'message': 'Você não tem permissão para acessar essa sala'}
+        
+        messages = NegotiationMessage.objects.filter(room=room)
+        
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
+        message_data = []
+        for message in messages:
+            receiver_data = None
+            if isinstance(message.receiver, User):
+                receiver_data = message.receiver.id
+            else:
+                receiver_data = message.receiver
+                
+            sender_img_path = str(message.sender.profile_picture) if message.sender.profile_picture else None
+                
+            sender_img_url = None
+            if message.sender.profile_picture_url:
+                sender_img_url = message.sender.profile_picture_url
+            elif sender_img_path:
+                sender_img_url = f"{base_url}/media/{sender_img_path}"
+            
+            message_data.append({
+                'id': str(message.id),
+                'sender': message.sender.first_name,
+                'sender_id': message.sender.id,
+                'sender_img_url': sender_img_url,
+                'sender_img': sender_img_path,
+                'receiver_id': receiver_data,
+                "receiver_name": f"{message.receiver.first_name} {message.receiver.last_name}".strip(),
+                'room_id': str(message.room.idRoom),
+                'content': message.content,
+                'created': message.created.isoformat(),
+                'is_read': message.is_read,
+            })
+        
+        return 200, {'messages': message_data}
+        
+    except Exception as e:
+        return 404, {'message': f'Erro ao buscar mensagens: {str(e)}'}
+    
