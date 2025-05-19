@@ -167,4 +167,77 @@ export class AuthService {
   }
   
 
+  postCreateProposalInnovation(payload: any): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postCreateProposalInnovation}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  getProposalInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getProposalInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  postSearchProposalInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postSearchProposalInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  userProposalsInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.userProposalsInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  getMensagens(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getMensagens}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+  postEnterNegotiationRoom(payload: { id: string }): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.post(`${this.baseUrl}${api.postEnterNegotiationRoom}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+getAllRooms(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getAllRooms}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
+
+postSearchMensagensRelated(payload: { id: string }): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.post(`${this.baseUrl}${api.postSearchMensagensRelated}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 }

@@ -6,13 +6,16 @@ export interface ICards {
     categorias: string
     investimento_minimo: string;
     porcentagem_cedida: string;
+    owner_id: number;
 
 
 }
 
 export interface Innovation {
+    
     id: number;
     owner: string;
+    owner_id: number;
     nome: string;
     imagens : string;
     descricao: string;
