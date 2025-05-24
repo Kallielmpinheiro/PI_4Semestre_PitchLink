@@ -371,7 +371,7 @@ def get_innovation(request):
 
     return 200, {'data': data}
 
-@api.post('/post-search-innovation',  auth=AuthBearer(), response={200: dict, 404: dict})
+@api.post('/post-search-innovation-categories',  auth=AuthBearer(), response={200: dict, 404: dict})
 def search_innovation(request, payload : SearchInnovationReq):
     try:
         user = request.auth
@@ -399,6 +399,37 @@ def search_innovation(request, payload : SearchInnovationReq):
             })
 
     except Exception as e:
+        return 404, {'message': str(e)}
+
+    return 200, {'data': data}
+
+@api.post('/post-search-innovation',  auth=AuthBearer(), response={200: dict, 404: dict})
+def search_innovation(request, payload : SearchInnovationReq):
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    data = []
+
+    
+    try:
+        inv = Innovation.objects.filter(id=payload.id).exclude(owner=user)
+        for x in inv:
+            data.append({
+                'id': x.id,
+                'owner': x.owner.first_name if x.owner else '-',
+                'partners': list(map(lambda p: {'id': p.id, 'nome': p.first_name}, x.partners.all())),
+                'nome': x.nome if x.nome else '-',
+                'descricao': x.descricao if x.descricao else '-',
+                'investimento_minimo': x.investimento_minimo if x.investimento_minimo else '-',
+                'porcentagem_cedida': x.porcentagem_cedida if x.porcentagem_cedida else '-',
+                'categorias': x.categorias if x.categorias else '-',
+            })
+
+    except Exception as e:
+        logging.warning(str(e))
         return 404, {'message': str(e)}
 
     return 200, {'data': data}
@@ -638,7 +669,7 @@ def post_create_proposal_innovation(request, payload : ProposalInnovationReq):
         return 404, {'erro': f"{e}"}
     
     
-    return 200, {'message': 'criado'}
+    return 200, {'message': 'Proposta criada com sucesso! Aguarde a resposta do inovador.'}
 
 
 @api.get('/get-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
@@ -648,12 +679,12 @@ def get_proposal_innovation(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    ppi = ProposalInnovation.objects.all()
+    ppi = ProposalInnovation.objects.all().order_by('-created')
     
     data = []
     for x in ppi:
-        
         data.append({
+            'id': x.id,
             'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
             'investor_id': x.investor.id,
             'sponsored_id': x.sponsored.id,
@@ -665,7 +696,7 @@ def get_proposal_innovation(request):
             'status': x.status
         })
         
-    return 200 ,{ "message": data}
+    return 200, {"message": data}
 
 
 @api.post('/post-search-proposal-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
@@ -703,7 +734,7 @@ def get_search_proposal_innovation(request):
         
         return 404, {'message': 'Conta não encontrada'}
     
-    ppi = ProposalInnovation.objects.filter(investor=user) | ProposalInnovation.objects.filter(sponsored=user)
+    ppi = ProposalInnovation.objects.filter(sponsored=user)
     
     if not ppi.exists():
         return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}

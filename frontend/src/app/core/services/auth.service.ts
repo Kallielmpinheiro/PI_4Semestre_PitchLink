@@ -185,7 +185,7 @@ export class AuthService {
     });
   }
 
-  postSearchProposalInnovations(): Observable<any> {
+  postSearchProposalInnovations(payload: any): Observable<any> {
     const token = localStorage.getItem('jwt_token');
     return this.http.post(`${this.baseUrl}${api.postSearchProposalInnovations}`, {
       headers: {
@@ -240,4 +240,12 @@ postSearchMensagensRelated(payload: { id: string }): Observable<any> {
   });
 }
 
+postSearchInnovation(payload: { id: Number }): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.post(`${this.baseUrl}${api.postSearchInnovation}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
 }
