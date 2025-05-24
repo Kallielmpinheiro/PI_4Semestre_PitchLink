@@ -3,15 +3,14 @@ import { AfterViewInit, Component, signal, ViewChildren, QueryList, ElementRef }
 import Hammer from 'hammerjs';
 import { ICards, Innovation } from '../interface/ICards.interface';
 import { AuthService } from '../../../../../core/services/auth.service';
-
+import { PropostasComponent } from '../../../propostas/propostas.component';
 @Component({
   selector: 'app-swing',
-  imports: [CommonModule],
+  imports: [CommonModule, PropostasComponent],
   templateUrl: './swing.component.html',
   styleUrls: ['./swing.component.css']
 })
 export class SwingComponent implements AfterViewInit {
-
   constructor(
     private authService: AuthService
   ) { }
@@ -22,6 +21,12 @@ export class SwingComponent implements AfterViewInit {
   public cardIndexes: { [idCard: string]: number } = {};
   @ViewChildren('pitchCardRef') cardsElements!: QueryList<ElementRef>;
 
+  // Adicione estas propriedades para controlar o modal e o estado do card
+  public showModal = signal<boolean>(false);
+  public selectedCard = signal<ICards | null>(null);
+  private pendingCardElement: HTMLElement | null = null; // Card que está esperando ação
+  private pendingAction: 'accept' | 'reject' | null = null; // Ação pendente
+
   CreatePro(cardId: string) {
     const selectedCard = this.arrayCards().find(card => card.idCard.toString() === cardId);
 
@@ -30,29 +35,63 @@ export class SwingComponent implements AfterViewInit {
       return;
     }
 
-    const payload = {
-      sponsored: parseInt(selectedCard.owner_id.toString()),
-      innovation: parseInt(selectedCard.idCard.toString()),
-      descricao: selectedCard.slogan,
-      investimento_minimo: parseFloat(selectedCard.investimento_minimo.toString()),
-      porcentagem_cedida: parseFloat(selectedCard.porcentagem_cedida.toString())
-    };
+    console.log('Card selecionado para proposta:', selectedCard);
+    console.log('ID da inovação:', selectedCard.idCard);
 
-    console.log(payload);
+    // Armazena o card e a ação pendente
+    this.pendingCardElement = document.getElementById(cardId);
+    this.pendingAction = 'accept';
 
-    this.authService.postCreateProposalInnovation(payload).subscribe(
-      response => {
-        console.log('Proposta criada com sucesso:', response);
-      },
-      error => {
-        console.error('Erro ao criar proposta:', error);
-        if (error.status === 422 && error.error?.detail) {
-          console.log('Detalhes do erro de validação:', error.error.detail);
-        }
-      }
-    );
+    // Abre o modal
+    this.selectedCard.set(selectedCard);
+    this.showModal.set(true);
   }
 
+  closeModal() {
+    if (this.pendingCardElement) {
+      this.pendingCardElement.style.transform = '';
+      this.pendingCardElement.classList.remove('removed');
+      this.pendingCardElement.classList.remove('moving');
+    }
+
+    this.resetPendingState();
+  }
+
+  onProposalSubmitted(proposalData: any) {
+    
+
+    if (this.pendingCardElement) {
+      this.removeCard(this.pendingCardElement, true);
+    }
+    
+    this.resetPendingState();
+  }
+
+  // Método para resetar o estado pendente
+  private resetPendingState() {
+    this.showModal.set(false);
+    this.selectedCard.set(null);
+    this.pendingCardElement = null;
+    this.pendingAction = null;
+  }
+
+  // Método para remover um card
+  private removeCard(card: HTMLElement, isAccept: boolean) {
+    const moveOutWidth = document.body.clientWidth * 1.5;
+    
+    card.classList.add('removed');
+    
+    if (isAccept) {
+      // Move para a direita (aceitar)
+      card.style.transform = `translate(${moveOutWidth}px, -100px) rotate(-30deg)`;
+    } else {
+      // Move para a esquerda (rejeitar)
+      card.style.transform = `translate(-${moveOutWidth}px, -100px) rotate(30deg)`;
+    }
+    
+    // Atualiza a posição dos cartões restantes
+    this.initCardsPosition();
+  }
 
   ngOnInit(): void {
     this.authService.getInnovation().subscribe(
@@ -122,10 +161,9 @@ export class SwingComponent implements AfterViewInit {
     }
 
     const allCards = this.cardsElements.map(ref => ref.nativeElement);
-    const nope = document.getElementById('nope');  // Botão de "Não"
-    const love = document.getElementById('love');  // Botão de "Sim"
+    const nope = document.getElementById('nope');
+    const love = document.getElementById('love');
 
-    // Store the component instance for use in event handlers
     const component = this;
 
     if (!allCards.length) {
@@ -146,27 +184,28 @@ export class SwingComponent implements AfterViewInit {
       tinderContainer.classList.add('loaded');
     };
 
+    this.initCardsPosition = initCardsPosition; // Armazena a referência
     initCardsPosition();
 
-    // Para cada carta, é configurado o evento de "pan" (movimento do dedo ou mouse)
     allCards.forEach((el) => {
       const card = el as HTMLElement;
       const hammertime = new Hammer(card);
-      const tolerance = 250;  // Distância mínima em pixels que o cartão precisa mover para ser removido
-
-      // Get the card ID from the element
-      const cardId = card.id.replace('card-', '');
+      const tolerance = 250;
+      const cardId = card.id;
 
       hammertime.on('pan', (event) => {
+        // Se há um modal aberto, não permite interação
+        if (this.showModal()) {
+          return;
+        }
+
         card.classList.add('moving');
         if (event.deltaX === 0) return;
         if (event.center.x === 0 && event.center.y === 0) return;
 
-        // Quando o movimento for para a direita (deltaX > 0), é um "like" (coração)
         card.classList.toggle('pitch_love', event.deltaX > tolerance);
         tinderContainer.classList.toggle('pitch_love_btn', event.deltaX > tolerance);
 
-        // Quando o movimento for para a esquerda (deltaX < 0), é um "dislike" (X)
         card.classList.toggle('pitch_nope', event.deltaX < -tolerance);
         tinderContainer.classList.toggle('pitch_nope_btn', event.deltaX < -tolerance);
 
@@ -178,77 +217,73 @@ export class SwingComponent implements AfterViewInit {
       });
 
       hammertime.on('panend', (event) => {
+        // Se há um modal aberto, não permite interação
+        if (this.showModal()) {
+          return;
+        }
+
         card.classList.remove('moving');
         tinderContainer.classList.remove('pitch_love');
         tinderContainer.classList.remove('pitch_nope');
 
-        const moveOutWidth = document.body.clientWidth;
-
-        // Verifica se o movimento foi suficiente para ultrapassar a margem de tolerância
         const movedEnough = Math.abs(event.deltaX) > tolerance || Math.abs(event.velocityX) > 0.5;
 
-        // Se o movimento for suficiente, o cartão é removido
-        card.classList.toggle('removed', movedEnough);
-
-        // Se o movimento foi suficiente, o cartão sai da tela
         if (movedEnough) {
-          const endX = Math.max(Math.abs(event.velocityX) * moveOutWidth, moveOutWidth);
-          const toX = event.deltaX > 0 ? endX : -endX;
-          const endY = Math.abs(event.velocityY) * moveOutWidth;
-          const toY = event.deltaY > 0 ? endY : -endY;
-          const xMulti = event.deltaX * 0.03;
-          const yMulti = event.deltaY / 80;
-          const rotate = xMulti * yMulti;
-
           if (event.deltaX > 0) {
+            // Movimento para direita - abre modal de proposta
             component.CreatePro(cardId);
+          } else {
+            // Movimento para esquerda - rejeita diretamente
+            component.removeCard(card, false);
           }
-
-          // Aplica a transformação para deslocar o cartão para fora da tela
-          card.style.transform = `translate(${toX}px, ${toY + event.deltaY}px) rotate(${rotate}deg)`;
-
         } else {
+          // Retorna o card para a posição original
           card.style.transform = '';
         }
-
-        // Atualiza a posição dos cartões restantes
-        initCardsPosition();
       });
     });
 
-    // Função para criar os ouvintes de evento para os botões de "Sim" e "Não"
+    // Função para criar os ouvintes de evento para os botões
     const createButtonListener = (love: boolean) => (event: MouseEvent) => {
+      // Se há um modal aberto, não permite interação
+      if (this.showModal()) {
+        return;
+      }
+
       const cards = document.querySelectorAll('.pitch--card:not(.removed)');
-      const moveOutWidth = document.body.clientWidth * 1.5;
 
       if (!cards.length) return;
 
       const card = cards[0] as HTMLElement;
-      const cardId = card.id.replace('card-', '');
+      const cardId = card.id;
 
       if (love) {
+        // Botão de aceitar - abre modal
         this.CreatePro(cardId);
-      }
-
-      card.classList.add('removed');
-
-      // Quando é "Sim" (coração), move a carta para a direita
-      if (love) {
-        card.style.transform = `translate(${moveOutWidth}px, -100px) rotate(-30deg)`;
       } else {
-        // Quando é "Não" (X), move a carta para a esquerda
-        card.style.transform = `translate(-${moveOutWidth}px, -100px) rotate(30deg)`;
+        // Botão de rejeitar - remove diretamente
+        this.removeCard(card, false);
       }
-
-      initCardsPosition();
 
       event.preventDefault();
     };
 
-    const nopeListener = createButtonListener(false);  // Listener para o botão "Não" (X)
-    const loveListener = createButtonListener(true);   // Listener para o botão "Sim" (coração)
+    const nopeListener = createButtonListener(false);
+    const loveListener = createButtonListener(true);
 
     nope?.addEventListener('click', nopeListener);
     love?.addEventListener('click', loveListener);
+  }
+
+  // Torna o método público para poder ser chamado
+  public initCardsPosition(): void {
+    const newCards = document.querySelectorAll('.pitch--card:not(.removed)');
+
+    newCards.forEach((card, index) => {
+      const cardElement = card as HTMLElement;
+      cardElement.style.zIndex = (this.cardsElements.length - index).toString();
+      cardElement.style.transform = `scale(${(20 - index) / 20}) translateY(-${30 * index}px)`;
+      cardElement.style.opacity = ((10 - index) / 10).toString();
+    });
   }
 }

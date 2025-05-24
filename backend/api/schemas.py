@@ -34,9 +34,11 @@ class CreateInnovationReq(Schema):
     porcentagem_cedida: float
     categorias: str
     
-class SearchInnovationReq(Schema):
+class SearchInnovationCategoriesReq(Schema):
     search : str
     
+class SearchInnovationReq(Schema):
+    id : int 
     
 class ImgInnovationReq(Schema):
     id : int 
