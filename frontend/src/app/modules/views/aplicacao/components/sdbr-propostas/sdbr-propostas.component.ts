@@ -31,14 +31,20 @@ export class SdbrPropostasComponent implements OnInit {
     this.loading = true;
     this.authService.userProposalsInnovations().subscribe({
       next: (response) => {
-        console.log('Resposta da API:', response);
         this.propostas = response.message || [];        
         
         this.loading = false;
       },
       error: (error) => {
         console.error(error);
-        this.error = 'Não foi possível carregar as propostas';
+        
+        if (error.status === 404 && error.error?.message) {
+          this.propostas = []; 
+          this.error = null;   
+        } else {
+          this.error = error.error?.message;
+        }
+        
         this.loading = false;
       }
     });
