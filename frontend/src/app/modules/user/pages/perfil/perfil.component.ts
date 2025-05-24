@@ -3,7 +3,8 @@ import { FormBuilder, Validators, ReactiveFormsModule, FormControl, FormArray, F
 import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
 import { CommonModule, formatDate } from '@angular/common';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
+import { ResponseModalComponent } from '../../../views/response-modal/response-modal.component';
+import { ModalConfig } from '../../../../shared/interfaces/common.interfaces';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DateUtils } from '../../../../core/utils/date-utils';
@@ -20,13 +21,11 @@ import { environment } from '../../../../../environments/environment.prod';
     NavBarComponent,
     CommonModule,
     ModalComponent,
-    AlertFormComponent
-],
+    ResponseModalComponent
+  ],
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.css']
-
 })
-
 export class PerfilComponent implements OnInit {
 
   userProfile = signal<UserProfile | null>(null);
@@ -54,6 +53,14 @@ export class PerfilComponent implements OnInit {
     categories: this.buildCategoriesFormArray()
   });
 
+  responseModalConfig: ModalConfig = {
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    showCancel: false
+  };
+  responseModalVisible: boolean = false;
+
   constructor() {
     this.route.data.subscribe(data => {
       this.hideNav.set(data['hideNav'] || false);
@@ -71,16 +78,33 @@ export class PerfilComponent implements OnInit {
     this.error.set(null);
 
     this.authService.getUser().subscribe({
-      next: (response ) => {
-        if( response ) {
-          const { data } = response
-
-       
-          this.userProfile.set( { ...data, categorias: data.categories });
-          this.updateFormWithProfileData();
+      next: (response) => {
+        if (response) {
+          const { data } = response;
+          this.userProfile.set({ ...data, categorias: data.categories });
+          
+          this.authService.getUserProfile().subscribe({
+            next: (socialResponse) => {
+              if (socialResponse) {
+                const socialData = this.normalizeProfileData(socialResponse);
+                this.userProfile.update(profile => ({
+                  ...profile!,
+                  provedores: socialData.provedores
+                }));
+                this.updateFormWithProfileData();
+              }
+              this.loading.set(false);
+            },
+            error: (err) => {
+              console.error(err);
+              this.updateFormWithProfileData();
+              this.loading.set(false);
+            }
+          });
         } else {
           this.authService.getUserProfile().subscribe({
             next: (response) => {
+              console.log(response);
               if (response) {
                 this.userProfile.set(this.normalizeProfileData(response));
                 this.updateFormWithProfileData();
@@ -117,8 +141,9 @@ export class PerfilComponent implements OnInit {
   private updateFormWithProfileData(): void {
     const profile = this.userProfile();
     if (!profile) return;
+    
     const { firstName, lastName } = this.extractNameInfo(profile);
-
+  
     this.profileForm.patchValue({
       firstName,
       lastName,
@@ -126,7 +151,6 @@ export class PerfilComponent implements OnInit {
     });
 
     this.updateProfileImage(profile);
-
     this.updateSelectedCategories(profile.categorias || []);
   }
 
@@ -136,8 +160,17 @@ export class PerfilComponent implements OnInit {
 
     if (profile.provedores) {
       if (profile.provedores['linkedin-server']) {
-        firstName = profile.provedores['linkedin-server'].given_name || '';
-        lastName = profile.provedores['linkedin-server'].family_name || '';
+        const linkedinData = profile.provedores['linkedin-server'] as any;
+        
+        if (linkedinData.perfil_linkedin) {
+          firstName = linkedinData.perfil_linkedin.given_name || '';
+          lastName = linkedinData.perfil_linkedin.family_name || '';
+        }
+        
+        if (!firstName) {
+          firstName = linkedinData.given_name || '';
+          lastName = linkedinData.family_name || '';
+        }
       } else if (profile.provedores['google']) {
         firstName = profile.provedores['google'].given_name || '';
         if (profile.provedores['google'].name &&
@@ -150,13 +183,14 @@ export class PerfilComponent implements OnInit {
       }
     }
 
-    if (!firstName && profile.username) {
-      firstName = profile.username;
+    if (profile.first_name && profile.last_name && 
+        profile.first_name !== '-' && profile.last_name !== '-') {
+      firstName = profile.first_name;
+      lastName = profile.last_name;
     }
 
-    if( profile.first_name && profile.last_name ) {
-      firstName = profile.first_name
-      lastName = profile.last_name
+    if (!firstName && profile.username) {
+      firstName = profile.username;
     }
 
     return { firstName, lastName };
@@ -264,7 +298,6 @@ export class PerfilComponent implements OnInit {
 
     let categorisLenght = this.getSelectedCategories().length 
     
-
     this.loading.set(true);
 
     const formData: ProfileFormData = {
@@ -278,20 +311,54 @@ export class PerfilComponent implements OnInit {
       ), categories: this.getSelectedCategories(),
       profile_picture: this.imageUser()
     };
+    
     this.authService.saveFullProfile(formData).subscribe({
       next: (response) => { 
         this.loading.set(false);
-        
         this.updateLocalProfileData(formData);
-        this.openModal(response.body.message);
         
+        this.showSuccessModal();
       },
       error: (err) => {
-        console.error(err);
         this.loading.set(false);
-        this.openModal(err?.error?.message);
+        this.showErrorModal(err?.error?.message);
       }
     });
+  }
+
+  private showSuccessModal(): void {
+    this.responseModalConfig = {
+      title: 'Perfil Salvo!',
+      message: 'Seu perfil foi salvo com sucesso. Você será redirecionado em instantes.',
+      type: 'success',
+      confirmText: 'Continuar',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
+  }
+
+  private showErrorModal(message: string): void {
+    this.responseModalConfig = {
+      title: 'Erro',
+      message: message,
+      type: 'error',
+      confirmText: 'Tentar Novamente',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
+  }
+
+  onResponseModalConfirm(): void {
+    if (this.responseModalConfig.type === 'success') {
+      this.router.navigate(['/app/recs']).then(() => {
+        window.location.reload();
+      });
+    }
+    this.closeResponseModal();
+  }
+
+  closeResponseModal(): void {
+    this.responseModalVisible = false;
   }
 
   private updateLocalProfileData(formData: ProfileFormData): void {
@@ -337,18 +404,5 @@ export class PerfilComponent implements OnInit {
       }
     }, 50);
   }
-
-  modalText: string = '';
-  modalVisible: boolean = false;
-
-  openModal(text: string) {
-    this.modalText = text;
-    this.modalVisible = true;
-  }
-
-  closeModal() {
-    this.modalVisible = false;
-  }
-
 
 }

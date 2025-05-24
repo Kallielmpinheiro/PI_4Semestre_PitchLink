@@ -343,6 +343,9 @@ def get_innovation(request):
     try:
         inv = Innovation.objects.exclude(owner=user)
         
+        if not inv.exists():
+            return 404, {'message': 'Nenhuma inovação encontrada'}
+        
         for x in inv:
             imagens = []
 
