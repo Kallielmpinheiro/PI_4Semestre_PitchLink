@@ -27,3 +27,12 @@ export interface ProposalInnovation {
   accepted: boolean;
   status: string;
 }
+
+export interface ModalConfig {
+  title?: string;
+  message: string;
+  type?: 'success' | 'error' | 'warning' | 'info';
+  confirmText?: string;
+  cancelText?: string;
+  showCancel?: boolean;
+}

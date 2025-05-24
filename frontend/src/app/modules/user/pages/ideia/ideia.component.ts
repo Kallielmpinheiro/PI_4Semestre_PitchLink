@@ -3,17 +3,19 @@ import { NavBarComponent } from '../../components/nav-bar/nav-bar.component';
 import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { AlertFormComponent } from '../../components/alert-form/alert-form.component';
+import { ResponseModalComponent } from '../../../views/response-modal/response-modal.component';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CATEGORIES } from '../../../../core/constants/categories';
+import { ModalConfig } from '../../../../shared/interfaces/common.interfaces';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ideia',
   imports: [
-    NavBarComponent,
     ReactiveFormsModule,
     ModalComponent,
-    AlertFormComponent
+    AlertFormComponent,
+    ResponseModalComponent
   ],
   templateUrl: './ideia.component.html',
   styleUrl: './ideia.component.css'
@@ -28,6 +30,15 @@ export class IdeiaComponent {
   private formBuilderService = inject(FormBuilder);
   private authService = inject(AuthService)
   private readonly router = inject(Router);
+
+  // Response Modal Configuration
+  responseModalConfig: ModalConfig = {
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    showCancel: false
+  };
+  responseModalVisible: boolean = false;
 
   // form
   protected formNewIdea = this.formBuilderService.group({
@@ -45,7 +56,6 @@ export class IdeiaComponent {
     valueInvestment: "Valor do Investimento",
     valueIPercentInvestment: "Porcentagem de Investimento",
     categoriesItens: "Categorias"
-
   };
   
   // slots das img
@@ -70,8 +80,6 @@ export class IdeiaComponent {
     const values = this.categories.map(() => new FormControl(false));
     return this.formBuilderService.array(values, [Validators.required]);
   }
-
-  // ------------------------------
 
   // tratamento das img
   onFileSelected(event: any) {
@@ -102,9 +110,6 @@ export class IdeiaComponent {
     this.previewImages.splice(index, 1);
   }
   
-  // --------------------------
-
-  
   submitFomr() {
     if (this.formNewIdea.valid) {
       this.submitForm = true;
@@ -119,23 +124,21 @@ export class IdeiaComponent {
       this.selectedFiles.forEach((file, index) => {
         formData.append(`imagens`, file);
       });
+      
       this.authService.postCreateInnovation(formData).subscribe({
         next: (response) => {
           console.log(response)
           this.submitForm = false;
-          this.openModal(response.message);
+          this.showSuccessModal(response.message);
           this.resetForm();
-          this.router.navigate(['/app/recs'])
-          
         },
         error: (error) => {
           console.log(error.error?.message || error.message);
           this.submitForm = false;
-          this.openModal(error.error?.message || 'Erro ao criar inovação');
+          this.showErrorModal(error.error?.message || 'Erro ao criar inovação');
         }
       });
     } else {
-
       let firstErrorKey: string | null = null;
       Object.keys(this.formNewIdea.controls).forEach(key => {
         const control = this.formNewIdea.get(key);
@@ -158,25 +161,44 @@ export class IdeiaComponent {
             errorMessage = `O campo ${friendlyName} precisa ter no mínimo ${control.errors['minlength'].requiredLength} caracteres`;
           }
         }
-
-
       }
-      this.openModal(errorMessage);
+      
+      this.showErrorModal(errorMessage);
       this.formNewIdea.markAllAsTouched();
     }
   }
 
-  // modal
-  modalText: string = '';
-  modalVisible: boolean = false;
-
-  openModal(text: string) {
-    this.modalText = text;
-    this.modalVisible = true;
+  private showSuccessModal(message: string): void {
+    this.responseModalConfig = {
+      title: 'Ideia Criada!',
+      message: message || 'Sua ideia foi criada com sucesso.',
+      type: 'success',
+      confirmText: 'Continuar',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
   }
 
-  closeModal() {
-    this.modalVisible = false;
+  private showErrorModal(message: string): void {
+    this.responseModalConfig = {
+      title: 'Erro',
+      message: message,
+      type: 'error',
+      confirmText: 'Tentar Novamente',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
+  }
+
+  onResponseModalConfirm(): void {
+    if (this.responseModalConfig.type === 'success') {
+      this.router.navigate(['/app/recs']);
+    }
+    this.closeResponseModal();
+  }
+
+  closeResponseModal(): void {
+    this.responseModalVisible = false;
   }
 
   // valida porcentagem
@@ -195,5 +217,4 @@ export class IdeiaComponent {
     this.selectedFiles = [];
     this.previewImages = [];
   }
-
 }
