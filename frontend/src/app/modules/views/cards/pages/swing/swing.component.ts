@@ -4,6 +4,7 @@ import Hammer from 'hammerjs';
 import { ICards, Innovation } from '../interface/ICards.interface';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { PropostasComponent } from '../../../propostas/propostas.component';
+
 @Component({
   selector: 'app-swing',
   imports: [CommonModule, PropostasComponent],
@@ -21,11 +22,13 @@ export class SwingComponent implements AfterViewInit {
   public cardIndexes: { [idCard: string]: number } = {};
   @ViewChildren('pitchCardRef') cardsElements!: QueryList<ElementRef>;
 
-  // Adicione estas propriedades para controlar o modal e o estado do card
   public showModal = signal<boolean>(false);
   public selectedCard = signal<ICards | null>(null);
-  private pendingCardElement: HTMLElement | null = null; // Card que está esperando ação
-  private pendingAction: 'accept' | 'reject' | null = null; // Ação pendente
+  public hasError = signal<boolean>(false);
+  public isLoading = signal<boolean>(true);
+  
+  private pendingCardElement: HTMLElement | null = null;
+  private pendingAction: 'accept' | 'reject' | null = null;
 
   CreatePro(cardId: string) {
     const selectedCard = this.arrayCards().find(card => card.idCard.toString() === cardId);
@@ -94,11 +97,13 @@ export class SwingComponent implements AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.authService.getInnovation().subscribe(
-      dataResponse => {
+    this.isLoading.set(true);
+    this.hasError.set(false);
+    
+    this.authService.getInnovation().subscribe({
+      next: (dataResponse) => {
         const innovations: Innovation[] = dataResponse.data;
         const cards: ICards[] = innovations.map((innovation: Innovation) => {
-
           return {
             owner_id: innovation.owner_id,
             idCard: innovation.id,
@@ -112,19 +117,25 @@ export class SwingComponent implements AfterViewInit {
         });
 
         this.arrayCards.set(cards);
+        this.isLoading.set(false);
 
         // Inicializa os índices dos carrosséis
         cards.forEach(card => {
           this.cardIndexes[card.idCard] = 0;
         });
-        
       },
-      error => {
-        console.log(error);
+      error: (error) => {
+        console.log('Erro ao carregar inovações:', error);
+        this.isLoading.set(false);
+        this.hasError.set(true);
       }
-    );
+    });
   }
 
+  // Método para tentar recarregar os dados
+  retryLoadCards(): void {
+    this.ngOnInit();
+  }
 
   // Avança imagem do carrossel do card específico
   next(idCard: string) {
