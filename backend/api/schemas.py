@@ -46,12 +46,12 @@ class ImgInnovationReq(Schema):
 
 class CreateRoomRequest(Schema):
     innovation_id: int
-
+    investor_id: int
+    
 class CreateMessageRequest(Schema):
-    room_id: UUID
-    senderid: int
-    receiver: int
+    room_id: str
     content: str
+    receiver: int
 
 
 class ProposalInnovationReq(Schema):
@@ -70,3 +70,10 @@ class EnterNegotiationRomReq(Schema):
     
 class SearchMensagensRelatedReq(Schema):
     id: str
+
+class AcceptedProposalInnovation(Schema):
+    id: int
+    
+
+class RejectProposalInnovation(Schema):
+    id: int

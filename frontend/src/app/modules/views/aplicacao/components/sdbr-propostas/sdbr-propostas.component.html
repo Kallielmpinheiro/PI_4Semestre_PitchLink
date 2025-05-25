@@ -282,4 +282,12 @@
       </div>
     </div>
   </div>
+
+  <app-response-modal 
+    [visible]="showResponseModal"
+    [config]="modalConfig"
+    (onConfirm)="onModalConfirm()"
+    (onCancel)="onModalCancel()"
+    (onClose)="onModalClose()">
+  </app-response-modal>
 </div>

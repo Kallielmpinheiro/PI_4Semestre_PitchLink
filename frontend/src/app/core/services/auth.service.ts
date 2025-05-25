@@ -248,4 +248,35 @@ postSearchInnovation(payload: { id: Number }): Observable<any> {
     }
   });
 }
+
+postAcceptProposalInnovation(id: number): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  const payload = { id };
+  return this.http.post(`${this.baseUrl}${api.postAcceptProposalInnovation}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+}
+
+postRejectProposalInnovation(id: number): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  const payload = { id };
+  return this.http.post(`${this.baseUrl}${api.postRejectProposalInnovation}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+}
+
+createRoom(payload: any): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.post(`${this.baseUrl}${api.createRoom}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+}
+
+
 }

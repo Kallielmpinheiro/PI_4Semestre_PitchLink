@@ -24,6 +24,9 @@ export const api = {
     postEnterNegotiationRoom: prefix + '/post-enter-negotiation-room',
     getAllRooms: prefix+'/get-all-rooms',
     postSearchMensagensRelated :prefix+'/post-search-mensagens-related',
+    postAcceptProposalInnovation : prefix + "/post-accept-proposal-innovation",
+    postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation"
+
 }
 
 export const socialAccounts = {

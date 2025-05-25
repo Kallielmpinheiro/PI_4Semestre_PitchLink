@@ -1,155 +1,297 @@
 <div class="pitch">
-  <!-- Loading State -->
-  @if (isLoading()) {
-    <div class="flex items-center justify-center h-full">
-      <div class="text-center">
-        <div role="status" class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]">
-          <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Carregando...</span>
-        </div>
-        <p class="mt-4 text-gray-600">Carregando ideias inovadoras...</p>
-      </div>
-    </div>
-  }
-
-  <!-- Error State - No Ideas Available -->
-  @else if (hasError()) {
-    <div class="flex items-center justify-center h-full px-4">
-      <div class="text-center max-w-lg">
-        <!-- Icon with better styling -->
-        <div class="mx-auto flex items-center justify-center h-32 w-32 rounded-full bg-gradient-to-br from-emerald-50 to-green-100 mb-8">
-          <svg class="h-16 w-16 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+  <!-- Header com Search e Filter Button - só mostra se houver cards -->
+  <div class="pitch-header" *ngIf="arrayCards().length > 0">
+    <!-- Search Bar -->
+    <div class="search-container">
+      <div class="search-wrapper">
+        <div class="relative">
+          <input
+            type="text"
+            [value]="searchTerm()"
+            (input)="onSearchTermChange($any($event.target).value)"
+            placeholder="Buscar inovação..."
+            class="search-input">
+          <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
         
-        <!-- Main heading -->
-        <h3 class="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-4">
-          Novas oportunidades em breve
-        </h3>
-        
-        <!-- Subtitle -->
-        <p class="text-xl text-emerald-700 mb-3 font-medium">
-          Estamos selecionando as melhores inovações para você
-        </p>
-        
-        <!-- Description -->
-        <p class="text-emerald-600 mb-8 leading-relaxed">
-          Nossa equipe de especialistas está analisando projetos inovadores e oportunidades exclusivas de investimento. 
-          Aguarde que em breve você terá acesso às melhores propostas do mercado.
-        </p>
-        
-        <!-- Action buttons with better styling -->
-        <div class="space-y-4">
-          <button 
-            type="button" 
-            class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            (click)="retryLoadCards()">
-            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+
+      </div>
+    </div>
+
+    <!-- Filter Button -->
+    <button 
+      type="button" 
+      class="filter-button"
+      (click)="toggleFilter()"
+      [class.active]="showFilter()">
+      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="pitch-content" [class.no-header]="arrayCards().length === 0">
+    <!-- Filters Panel - só mostra se houver cards -->
+    <div *ngIf="showFilter() && arrayCards().length > 0" class="filter-overlay" (click)="toggleFilter()"></div>
+    
+    <div *ngIf="showFilter() && arrayCards().length > 0" class="filter-panel">
+      <div class="filter-panel-inner">
+        <!-- Header -->
+        <div class="filter-header">
+          <div>
+            <h2 class="filter-title">Filtros</h2>
+            <p class="filter-subtitle">
+              {{ (selectedCategories().length + (minInvestment() ? 1 : 0) + (maxInvestment() ? 1 : 0)) }} filtro(s) ativo(s)
+            </p>
+          </div>
+          <button (click)="toggleFilter()" class="filter-close">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            Verificar novas oportunidades
           </button>
-          
         </div>
 
-        <!-- Additional info -->
-        <div class="mt-8 p-6 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200">
-          <div class="flex items-start space-x-3">
-            <div class="flex-shrink-0">
-              <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div class="flex-1">
-              <p class="text-sm text-emerald-800 font-medium">
-                Maximize suas oportunidades
-              </p>
-              <p class="text-sm text-emerald-700 mt-1">
-                Configure seu perfil de investidor para receber propostas personalizadas de acordo com seus interesses e orçamento.
-              </p>
+        <!-- Filters Content -->
+        <div class="filter-content">
+          <!-- Investment Range -->
+          <div class="filter-section">
+            <h3 class="section-title">
+              <div class="section-dot"></div>
+              Faixa de Investimento
+            </h3>
+            
+            <div class="investment-inputs">
+              <div>
+                <label class="input-label">Valor Mínimo</label>
+                <div class="input-wrapper">
+                  <span class="currency-symbol">R$</span>
+                  <input
+                    type="number"
+                    [value]="minInvestment() || ''"
+                    (input)="onMinInvestmentChange($any($event.target).value)"
+                    placeholder="0"
+                    class="investment-input">
+                </div>
+              </div>
+              
+              <div>
+                <label class="input-label">Valor Máximo</label>
+                <div class="input-wrapper">
+                  <span class="currency-symbol">R$</span>
+                  <input
+                    type="number"
+                    [value]="maxInvestment() || ''"
+                    (input)="onMaxInvestmentChange($any($event.target).value)"
+                    placeholder="∞"
+                    class="investment-input">
+                </div>
+              </div>
             </div>
           </div>
+
+          <!-- Divider -->
+          <div class="filter-divider"></div>
+
+          <!-- Categories -->
+          <div class="filter-section">
+            <div class="section-header">
+              <h3 class="section-title">
+                <div class="section-dot"></div>
+                Categorias ({{ allCategories().length }})
+              </h3>
+              <button
+                *ngIf="selectedCategories().length > 0"
+                (click)="clearSelectedCategories()"
+                class="clear-button">
+                Limpar ({{ selectedCategories().length }})
+              </button>
+            </div>
+            
+            <div class="categories-scroll-container">
+              <div class="categories-list" #categoriesList>
+                <label *ngFor="let category of allCategories(); trackBy: trackByCategory" class="category-item">
+                  <div class="category-checkbox">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedCategories().includes(category)"
+                      (change)="toggleCategory(category)"
+                      class="checkbox">
+                    <span class="category-name" [title]="category">{{ category }}</span>
+                  </div>
+                  <span class="category-count">
+                    {{ getCategoryCount(category) }}
+                  </span>
+                </label>
+              </div>
+              
+              <!-- Indicador de scroll -->
+              <div class="scroll-indicator" *ngIf="allCategories().length > 8">
+                <div class="scroll-hint">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                  <span class="text-xs">{{ allCategories().length - 8 }}+ categorias</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="filter-footer">
+          <button (click)="clearFilters()" class="clear-all-button">
+            Limpar Tudo
+          </button>
+          <button (click)="toggleFilter()" class="apply-button">
+            Aplicar
+          </button>
         </div>
       </div>
     </div>
-  }
 
-  <!-- Cards Content - Only show when there are cards and no error -->
-  @else if (arrayCards().length > 0) {
-    <div class="pitch--cards">
-      @for (item of arrayCards(); track item) {
-        <div class="pitch--card" #pitchCardRef [id]="item.idCard">
-          <div class="pitch--status">
-            <div class="nope-icon"></div>
-            <div class="love-icon"></div>
+    <!-- Cards Area -->
+    <div class="cards-area">
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="state-container">
+          <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Carregando ideias inovadoras...</p>
           </div>
-          <figure class="relative cursor-pointer filter transition-transform h-full">
-            <div class="carousel">
-              <div class="carousel-inner" [style.transform]="'translateX(-' + cardIndexes[item.idCard] * 100 + '%)'">
-                @for (image of item.imagens; track $index) {
-                  <div class="carousel-item">
-                    <img [src]="image" class="h-full object-cover" alt="Imagem" />
-                  </div>
-                }
-              </div>
-              @if (item.imagens.length > 1) {
-                <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="prev(item.idCard.toString())">
-                  <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
-                    <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
-                    </svg>
-                    <span class="sr-only">Previous</span>
-                  </span>
-                </button>
-                <button type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="next(item.idCard.toString())">
-                  <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
-                    <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-                    </svg>
-                    <span class="sr-only">Next</span>
-                  </span>
-                </button>                  
-              }
-            </div>
+        </div>
+      }
 
-            <figcaption class="absolute px-4 pb-12 text-white w-full bottom-0 text-start bg-gradient-to-t from-black/90 via-black/60 to-transparent">
-              <div class="space-y-1">
-                <h3 class="text-lg font-bold">{{ item.title }}</h3>
-                <p class="text-sm">
-                  Invista: <span class="font-semibold">{{ item.investimento_minimo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
-                </p>
-                <p class="text-sm"> 
-                  por <span class="font-semibold">{{ item.porcentagem_cedida | number:'1.0-0' }} %</span> da empresa
-                </p>
-              </div>
+      <!-- Error State -->
+      @else if (hasError()) {
+        <div class="state-container">
+          <div class="error-content">
+            <div class="error-icon">
+              <svg class="h-16 w-16 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
             
-              <div class="mt-3">
-                <ul id="categoriesItens" class="flex flex-wrap justify-start gap-2" formArrayName="categories">
-                  @for (item of item.categorias.slice(0, 3); track item) {
-                    <li>
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/20">
-                        {{ item }}
-                      </span>
-                    </li>
-                  }
-                </ul>
+            <h3 class="error-title">Novas oportunidades em breve</h3>
+            <p class="error-subtitle">Estamos selecionando as melhores inovações para você</p>
+            <p class="error-description">
+              Nossa equipe de especialistas está analisando projetos inovadores e oportunidades exclusivas de investimento. 
+              Aguarde que em breve você terá acesso às melhores propostas do mercado.
+            </p>
+            
+            <button type="button" class="retry-button" (click)="retryLoadCards()">
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Verificar novas oportunidades
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Cards Content -->
+      @else if (filteredCards().length > 0) {
+        <div class="pitch--cards">
+          @for (item of filteredCards(); track item) {
+            <div class="pitch--card" #pitchCardRef [id]="item.idCard">
+              <div class="pitch--status">
+                <div class="nope-icon"></div>
+                <div class="love-icon"></div>
               </div>
-            </figcaption>
-          </figure>
+              <figure class="relative cursor-pointer filter transition-transform h-full">
+                <div class="carousel">
+                  <div class="carousel-inner" [style.transform]="'translateX(-' + cardIndexes[item.idCard] * 100 + '%)'">
+                    @for (image of item.imagens; track $index) {
+                      <div class="carousel-item">
+                        <img [src]="image" class="h-full object-cover" alt="Imagem" />
+                      </div>
+                    }
+                  </div>
+                  @if (item.imagens.length > 1) {
+                    <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="prev(item.idCard.toString())">
+                      <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
+                        <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
+                        </svg>
+                        <span class="sr-only">Previous</span>
+                      </span>
+                    </button>
+                    <button type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" (click)="next(item.idCard.toString())">
+                      <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/30 group-hover:bg-gray-800/60">
+                        <svg class="w-4 h-4 text-gray-800 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                        </svg>
+                        <span class="sr-only">Next</span>
+                      </span>
+                    </button>                  
+                  }
+                </div>
+
+                <figcaption class="absolute px-4 pb-12 text-white w-full bottom-0 text-start bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                  <div class="space-y-1">
+                    <h3 class="text-lg font-bold">{{ item.title }}</h3>
+                    <p class="text-sm">
+                      Invista: <span class="font-semibold">{{ item.investimento_minimo | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</span>
+                    </p>
+                    <p class="text-sm"> 
+                      por <span class="font-semibold">{{ item.porcentagem_cedida | number:'1.0-0' }} %</span> da empresa
+                    </p>
+                  </div>
+                
+                  <div class="mt-3">
+                    <ul class="flex flex-wrap justify-start gap-2">
+                      @for (category of item.categorias.slice(0, 3); track category) {
+                        <li>
+                          <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/20">
+                            {{ category }}
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </figcaption>
+              </figure>
+            </div>
+          }
+        </div>
+
+        <div class="pitch--buttons">
+          <button class="btn-nope" id="nope"><i class="fa fa-remove"></i></button>
+          <button class="btn-love" id="love"><i class="fa fa-dollar"></i></button>
+        </div>
+      }
+
+      <!-- No Results State -->
+      @else if (arrayCards().length > 0 && filteredCards().length === 0) {
+        <div class="state-container">
+          <div class="no-results-content">
+            <div class="no-results-icon">
+              <svg class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            
+            <h3 class="no-results-title">Nenhum resultado encontrado</h3>
+            <p class="no-results-description">
+              Não encontramos inovações que correspondam aos seus critérios de busca.
+            </p>
+            
+            <button type="button" class="clear-filters-button" (click)="clearFilters()">
+              Limpar filtros
+            </button>
+          </div>
         </div>
       }
     </div>
-
-    <div class="pitch--buttons">
-      <button class="btn-nope" id="nope"><i class="fa fa-remove"></i></button>
-      <button class="btn-love" id="love"><i class="fa fa-dollar"></i></button>
-    </div>
-  }
+  </div>
 </div>
 
-<div *ngIf="showModal()" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-  <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-    <div class="mt-3"> 
+<!-- Modal -->
+@if (showModal()) {
+  <div class="modal-overlay">
+    <div class="modal-content">
       <app-propostas 
         [selectedCard]="selectedCard()"
         (proposalSubmitted)="onProposalSubmitted($event)"
@@ -157,4 +299,5 @@
       </app-propostas>
     </div>
   </div>
-</div>
+}
+
