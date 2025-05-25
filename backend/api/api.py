@@ -1,6 +1,6 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq
+from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
 from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage, ProposalInnovation
 from ninja.security import django_auth, HttpBearer
@@ -439,12 +439,16 @@ def search_innovation(request, payload : SearchInnovationReq):
 
 # testes
 
-@api.post("/create-room", response={200: dict, 404: dict, 403: dict})
+@api.post("/create-room", auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
 def create_room(request, payload: CreateRoomRequest):
     
     try:
         user = request.auth
-        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        investor = User.objects.get(id=payload.investor_id)
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
 
@@ -453,9 +457,8 @@ def create_room(request, payload: CreateRoomRequest):
     except Innovation.DoesNotExist:
         return 404, {'message': 'Inovação não encontrada'}
 
-
-    room, created = NegotiationRoom.objects.get_or_create(innovation_id=payload.innovation_id)
-    room.participants.add(user)
+    room, created = NegotiationRoom.objects.get_or_create(innovation=innovation)
+    room.participants.add(user, investor)
     
     return 200, {
         "room_id": str(room.idRoom),
@@ -464,12 +467,11 @@ def create_room(request, payload: CreateRoomRequest):
         "created": created
     }
 
-@api.post("/send-message", response={200: dict, 404: dict, 403: dict})
+@api.post("/send-message", auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
 def send_message(request, payload: CreateMessageRequest):
     
     try:
         user = request.auth
-        # user = User.objects.get(id=1)   
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
@@ -478,38 +480,62 @@ def send_message(request, payload: CreateMessageRequest):
     except NegotiationRoom.DoesNotExist:
         return 404, {'message': 'Sala de negociação não encontrada'}
 
-    message = NegotiationMessage.objects.create(
-        room=room,
-        sender=user,
-        receiver=payload.receiver,
-        content=payload.content
-    )
+    # Verificar se o usuário é participante da sala
+    if user not in room.participants.all():
+        return 403, {'message': 'Você não tem permissão para enviar mensagens nesta sala'}
 
-    message_data = {
-        "id": str(message.id),
-        "content": message.content,
-        "sender_id": message.sender.id,
-        "sender_name": f"{message.sender.first_name} {message.sender.last_name}".strip(),
-        "receiver": message.receiver,
-        "receiver_name": f"{message.receiver.first_name} {message.receiver.last_name}".strip(),
-        "room_id": str(message.room.idRoom),
-        "created": message.created.isoformat(),
-        "is_read": message.is_read,
-    }
+    try:
+        # Buscar o receiver (agora obrigatório)
+        try:
+            receiver = User.objects.get(id=payload.receiver)
+        except User.DoesNotExist:
+            return 404, {'message': 'Usuário destinatário não encontrado'}
 
-    # Usando o nome do grupo padronizado
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"negotiation_{room.idRoom}",
-        {
-            "type": "negotiation_message",
-            "message": message_data
+        # Verificar se o receiver é participante da sala
+        if receiver not in room.participants.all():
+            return 403, {'message': 'Destinatário não é participante desta sala'}
+
+        message = NegotiationMessage.objects.create(
+            room=room,
+            sender=user,
+            receiver=receiver,
+            content=payload.content
+        )
+
+        sender_img_url = None
+        if user.profile_picture and user.profile_picture.name:
+            sender_img_url = f"http://localhost:8000{user.profile_picture.url}"
+        elif user.profile_picture_url:
+            sender_img_url = user.profile_picture_url
+
+        message_data = {
+            "id": str(message.id),
+            "content": message.content,
+            "sender_id": message.sender.id,
+            "sender_name": f"{message.sender.first_name} {message.sender.last_name}".strip(),
+            "sender_img_url": sender_img_url,
+            "receiver_id": message.receiver.id,
+            "receiver_name": f"{message.receiver.first_name} {message.receiver.last_name}".strip(),
+            "room_id": str(message.room.idRoom),
+            "created": message.created.isoformat(),
+            "is_read": message.is_read,
         }
-    )
 
-    return 200, message_data
-
-
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"negotiation_{room.idRoom}",
+            {
+                "type": "negotiation_message",
+                "message": message_data
+            }
+        )
+        
+        logging.info(f"Mensagem salva e enviada: {message.id} - {message.content}")
+        return 200, message_data
+        
+    except Exception as e:
+        logging.exception(f"Erro ao enviar mensagem: {e}")
+        return 500, {'message': f'Erro ao enviar mensagem: {str(e)}'}
 
 @api.get('/get-negotiation-room', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_negotiation_room(request):
@@ -737,7 +763,7 @@ def get_search_proposal_innovation(request):
         
         return 404, {'message': 'Conta não encontrada'}
     
-    ppi = ProposalInnovation.objects.filter(sponsored=user)
+    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=False, status='pending').order_by("-created")
     
     if not ppi.exists():
         return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
@@ -749,6 +775,7 @@ def get_search_proposal_innovation(request):
             profile_picture = str(x.investor.profile_picture)
             
         data.append({
+            'id': x.id,
             'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
             'investor_id': x.investor.id,
             'investor_nome': x.investor.first_name,
@@ -857,4 +884,93 @@ def post_search_mensagens_related(request, payload : SearchMensagensRelatedReq):
         
     except Exception as e:
         return 404, {'message': f'Erro ao buscar mensagens: {str(e)}'}
+
+
+@api.post('/post-accept-proposal-innovation',auth=AuthBearer(),response={200: dict, 404: dict, 403: dict})
+def post_accept_proposal_innovation(request, payload: AcceptedProposalInnovation):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
     
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+    
+    if proposal.sponsored.id != user.id:
+         return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
+    
+    proposal.accepted = True
+    proposal.status = 'accepted'
+    proposal.save()
+    
+    proposal_data = {
+        'id': proposal.id,
+        'created': proposal.created.isoformat(),
+        'investor': {
+            'id': proposal.investor.id,
+            'name': proposal.investor.first_name
+        },
+        'sponsored': {
+            'id': proposal.sponsored.id,
+            'name': proposal.sponsored.first_name
+        },
+        'innovation': {
+            'id': proposal.innovation.id,
+            'name': proposal.innovation.nome
+        },
+        'descricao': proposal.descricao,
+        'investimento_minimo': proposal.investimento_minimo,
+        'porcentagem_cedida': proposal.porcentagem_cedida,
+        'accepted': proposal.accepted,
+        'status': proposal.status
+    }
+    
+    
+    
+    return 200, {'message': 'Proposta aceita com sucesso!', 'proposal': proposal_data}
+
+
+@api.post('/post-reject-proposal-innovation',auth=AuthBearer(),response={200: dict, 404: dict, 403: dict})
+def post_reject_proposal_innovation(request, payload: RejectProposalInnovation):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+    
+    if proposal.sponsored.id != user.id:
+         return 403, {'message': 'Você não tem permissão para rejeitar esta proposta'}
+    
+    proposal.accepted = False
+    proposal.status = 'rejected'
+    proposal.save()
+    
+    proposal_data = {
+        'id': proposal.id,
+        'created': proposal.created.isoformat(),
+        'investor': {
+            'id': proposal.investor.id,
+            'name': proposal.investor.first_name
+        },
+        'sponsored': {
+            'id': proposal.sponsored.id,
+            'name': proposal.sponsored.first_name
+        },
+        'innovation': {
+            'id': proposal.innovation.id,
+            'name': proposal.innovation.nome
+        },
+        'descricao': proposal.descricao,
+        'investimento_minimo': proposal.investimento_minimo,
+        'porcentagem_cedida': proposal.porcentagem_cedida,
+        'accepted': proposal.accepted,
+        'status': proposal.status
+    }
+    
+    return 200, {'message': 'Proposta rejeitada com sucesso!', 'proposal': proposal_data}

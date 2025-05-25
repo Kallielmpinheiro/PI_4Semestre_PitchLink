@@ -1,5 +1,4 @@
 from django.db import models
-from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models import JSONField
 import uuid
@@ -119,7 +118,7 @@ class NegotiationMessage(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
     modified = models.DateTimeField(_('Alterado em'), auto_now=True)
     sender = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sent_messages')
-    receiver = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_messages')
+    receiver = models.ForeignKey('User', on_delete=models.CASCADE, related_name='received_messages')  # Removido null=True, blank=True
     room = models.ForeignKey(NegotiationRoom, on_delete=models.CASCADE, related_name='messages')
     content = models.TextField(_('Conteúdo da Mensagem'))
     is_read = models.BooleanField(_('Lida'), default=False)
@@ -136,22 +135,6 @@ class NegotiationMessage(models.Model):
         is_new = self.pk is None
         super().save(*args, **kwargs)
         
-        if is_new:
-            self.notify_room()
-    
-    def notify_room(self):
-        message_data = {
-            "id": str(self.id),
-            "content": self.content,
-            "sender_id": self.sender.id,
-            "sender_name": f"{self.sender.first_name} {self.sender.last_name}".strip(),
-            "room_id": str(self.room.idRoom),
-            "created": self.created.isoformat(),
-            "is_read": self.is_read,
-        }
-        
-        self.room.send_message_to_room(message_data)
-
 
 class ProposalInnovation(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
