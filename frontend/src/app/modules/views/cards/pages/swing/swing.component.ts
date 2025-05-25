@@ -1,17 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, signal, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { AfterViewInit, Component, signal, ViewChildren, QueryList, ElementRef, computed, OnInit } from '@angular/core';
 import Hammer from 'hammerjs';
 import { ICards, Innovation } from '../interface/ICards.interface';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { PropostasComponent } from '../../../propostas/propostas.component';
+import { CATEGORIES } from '../../../../../core/constants/categories';
 
 @Component({
   selector: 'app-swing',
-  imports: [CommonModule, PropostasComponent],
+  imports: [CommonModule, PropostasComponent, FormsModule],
   templateUrl: './swing.component.html',
   styleUrls: ['./swing.component.css']
 })
-export class SwingComponent implements AfterViewInit {
+export class SwingComponent implements OnInit, AfterViewInit {
   constructor(
     private authService: AuthService
   ) { }
@@ -26,26 +28,117 @@ export class SwingComponent implements AfterViewInit {
   public selectedCard = signal<ICards | null>(null);
   public hasError = signal<boolean>(false);
   public isLoading = signal<boolean>(true);
+
+  public showFilter = signal<boolean>(false);
+  public searchTerm = signal<string>('');
+  public selectedCategories = signal<string[]>([]);
+  public minInvestment = signal<number | null>(null);
+  public maxInvestment = signal<number | null>(null);
   
   private pendingCardElement: HTMLElement | null = null;
   private pendingAction: 'accept' | 'reject' | null = null;
 
+  public allCategories = computed(() => {
+    return CATEGORIES.sort();
+  });
+
+  public filteredCards = computed(() => {
+    let filtered = this.arrayCards();
+
+    if (this.searchTerm().trim()) {
+      const term = this.searchTerm().toLowerCase();
+      filtered = filtered.filter(card => 
+        card.title.toLowerCase().includes(term) ||
+        card.slogan?.toLowerCase().includes(term)
+      );
+    }
+
+    if (this.selectedCategories().length > 0) {
+      filtered = filtered.filter(card =>
+        Array.isArray(card.categorias) && card.categorias.some(cat => this.selectedCategories().includes(cat))
+      );
+    }
+
+    if (this.minInvestment() !== null) {
+      filtered = filtered.filter(card => Number(card.investimento_minimo) >= this.minInvestment()!);
+    }
+
+    if (this.maxInvestment() !== null) {
+      filtered = filtered.filter(card => Number(card.investimento_minimo) <= this.maxInvestment()!);
+    }
+
+    return filtered;
+  });
+
+  toggleFilter(): void {
+    if (this.arrayCards().length === 0) {
+      return; 
+    }
+    this.showFilter.set(!this.showFilter());
+  }
+
+  toggleCategory(category: string): void {
+    const current = this.selectedCategories();
+    if (current.includes(category)) {
+      this.selectedCategories.set(current.filter(c => c !== category));
+    } else {
+      this.selectedCategories.set([...current, category]);
+    }
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    setTimeout(() => {
+      this.initCardsPosition();
+    }, 0);
+  }
+
+  clearFilters(): void {
+    this.searchTerm.set('');
+    this.selectedCategories.set([]);
+    this.minInvestment.set(null);
+    this.maxInvestment.set(null);
+    this.applyFilters();
+  }
+
+  clearSelectedCategories(): void {
+    this.selectedCategories.set([]);
+    this.applyFilters();
+  }
+
+  getCategoryCount(category: string): number {
+    return this.arrayCards().filter(card => 
+      Array.isArray(card.categorias) && card.categorias.includes(category)
+    ).length;
+  }
+
+  onSearchTermChange(value: string): void {
+    this.searchTerm.set(value);
+    this.applyFilters();
+  }
+
+  onMinInvestmentChange(value: string): void {
+    this.minInvestment.set(value ? Number(value) : null);
+    this.applyFilters();
+  }
+
+  onMaxInvestmentChange(value: string): void {
+    this.maxInvestment.set(value ? Number(value) : null);
+    this.applyFilters();
+  }
+
   CreatePro(cardId: string) {
-    const selectedCard = this.arrayCards().find(card => card.idCard.toString() === cardId);
+    const selectedCard = this.filteredCards().find(card => card.idCard.toString() === cardId);
 
     if (!selectedCard) {
-      console.error('Dados do card não encontrados');
       return;
     }
 
-    console.log('Card selecionado para proposta:', selectedCard);
-    console.log('ID da inovação:', selectedCard.idCard);
 
-    // Armazena o card e a ação pendente
+
     this.pendingCardElement = document.getElementById(cardId);
     this.pendingAction = 'accept';
 
-    // Abre o modal
     this.selectedCard.set(selectedCard);
     this.showModal.set(true);
   }
@@ -61,8 +154,6 @@ export class SwingComponent implements AfterViewInit {
   }
 
   onProposalSubmitted(proposalData: any) {
-    
-
     if (this.pendingCardElement) {
       this.removeCard(this.pendingCardElement, true);
     }
@@ -119,27 +210,32 @@ export class SwingComponent implements AfterViewInit {
         this.arrayCards.set(cards);
         this.isLoading.set(false);
 
+        if (cards.length === 0) {
+          this.showFilter.set(false);
+          this.clearFilters();
+        }
+
         // Inicializa os índices dos carrosséis
         cards.forEach(card => {
           this.cardIndexes[card.idCard] = 0;
         });
       },
       error: (error) => {
-        console.log('Erro ao carregar inovações:', error);
+        console.log(error);
         this.isLoading.set(false);
         this.hasError.set(true);
+        this.showFilter.set(false);
       }
     });
   }
 
-  // Método para tentar recarregar os dados
   retryLoadCards(): void {
     this.ngOnInit();
   }
 
   // Avança imagem do carrossel do card específico
   next(idCard: string) {
-    const card = this.arrayCards().find(c => c.idCard.toString() === idCard);
+    const card = this.filteredCards().find(c => c.idCard.toString() === idCard);
     if (card) {
       const total = card.imagens.length;
       this.cardIndexes[idCard] = (this.cardIndexes[idCard] + 1) % total;
@@ -148,7 +244,7 @@ export class SwingComponent implements AfterViewInit {
 
   // Volta imagem do carrossel do card específico
   prev(idCard: string) {
-    const card = this.arrayCards().find(c => c.idCard.toString() === idCard);
+    const card = this.filteredCards().find(c => c.idCard.toString() === idCard);
     if (card) {
       const total = card.imagens.length;
       this.cardIndexes[idCard] = (this.cardIndexes[idCard] - 1 + total) % total;
@@ -206,7 +302,7 @@ export class SwingComponent implements AfterViewInit {
 
       hammertime.on('pan', (event) => {
         // Se há um modal aberto, não permite interação
-        if (this.showModal()) {
+        if (this.showModal() || this.showFilter()) {
           return;
         }
 
@@ -229,7 +325,7 @@ export class SwingComponent implements AfterViewInit {
 
       hammertime.on('panend', (event) => {
         // Se há um modal aberto, não permite interação
-        if (this.showModal()) {
+        if (this.showModal() || this.showFilter()) {
           return;
         }
 
@@ -244,7 +340,7 @@ export class SwingComponent implements AfterViewInit {
             // Movimento para direita - abre modal de proposta
             component.CreatePro(cardId);
           } else {
-            // Movimento para esquerda - rejeita diretamente
+            // Movimento para a esquerda - rejeita diretamente
             component.removeCard(card, false);
           }
         } else {
@@ -257,7 +353,7 @@ export class SwingComponent implements AfterViewInit {
     // Função para criar os ouvintes de evento para os botões
     const createButtonListener = (love: boolean) => (event: MouseEvent) => {
       // Se há um modal aberto, não permite interação
-      if (this.showModal()) {
+      if (this.showModal() || this.showFilter()) {
         return;
       }
 
@@ -286,7 +382,6 @@ export class SwingComponent implements AfterViewInit {
     love?.addEventListener('click', loveListener);
   }
 
-  // Torna o método público para poder ser chamado
   public initCardsPosition(): void {
     const newCards = document.querySelectorAll('.pitch--card:not(.removed)');
 
@@ -296,5 +391,17 @@ export class SwingComponent implements AfterViewInit {
       cardElement.style.transform = `scale(${(20 - index) / 20}) translateY(-${30 * index}px)`;
       cardElement.style.opacity = ((10 - index) / 10).toString();
     });
+  }
+
+  private initializeCardIndexes(): void {
+    this.arrayCards().forEach(card => {
+      if (!(card.idCard in this.cardIndexes)) {
+        this.cardIndexes[card.idCard] = 0;
+      }
+    });
+  }
+
+  trackByCategory(index: number, category: string): string {
+    return category;
   }
 }
