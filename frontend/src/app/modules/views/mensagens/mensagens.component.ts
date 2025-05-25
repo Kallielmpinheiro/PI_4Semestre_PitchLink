@@ -55,11 +55,11 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
     
     const payload = { id: this.roomId };
     
+    
     this.authService.postSearchMensagensRelated(payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          
           if (response && response.messages) {
             const formattedMessages = response.messages.map((msg: any) => ({
               room_id: msg.room_id,
@@ -81,6 +81,7 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
             
             this.messagesList = sortedMessages;
             this.shouldScrollToBottom = true;
+
             
             if (!this.receiverId && this.senderId && response.messages.length > 0) {
               const participantsIds = new Set<number>();
@@ -90,27 +91,31 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
               });
               
               
+              
               const potentialReceivers = [...participantsIds].filter(id => id !== this.senderId);
               
               if (potentialReceivers.length > 0) {
                 this.receiverId = potentialReceivers[0];
-                
                 this.tryInitializeWebSocket();
               } else if (participantsIds.size > 0) {
                 this.receiverId = [...participantsIds][0];
-                
                 this.tryInitializeWebSocket();
               } else {
                 this.buscarReceptorDaNegociacao();
               }
-            } else if (!this.receiverId && !this.senderId) {
+            } 
+            else if (!this.receiverId && !this.senderId) {
               this.authService.getUser().subscribe(user => {
                 if (user && user.data && user.data.id) {
                   this.senderId = user.data.id;
                   this.carregarMensagensEDeterminarParticipantes();
                 }
               });
-            } else {
+            } 
+            else if (!this.receiverId || response.messages.length === 0) {
+              this.buscarReceptorDaNegociacao();
+            } 
+            else {
               this.tryInitializeWebSocket();
             }
           } else {
@@ -118,6 +123,7 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
           }
         },
         error: (err) => {
+          console.error(err);
           this.buscarReceptorDaNegociacao();
         }
       });
@@ -129,16 +135,18 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          
           if (response && response.data && response.data.length > 0) {
             const salaCorrespondente = response.data.find(
               (r: any) => r.id === this.roomId
             );
             
+            
             if (salaCorrespondente && salaCorrespondente.participants && salaCorrespondente.participants.length > 0) {
-              
               const outroParticipante = salaCorrespondente.participants.find(
                 (p: any) => p.id !== this.senderId
               );
+              
               
               if (outroParticipante) {
                 this.receiverId = outroParticipante.id;
@@ -157,9 +165,11 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
                 }
               }
             }
-          }
+          } 
         },
-        error: (err) => console.error(err)
+        error: (err) => {
+          console.error(err);
+        }
       });
   }
 
@@ -181,28 +191,44 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    
+
+    if (!this.receiverId) {
+      this.carregarMensagensEDeterminarParticipantes();
+      
+      setTimeout(() => {
+        if (this.receiverId) {
+          this.sendMessage(content);
+        } else {
+          this.buscarReceptorDaNegociacao();
+          setTimeout(() => {
+            if (this.receiverId) {
+              this.sendMessage(content);
+            } else {
+            }
+          }, 1000);
+        }
+      }, 2000);
+      return;
+    }
+
     if (!this.senderId) {
       this.authService.getUser().subscribe({
         next: (response) => {
           if (response?.data?.id) {
             this.senderId = response.data.id;
             this.sendMessage(content);
-          } 
+          } else {
+          }
         },
-        error: (err) => console.error(err)
+        error: (err) => {
+          console.error(err);
+        }
       });
       return;
     }
 
-    if (!this.receiverId && this.roomId) {
-      this.carregarMensagensEDeterminarParticipantes();
-      
-      setTimeout(() => {
-        if (this.receiverId) {
-          this.enviarMensagemComReceiver(content);
-        } else {
-        }
-      }, 500);
+    if (!this.roomId) {
       return;
     }
 
@@ -214,14 +240,93 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    if (!this.senderId) {
+      return;
+    }
+
+    if (!this.roomId) {
+      return;
+    }
+
+    if (!this.socket) {
+      this.tryInitializeWebSocket();
+      
+      setTimeout(() => {
+        if (this.socket) {
+          this.enviarMensagemComReceiver(content);
+        }
+      }, 500);
+      return;
+    }
+
     const message = {
+      type: 'message',
       room_id: this.roomId,
       content: content,
       sender_id: this.senderId,
-      receiver: this.receiverId
+      receiver_id: this.receiverId
     };
 
-    this.socket.next(message);
+    try {
+      this.socket.next(message);
+      
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  private initializeWebSocket(): void {
+    if (!this.roomId) {
+      return;
+    }
+
+    this.closeConnection();
+    
+    const wsUrl = `ws://localhost:8001/ws/chat/${this.roomId}/`;
+    
+    this.socket = webSocket(wsUrl);
+
+    this.socket
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (message) => {
+          if (message.type === 'message') {
+            const formattedMessage = {
+              room_id: message.room_id || this.roomId,
+              content: message.content,
+              sender_id: message.sender_id,
+              sender: message.sender_name || message.sender || 'Usuário',
+              sender_name: message.sender_name || message.sender || 'Usuário',
+              sender_img_url: message.sender_img_url || '',
+              created: message.created || new Date().toISOString(),
+              is_read: message.is_read || false,
+              receiver_id: message.receiver_id,
+              receiver_name: message.receiver_name || '',
+              id: message.id || Date.now()
+            };
+
+            
+            const isDuplicate = this.messagesList.some(msg => 
+              msg.id === formattedMessage.id || 
+              (msg.content === formattedMessage.content && 
+               msg.sender_id === formattedMessage.sender_id &&
+               Math.abs(new Date(msg.created).getTime() - new Date(formattedMessage.created).getTime()) < 5000)
+            );
+
+            if (!isDuplicate) {
+              this.messagesList.push(formattedMessage);
+              this.shouldScrollToBottom = true;
+            } else {
+              console.log(formattedMessage);
+            }
+          }
+        },
+        error: (err) => {
+          setTimeout(() => {
+            this.initializeWebSocket();
+          }, 3000);
+        },
+      });
   }
 
   private loadInitialData(): void {
@@ -302,24 +407,8 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
   private tryInitializeWebSocket(): void {
     if (this.userLoaded && this.roomLoaded && this.roomId) {
       this.initializeWebSocket();
+    } else {
+      console.log('Aguardando dados necessários para inicializar WebSocket...');
     }
-  }
-
-  private initializeWebSocket(): void {
-    if (!this.roomId) return;
-
-    this.closeConnection();
-    
-    this.socket = webSocket(`ws://localhost:8001/ws/chat/${this.roomId}/`);
-
-    this.socket
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (message) => {
-          this.messagesList.push(message);
-          this.shouldScrollToBottom = true;
-        },
-        error: (err) => console.error(err),
-      });
   }
 }

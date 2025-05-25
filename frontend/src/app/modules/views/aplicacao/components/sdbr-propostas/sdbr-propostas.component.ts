@@ -1,12 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { COMPILER_OPTIONS, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { environment } from '../../../../../../environments/environment';
+import { ResponseModalComponent } from '../../../response-modal/response-modal.component';
+import { ModalConfig } from '../../../../../shared/interfaces/common.interfaces';
 
 @Component({
   selector: 'app-sdbr-propostas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ResponseModalComponent],
   templateUrl: './sdbr-propostas.component.html',
   styleUrl: './sdbr-propostas.component.css'
 })
@@ -21,18 +23,25 @@ export class SdbrPropostasComponent implements OnInit {
   
   mostrarModal = false;
   propostaSelecionada: any = null;
+  
+  showResponseModal = false;
+  modalConfig: ModalConfig = {
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    cancelText: 'Cancelar',
+    showCancel: false
+  };
 
   ngOnInit(): void {
     this.carregarPropostas();
-    this.baseUrl
   }
 
   carregarPropostas() {
     this.loading = true;
     this.authService.userProposalsInnovations().subscribe({
       next: (response) => {
-        this.propostas = response.message || [];        
-        
+        this.propostas = response.message;
         this.loading = false;
       },
       error: (error) => {
@@ -135,10 +144,106 @@ export class SdbrPropostasComponent implements OnInit {
   }
 
   aceitarProposta(propostaId: number) {
-    console.log('Aceitando proposta com ID:', propostaId);
+
+    const id = propostaId;
+    
+    this.authService.postAcceptProposalInnovation(id).subscribe({
+      next: (response) => {
+        this.error = null;
+        this.criarSalaParaProposta(response.proposal);
+      },
+      error: (error) => {
+        let errorMessage = error.error?.message || error.message;
+        this.error = errorMessage;
+        this.showErrorModal(errorMessage);
+      }
+    });
+  }
+
+  private criarSalaParaProposta(proposta: any) {
+    if (!proposta) {
+      return;
+    }
+
+    const criarSalaPayload = {
+      innovation_id: proposta.innovation?.id || proposta.innovation_id,
+      investor_id: proposta.investor?.id || proposta.investor_id
+    };
+    this.authService.createRoom(criarSalaPayload).subscribe({
+      next: (roomResponse) => {
+        this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
+      },
+      error: (roomError) => {
+        this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
+      }
+    });
+  }
+
+  private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
+    this.carregarPropostas();
+    this.fecharModal();
+    this.showSuccessModal(mensagem);
   }
 
   rejeitarProposta(propostaId: number) {
-    console.log('Rejeitando proposta com ID:', propostaId);
+    const id = propostaId 
+    this.authService.postRejectProposalInnovation(id).subscribe({
+      next: (response) => {
+        this.error = null;
+        this.carregarPropostas();
+        this.fecharModal();
+        this.showSuccessModal('Proposta rejeitada com sucesso!');
+      },
+      error: (error) => {
+        let errorMessage = error;
+        this.error = errorMessage;
+        this.showErrorModal(errorMessage);
+      }
+    });
+  }
+
+  showSuccessModal(message: string) {
+    this.modalConfig = {
+      title: 'Sucesso!',
+      message: message,
+      type: 'success',
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.showResponseModal = true;
+  }
+
+  showErrorModal(message: string) {
+    this.modalConfig = {
+      title: 'Erro!',
+      message: message,
+      type: 'error',
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.showResponseModal = true;
+  }
+
+  showWarningModal(message: string) {
+    this.modalConfig = {
+      title: 'Atenção!',
+      message: message,
+      type: 'warning',
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.showResponseModal = true;
+  }
+
+  onModalConfirm() {
+    this.showResponseModal = false;
+  }
+
+  onModalCancel() {
+    this.showResponseModal = false;
+  }
+
+  onModalClose() {
+    this.showResponseModal = false;
   }
 }
