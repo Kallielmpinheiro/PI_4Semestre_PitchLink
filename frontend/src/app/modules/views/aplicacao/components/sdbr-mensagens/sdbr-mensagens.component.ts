@@ -47,7 +47,6 @@ export class SdbrMensagensComponent implements OnInit {
     this.authService.getMensagens().subscribe({
       next: (response: any) => {
         const { rooms, messages } = response;
-        console.log(response);
         
         if (this.userId()) {
           const mensagensFiltradas = messages.filter(
@@ -58,7 +57,7 @@ export class SdbrMensagensComponent implements OnInit {
             new Date(b.created).getTime() - new Date(a.created).getTime()
           );
           
-          const ultimasMensagens = mensagensOrdenadas.slice(0, 3);
+          const ultimasMensagens = mensagensOrdenadas.slice(0, 1);
           
           ultimasMensagens.forEach((msg: Mensagem) => {
             if (!msg.sender_img_url || !msg.sender_img_url.startsWith('http')) {
@@ -117,7 +116,6 @@ export class SdbrMensagensComponent implements OnInit {
   
   this.authService.postEnterNegotiationRoom(payload).subscribe({
     next: (response) => {
-      console.log(response);
       this.router.navigate(['app/mensagens'], { queryParams: { roomId: roomId } });
     },
     error: (error) => {

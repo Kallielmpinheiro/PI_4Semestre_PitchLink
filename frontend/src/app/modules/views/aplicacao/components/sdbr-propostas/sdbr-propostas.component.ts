@@ -77,61 +77,37 @@ export class SdbrPropostasComponent implements OnInit {
     return 'assets/images/default-avatar.png';
   }
 
-  formatMoneyCompact(value: any): string {
-    if (value === null || value === undefined) {
-      return 'R$ 0';
-    }
-    
-    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (isNaN(numVal)) return 'R$ 0';
-    
-    if (numVal >= 1000000) {
-      return `R$ ${(numVal / 1000000).toFixed(1)}M`;
-    }
-    else if (numVal >= 1000) {
-      return `R$ ${(numVal / 1000).toFixed(1)}K`;
-    } 
-    else {
-      return `R$ ${numVal.toFixed(0)}`;
+formatMoneyCompact(value: number | string | null | undefined): string {
+  const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+
+  if (!value || isNaN(numVal)) {
+    return 'R$ 0,00';
+  }
+
+  if (numVal <= 999_999_999.99) {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(numVal);
+  }
+
+  // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
+  const abbreviations = [
+    { limit: 1_000_000_000_000, suffix: 'T' },
+    { limit: 1_000_000_000, suffix: 'B' },
+    { limit: 1_000_000, suffix: 'M' },
+    { limit: 1_000, suffix: 'K' },
+  ];
+
+  for (const { limit, suffix } of abbreviations) {
+    if (numVal >= limit) {
+      const short = (numVal / limit).toFixed(1).replace('.', ',');
+      return `R$ ${short}${suffix}`;
     }
   }
 
-  // Método para formatar valores monetários completos
-  formatMoney(value: any): string {
-    if (value === null || value === undefined) {
-      return 'R$ 0';
-    }
-    
-    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (isNaN(numVal)) return 'R$ 0';
-    
-    return numVal.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0
-    });
-  }
-
-  getFormattedDisplayValue(value: any): string {
-    if (value === null || value === undefined) {
-      return 'R$ 0';
-    }
-    
-    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
-    if (isNaN(numVal)) return 'R$ 0';
-    
-    const formattedValue = numVal.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0
-    });
-    
-    if (formattedValue.length > 15) {
-      return this.formatMoneyCompact(value);
-    }
-    
-    return formattedValue;
-  }
+  return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
+}
 
   handlePropostaClick(proposta: any) {
     this.propostaSelecionada = proposta;

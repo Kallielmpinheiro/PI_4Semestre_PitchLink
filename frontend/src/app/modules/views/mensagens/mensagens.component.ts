@@ -19,6 +19,8 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
   roomId?: string;
   senderId?: number;
   receiverId?: number;
+  receiverName?: string;
+  receiverProfilePictureUrl?: string;
   profilePictureUrl: string = '';
   messagesList: any[] = [];
 
@@ -96,9 +98,29 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
               
               if (potentialReceivers.length > 0) {
                 this.receiverId = potentialReceivers[0];
+
+                const receiverMessage = response.messages.find(
+                  (msg: any) => msg.sender_id === this.receiverId
+                );
+
+                if (receiverMessage) {
+                  this.receiverName = receiverMessage.sender_name;
+                  this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
+                }
+
                 this.tryInitializeWebSocket();
               } else if (participantsIds.size > 0) {
                 this.receiverId = [...participantsIds][0];
+
+                const receiverMessage = response.messages.find(
+                  (msg: any) => msg.sender_id === this.receiverId
+                );
+
+                if (receiverMessage) {
+                  this.receiverName = receiverMessage.sender_name;
+                  this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
+                }
+
                 this.tryInitializeWebSocket();
               } else {
                 this.buscarReceptorDaNegociacao();
