@@ -16,6 +16,7 @@ import { ContatoComponent } from './modules/pitchlink/pages/contato/contato.comp
 import { PoliticasPrivacidadeComponent } from './modules/pitchlink/pages/politicas-privacidade/politicas-privacidade.component';
 import { LicenciamentoComponent } from './modules/pitchlink/pages/licenciamento/licenciamento.component';
 import { TermosCondicoesComponent } from './modules/pitchlink/pages/termos-condicoes/termos-condicoes.component';
+import { ListaIdeiasComponent } from './modules/views/aplicacao/components/lista-ideias/lista-ideias.component';
 
 export const routes: Routes = [
     {
@@ -87,6 +88,11 @@ export const routes: Routes = [
                 path:'mensagens', 
                 component: MensagensComponent, 
                 title: 'Mensagens | PitchLink'
+            },
+            {
+                path:'listar_ideias', 
+                component: ListaIdeiasComponent, 
+                title: 'Lista de Ideias | PitchLink'
             },
             {
                 path:'subscription', 

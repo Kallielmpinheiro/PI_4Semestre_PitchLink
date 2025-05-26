@@ -104,9 +104,11 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
                 );
 
                 if (receiverMessage) {
-                  this.receiverName = receiverMessage.sender_name;
+                  this.receiverName = receiverMessage.sender;
                   this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
                 }
+
+                console.log(receiverMessage)
 
                 this.tryInitializeWebSocket();
               } else if (participantsIds.size > 0) {
@@ -117,9 +119,11 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
                 );
 
                 if (receiverMessage) {
-                  this.receiverName = receiverMessage.sender_name;
+                  this.receiverName = receiverMessage.sender;
                   this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
                 }
+
+                console.log(this.receiverName)
 
                 this.tryInitializeWebSocket();
               } else {
