@@ -25,7 +25,9 @@ export const api = {
     getAllRooms: prefix+'/get-all-rooms',
     postSearchMensagensRelated :prefix+'/post-search-mensagens-related',
     postAcceptProposalInnovation : prefix + "/post-accept-proposal-innovation",
-    postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation"
+    postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation",
+    getUserInnovations: prefix + "/get-user-innovations",
+
 
 }
 

@@ -77,3 +77,12 @@ class AcceptedProposalInnovation(Schema):
 
 class RejectProposalInnovation(Schema):
     id: int
+
+class UpdateInovattionReq(Schema):
+    id: int
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    investimento_minimo: Optional[float] = None
+    porcentagem_cedida: Optional[float] = None
+    categorias: Optional[List[str]] = None
+

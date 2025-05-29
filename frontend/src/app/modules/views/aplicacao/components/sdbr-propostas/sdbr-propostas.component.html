@@ -52,16 +52,6 @@
             </div>
           </div>
         </div>
-        
-        <div class="px-3 py-1 rounded-full text-sm font-medium"
-             [ngClass]="{
-               'bg-yellow-800 text-yellow-200': proposta.status === 'pending',
-               'bg-green-800 text-green-200': proposta.status === 'accepted',
-               'bg-red-800 text-red-200': proposta.status === 'rejected'
-             }">
-          {{ proposta.status === 'pending' ? 'Pendente' : 
-             proposta.status === 'accepted' ? 'Aceita' : 'Rejeitada' }}
-        </div>
       </div>
       
       <!-- Resumo dos valores financeiros - Com ajustes para evitar transbordamentos -->
@@ -75,7 +65,7 @@
             <span class="flex-shrink-0">Investimento:</span>
           </div>
           <div class="text-blue-300 font-medium text-sm break-words">
-            {{ getFormattedDisplayValue(proposta.investimento_minimo) }}
+            {{ formatMoneyCompact(proposta.investimento_minimo) }}
           </div>
         </div>
         
@@ -87,21 +77,9 @@
             <span class="flex-shrink-0">Porcentagem:</span>
           </div>
           <div class="text-blue-300 font-medium text-sm break-words">
-            {{ proposta.porcentagem_cedida }}%
+            {{ proposta.porcentagem_cedida | number:'1.0-0' }}%
           </div>
         </div>
-      </div>
-      
-      <!-- Descrição com limite de caracteres e quebra de linha melhorada -->
-      <div class="bg-gray-700 p-3 rounded my-3 hover:bg-gray-650 transition-colors duration-200">
-        <p class="text-gray-200 break-words whitespace-pre-line">
-          {{ (proposta.descricao?.length > 150) ? (proposta.descricao | slice:0:150) + '...' : proposta.descricao }}
-          <button *ngIf="proposta.descricao?.length > 150" 
-                  class="text-blue-400 text-sm ml-2 cursor-pointer font-medium hover:underline focus:outline-none focus:underline"
-                  (click)="$event.stopPropagation(); handlePropostaClick(proposta)">
-            Ver mais
-          </button>
-        </p>
       </div>
       
       <!-- Botões de ação para propostas pendentes - Espaçamento melhorado -->
@@ -218,17 +196,17 @@
         </div>
         
         <!-- Detalhes financeiros - Com formatação corrigida -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6 text-center">
           <div class="bg-gray-700 p-4 rounded-lg">
             <h5 class="text-sm font-medium text-gray-400 mb-1">Investimento Proposto</h5>
             <p class="text-xl font-bold text-white break-all">
-              {{ formatMoney(propostaSelecionada.investimento_minimo) }}
+              {{ formatMoneyCompact(propostaSelecionada.investimento_minimo) }}
             </p>
           </div>
           
           <div class="bg-gray-700 p-4 rounded-lg">
             <h5 class="text-sm font-medium text-gray-400 mb-1">Porcentagem Cedida</h5>
-            <p class="text-xl font-bold text-white">{{ propostaSelecionada.porcentagem_cedida }}%</p>
+            <p class="text-xl font-bold text-white">{{ propostaSelecionada.porcentagem_cedida | number:'1.0-0' }}%</p>
           </div>
         </div>
         

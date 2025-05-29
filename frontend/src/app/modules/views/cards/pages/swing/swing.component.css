@@ -29,7 +29,7 @@
 }
 
 .search-wrapper {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.50);
     backdrop-filter: blur(12px);
     border-radius: 1.5rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -83,7 +83,6 @@
     right: 1rem;
     width: 3.5rem;
     height: 3.5rem;
-    background: #059669;
     color: white;
     border-radius: 50%;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -97,12 +96,7 @@
 }
 
 .filter-button:hover {
-    background: #047857;
     transform: scale(1.1);
-}
-
-.filter-button.active {
-    background: #047857;
 }
 
 /* Content Layout */
@@ -160,18 +154,17 @@
 }
 
 .filter-panel-inner {
-    background: white;
+    background: rgba(31, 41, 55, 1);
     border-radius: 8px; 
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid #E5E7EB;
+    border: 1px solid rgb(55, 65, 81);
 }
 
 .filter-header {
-    background: linear-gradient(to right, #059669, #047857);
     padding: 1.2rem;
     color: white;
     display: flex;
@@ -188,8 +181,9 @@
 
 .filter-subtitle {
     font-size: 0.8rem;
-    color: #A7F3D0;
+    color: #ffffff;
     margin: 0.25rem 0 0 0;
+    font-weight: 500;
 }
 
 .filter-close {
@@ -212,14 +206,10 @@
     padding: 1.2rem;
 }
 
-.filter-section {
-    margin-bottom: 1.2rem;
-}
-
 .section-title {
     font-size: 0.8rem;
     font-weight: 700;
-    color: #111827;
+    color: #ffffff;
     display: flex;
     align-items: center;
     margin-bottom: 0.8rem;
@@ -228,7 +218,7 @@
 .section-dot {
     width: 0.4rem;
     height: 0.4rem;
-    background: #059669;
+    background: #06ca8c;
     border-radius: 50%;
     margin-right: 0.6rem;
 }
@@ -237,12 +227,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.8rem;
 }
 
 .clear-button {
     font-size: 0.7rem;
-    color: #059669;
+    color: #c146ff;
     font-weight: 700;
     text-decoration: underline;
     background: none;
@@ -251,7 +240,7 @@
 }
 
 .clear-button:hover {
-    color: #047857;
+    color: #8500c7;
 }
 
 .investment-inputs {
@@ -263,7 +252,7 @@
     display: block;
     font-size: 0.7rem;
     font-weight: 600;
-    color: #4B5563;
+    color: #ffffff;
     margin-bottom: 0.4rem;
 }
 
@@ -282,27 +271,28 @@
 
 .investment-input {
     width: 100%;
-    padding: 0.6rem 0.8rem 0.6rem 1.8rem;
-    border: 1px solid #E5E7EB;
+    padding: 0.6rem 0.8rem 0.6rem 0.8rem;
+    border: 1px solid #5b719c00;
     border-radius: 0.5rem;
     font-size: 0.8rem;
     font-weight: 500;
     transition: all 0.2s;
+    color: white;
 }
 
 .investment-input:focus {
     outline: none;
-    border-color: #059669;
+    border-color: #8300c5;
     box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.1);
 }
 
 .filter-divider {
-    border-top: 1px solid #F3F4F6;
+    border-top: 1px solid rgb(55, 65, 81);
     margin: 1rem 0;
 }
 
 .categories-list {
-    max-height: 10rem;
+    max-height: 12rem;
     overflow-y: auto;
     padding-right: 0.3rem;
     display: flex;
@@ -315,7 +305,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.6rem;
-    background: white;
+    background: rgb(34, 45, 60);
     border: 1px solid transparent;
     border-radius: 0.5rem;
     cursor: pointer;
@@ -323,8 +313,8 @@
 }
 
 .category-item:hover {
-    background: #ECFDF5;
-    border-color: #A7F3D0;
+    background: #00000013;
+    border-color: #2b2b2b;
 }
 
 .category-checkbox {
@@ -336,9 +326,17 @@
 .checkbox {
     height: 0.9rem;
     width: 0.9rem;
-    color: #059669;
+    color: #8300c5;
     border: 1px solid #D1D5DB;
     border-radius: 0.2rem;
+}
+
+input{
+    background-color: rgb(34, 45, 60);
+}
+
+input::placeholder {
+  color: #ffffff9b; /* cor desejada */
 }
 
 .checkbox:focus {
@@ -347,14 +345,14 @@
 
 .category-name {
     font-size: 0.8rem;
-    color: #374151;
+    color: #8a8a8a;
     font-weight: 500;
 }
 
 .category-count {
     font-size: 0.7rem;
-    color: #059669;
-    background: #ECFDF5;
+    color: #aa00ff;
+    background: #ecfdf50c;
     padding: 0.2rem 0.5rem;
     border-radius: 9999px;
     font-weight: 700;
@@ -381,9 +379,9 @@
 }
 
 .filter-footer {
-    border-top: 1px solid #F3F4F6;
+    border-top: 1px solid rgb(55, 65, 81);
     padding: 1rem; 
-    background: rgba(249, 250, 251, 0.5);
+    background: rgb(39, 51, 68);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
@@ -394,17 +392,17 @@
     padding: 0.6rem 0.8rem;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #374151;
-    background: white;
-    border: 1px solid #E5E7EB;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.17);
+    border: 1px solid rgb(55, 65, 81);
     border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .clear-all-button:hover {
-    background: #F9FAFB;
-    border-color: #D1D5DB;
+    background: #f9fafb55;
+    transform: scale(1.02);
 }
 
 .apply-button {
@@ -412,7 +410,6 @@
     font-size: 0.8rem;
     font-weight: 700;
     color: white;
-    background: #059669;
     border: none;
     border-radius: 0.5rem;
     cursor: pointer;
@@ -421,7 +418,7 @@
 }
 
 .apply-button:hover {
-    background: #047857;
+    transform: scale(1.02);
 }
 
 .state-container {
@@ -850,10 +847,6 @@
         padding: 1rem;
     }
     
-    .filter-section {
-        margin-bottom: 1rem;
-    }
-    
     .section-title {
         font-size: 0.75rem;
         margin-bottom: 0.6rem;
@@ -964,3 +957,27 @@
 }
 
 
+
+
+
+
+
+/* Scrollbar mais suave e moderna */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* deixa o fundo limpo */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.3);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.5);
+}

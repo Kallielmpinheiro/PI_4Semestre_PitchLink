@@ -278,5 +278,13 @@ createRoom(payload: any): Observable<any> {
   });
 }
 
+getUserInnovations(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getUserInnovations}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
 }

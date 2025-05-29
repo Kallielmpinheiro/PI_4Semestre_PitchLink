@@ -1,0 +1,291 @@
+<div class="p-8 space-y-8 bg-gray-900 min-h-screen flex flex-col items-center">
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="text-white text-center">
+    <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+    <p class="mt-4">Carregando inovações...</p>
+  </div>
+
+  <!-- Table -->
+  <table *ngIf="!isLoading"
+    class="w-full max-w-none bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 rounded-3xl p-4 border border-gray-700 shadow-xl overflow-hidden mx-8">
+    
+    <thead class="text-xs uppercase bg-gray-800 text-gray-400">
+      <tr>
+        <th class="px-6 py-3 text-left">Inovação</th>
+        <th class="px-6 py-3 text-left">Investimento</th>
+        <th class="px-6 py-3 text-left">Participação</th>
+        <th class="px-6 py-3 text-left">Categorias</th>
+        <th class="px-6 py-3 text-left">Ações</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let innovation of paginatedInnovations; trackBy: trackByInnovationId"
+        class="border-b border-gray-700 hover:bg-gray-800 transition-colors duration-150">
+        <td class="px-6 py-4 text-white">
+          <div class="flex items-center gap-4">
+            <img class="w-12 h-12 rounded-lg object-cover" [src]="getMainImage(innovation.imagens)" [alt]="innovation.nome" />
+            <div>
+              <div class="text-base font-semibold">{{ innovation.nome }}</div>
+              <div class="font-normal text-gray-400 text-sm max-w-xs truncate">{{ innovation.descricao.slice(0, 40) }}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-6 py-4 text-gray-300">
+          <span class="text-green-400 font-semibold">{{ formatCurrency(innovation.investimento_minimo) }}</span>
+        </td>
+        <td class="px-6 py-4">
+          <span class="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+            {{ formatPercentage(innovation.porcentagem_cedida) }}
+          </span>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex flex-wrap gap-1">
+            <span *ngFor="let categoria of innovation.categorias.slice(0, 3)" 
+              [class]="getCategoryColor(categoria)"
+              class="px-2 py-1 rounded text-xs">
+              {{ categoria }}
+            </span>
+            <span *ngIf="innovation.categorias.length > 3" 
+              class="bg-gray-600 text-gray-400 px-2 py-1 rounded text-xs">
+              +{{ innovation.categorias.length - 3 }}
+            </span>
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex gap-2">
+            <button (click)="viewInnovation(innovation)"
+              class="text-blue-400 hover:underline hover:text-blue-300 transition-colors duration-150">
+              Ver Detalhes
+            </button>
+            <button (click)="editInnovation(innovation)"
+              class="text-yellow-400 hover:underline hover:text-yellow-300 transition-colors duration-150">
+              Editar
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Empty state -->
+  <div *ngIf="!isLoading && innovations.length === 0" class="text-center text-gray-400">
+    <p class="text-xl">Nenhuma inovação encontrada</p>
+    <p class="text-sm mt-2">Crie sua primeira inovação para começar!</p>
+  </div>
+
+  <!-- Modal de Visualização/Edição -->
+  <div *ngIf="isModalOpen && selectedInnovation" 
+    class="fixed inset-0 z-50 flex items-center justify-center overflow-auto outline-none focus:outline-none bg-black/50 backdrop-blur-sm p-4"
+    (click)="closeModal()">
+    <div class="relative w-full max-w-4xl" (click)="$event.stopPropagation()">
+      <!-- Modal content -->
+      <div class="relative bg-gray-800 rounded-2xl shadow-2xl border border-gray-700">
+        <!-- Modal header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-700 bg-gradient-to-r from-gray-800 via-gray-900 to-black rounded-t-2xl">
+          <div class="flex items-center space-x-3">
+            <img class="w-12 h-12 rounded-lg object-cover" [src]="getMainImage(selectedInnovation.imagens)" [alt]="selectedInnovation.nome" />
+            <div>
+              <h3 class="text-xl font-semibold text-white">{{ selectedInnovation.nome }}</h3>
+              <p class="text-gray-300 text-sm mt-1">{{ isEditMode ? 'Editando Inovação' : 'Detalhes da Inovação' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button *ngIf="!isEditMode" (click)="toggleEditMode()"
+              class="text-yellow-400 hover:text-yellow-300 hover:bg-gray-700 rounded-lg text-sm px-3 py-2 transition-all duration-200">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Editar
+            </button>
+            <button (click)="closeModal()" 
+              class="text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center transition-all duration-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal body -->
+        <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+          
+          <!-- Modo Visualização -->
+          <div *ngIf="!isEditMode">
+            <!-- Descrição -->
+            <div>
+              <h4 class="text-lg font-medium text-white mb-3">Descrição</h4>
+              <p class="text-gray-300 leading-relaxed">{{ selectedInnovation.descricao }}</p>
+            </div>
+
+            <!-- Informações Financeiras -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="bg-gray-700 rounded-lg p-4">
+                <h5 class="text-sm font-medium text-gray-400 mb-2">Investimento Mínimo</h5>
+                <p class="text-2xl font-bold text-green-400">{{ formatCurrency(selectedInnovation.investimento_minimo) }}</p>
+              </div>
+              <div class="bg-gray-700 rounded-lg p-4">
+                <h5 class="text-sm font-medium text-gray-400 mb-2">Participação Oferecida</h5>
+                <p class="text-2xl font-bold text-blue-400">{{ formatPercentage(selectedInnovation.porcentagem_cedida) }}</p>
+              </div>
+            </div>
+
+            <!-- Categorias -->
+            <div>
+              <h4 class="text-lg font-medium text-white mb-3">Categorias</h4>
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let categoria of selectedInnovation.categorias" 
+                  [class]="getCategoryColor(categoria)"
+                  class="px-3 py-1 rounded-full text-sm">
+                  {{ categoria }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Galeria de Imagens -->
+            <div *ngIf="selectedInnovation.imagens && selectedInnovation.imagens.length > 0">
+              <h4 class="text-lg font-medium text-white mb-3">Galeria de Imagens</h4>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div *ngFor="let imagem of selectedInnovation.imagens; let i = index" 
+                  class="relative group">
+                  <img [src]="imagem" [alt]="'Imagem ' + (i + 1)" 
+                    class="w-full h-32 object-cover rounded-lg border border-gray-600">
+                  <div *ngIf="i === 0" class="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    Principal
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modo Edição -->
+          <div *ngIf="isEditMode">
+            <form class="space-y-6">
+              
+              <!-- Nome da Inovação -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Nome da Inovação</label>
+                <input type="text" 
+                  [(ngModel)]="selectedInnovation.nome"
+                  name="nome"
+                  class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              </div>
+
+              <!-- Descrição -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Descrição</label>
+                <textarea 
+                  [(ngModel)]="selectedInnovation.descricao"
+                  name="descricao"
+                  rows="4"
+                  class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none">
+                </textarea>
+              </div>
+
+              <!-- Informações Financeiras -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Investimento Mínimo (R$)</label>
+                  <input type="number" 
+                    [(ngModel)]="selectedInnovation.investimento_minimo"
+                    name="investimento"
+                    min="0"
+                    step="0.01"
+                    class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-2">Participação Oferecida (%)</label>
+                  <input type="number" 
+                    [(ngModel)]="selectedInnovation.porcentagem_cedida"
+                    name="porcentagem"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+              </div>
+
+              <!-- Categorias -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Categorias</label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <label *ngFor="let category of categories" class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" 
+                      [checked]="selectedInnovation.categorias.includes(category)"
+                      (change)="toggleCategory(category)"
+                      class="rounded border-gray-600 bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800">
+                    <span class="text-sm text-gray-300">{{ category }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Upload de Imagens -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Imagens</label>
+                <div class="space-y-4">
+                  <!-- Upload Area -->
+                  <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
+                    <input type="file" 
+                      multiple 
+                      accept="image/*"
+                      (change)="onFileSelect($event)"
+                      class="hidden"
+                      #fileInput>
+                    <button type="button" 
+                      (click)="fileInput.click()"
+                      class="text-blue-400 hover:text-blue-300">
+                      <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                      </svg>
+                      Adicionar Imagens
+                    </button>
+                    <p class="text-gray-400 text-sm mt-2">PNG, JPG até 5MB cada</p>
+                  </div>
+
+                  <!-- Preview das Imagens -->
+                  <div *ngIf="selectedInnovation.imagens && selectedInnovation.imagens.length > 0" 
+                    class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div *ngFor="let imagem of selectedInnovation.imagens; let i = index" 
+                      class="relative group">
+                      <img [src]="imagem" [alt]="'Imagem ' + (i + 1)" 
+                        class="w-full h-24 object-cover rounded-lg border border-gray-600">
+                      <button type="button"
+                        (click)="removeImage(i)"
+                        class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                      </button>
+                      <div *ngIf="i === 0" class="absolute bottom-1 left-1 bg-green-600 text-white px-1 py-0.5 rounded text-xs">
+                        Principal
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal footer -->
+        <div class="flex items-center justify-between p-6 border-t border-gray-700 bg-gray-800 rounded-b-2xl">
+          <div>
+            <button *ngIf="isEditMode" (click)="cancelEdit()" type="button"
+              class="py-2 px-4 text-sm font-medium text-gray-300 bg-gray-700 rounded-lg border border-gray-600 hover:bg-gray-600 hover:text-white transition-all duration-200">
+              Cancelar
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <button *ngIf="isEditMode" (click)="saveChanges()" type="button"
+              class="py-2 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all duration-200">
+              Salvar Alterações
+            </button>
+            <button *ngIf="!isEditMode" (click)="closeModal()" type="button"
+              class="py-2 px-4 text-sm font-medium text-gray-300 bg-gray-700 rounded-lg border border-gray-600 hover:bg-gray-600 hover:text-white focus:z-10 focus:ring-4 focus:ring-gray-600 transition-all duration-200">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

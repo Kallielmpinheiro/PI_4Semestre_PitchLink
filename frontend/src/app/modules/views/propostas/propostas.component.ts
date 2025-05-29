@@ -26,6 +26,15 @@ export class PropostasComponent implements OnInit, OnChanges {
   backendResponse: any = null;
   isSuccess = false;
 
+  proposalSummary: {
+  investor: string;
+  sponsored: string;
+  innovation: string;
+  descricao: string;
+  investimento_minimo: string;
+  porcentagem_cedida: string;
+} | null = null;
+
   constructor(private fb: FormBuilder) {
     this.proposalForm = this.fb.group({
       investor: [{value: '', disabled: true}, Validators.required],
@@ -152,8 +161,7 @@ export class PropostasComponent implements OnInit, OnChanges {
   onSubmit(): void {
     if (this.proposalForm.valid) {
       const rawFormData = this.proposalForm.getRawValue();
-      
-      
+
       const formData = {
         sponsored: Number(rawFormData.sponsored),
         innovation: Number(rawFormData.innovation),
@@ -161,12 +169,22 @@ export class PropostasComponent implements OnInit, OnChanges {
         investimento_minimo: parseFloat(rawFormData.investimento_minimo?.toString().replace(',', '.') || '0'),
         porcentagem_cedida: parseFloat(rawFormData.porcentagem_cedida?.toString().replace(',', '.') || '0')
       };
-      
+
       this.authService.postCreateProposalInnovation(formData).subscribe({
         next: (response) => {
           this.backendResponse = response;
           this.isSuccess = true;
           this.showResponseModal = true;
+
+          // Define o resumo da proposta aqui
+          this.proposalSummary = {
+            investor: this.getInvestorName(),
+            sponsored: this.getSponsoredName(),
+            innovation: this.getInnovationName(),
+            descricao: formData.descricao,
+            investimento_minimo: formData.investimento_minimo.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+            porcentagem_cedida: formData.porcentagem_cedida.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + '%'
+          };
         },
         error: (error) => {
           this.backendResponse = error;
@@ -174,8 +192,9 @@ export class PropostasComponent implements OnInit, OnChanges {
           this.showResponseModal = true;
         }
       });
-    } 
+    }
   }
+
 
   closeResponseModal(): void {
     this.showResponseModal = false;
