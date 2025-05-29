@@ -56,7 +56,13 @@ export class SidebarComponent implements OnInit {
     this.isPerfil = url.includes('/app/perfil') || 
     url.includes('/app/subscription')  || 
     url.includes( '/app/ideia') ||
-    url.includes( '/app/listar_ideias');
+    url.includes( '/app/listar_ideias') ||
+    url.includes( '/app/regras-comunidade') ||
+    url.includes( '/app/seguranca-politica') ||
+    url.includes( '/app/dicas-seguranca') ||
+    url.includes( '/app/politicas-privacidade') ||
+    url.includes( 'app/termos-servico') ||
+    url.includes( '/app/politica-cookies');
 
     // Dados do usuário
     this.authService.image().subscribe(

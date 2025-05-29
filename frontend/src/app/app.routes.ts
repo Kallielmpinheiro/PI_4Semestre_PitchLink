@@ -17,6 +17,10 @@ import { PoliticasPrivacidadeComponent } from './modules/pitchlink/pages/politic
 import { LicenciamentoComponent } from './modules/pitchlink/pages/licenciamento/licenciamento.component';
 import { TermosCondicoesComponent } from './modules/pitchlink/pages/termos-condicoes/termos-condicoes.component';
 import { ListaIdeiasComponent } from './modules/views/aplicacao/components/lista-ideias/lista-ideias.component';
+import { RegrasComunidadeComponent } from './modules/views/aplicacao/pages/regras-comunidade/regras-comunidade.component';
+import { SegurancaPoliticaComponent } from './modules/views/aplicacao/pages/seguranca-politica/seguranca-politica.component';
+import { PoliticaCookiesComponent } from './modules/views/aplicacao/pages/politica-cookies/politica-cookies.component';
+import { DicasSegurancaComponent } from './modules/views/aplicacao/pages/dicas-seguranca/dicas-seguranca.component';
 
 export const routes: Routes = [
     {
@@ -103,6 +107,38 @@ export const routes: Routes = [
                 path:'subscription/:parametro', 
                 component: PlanosComponent, 
                 title: 'Mensagens | PitchLink',
+            },
+            {
+                path:'regras-comunidade', 
+                component: RegrasComunidadeComponent, 
+                title: 'Regras da Comunidade | PitchLink',
+            },
+            {
+                path:'seguranca-politica', 
+                component: SegurancaPoliticaComponent, 
+                title: 'Regras da Comunidade | PitchLink',
+            },
+            {
+                path:'dicas-seguranca', 
+                component: DicasSegurancaComponent, 
+                title: 'Regras da Comunidade | PitchLink',
+            },
+            {
+                path:'politica-cookies', 
+                component: PoliticaCookiesComponent, 
+                title: 'Regras da Comunidade | PitchLink',
+            },
+            {
+                path: 'politicas-privacidade',
+                component: PoliticasPrivacidadeComponent,
+                data: { hide: false },
+                title: 'Políticas de Privacidade | PitchLink'
+            },
+            {
+                path: 'termos-servico',
+                component: TermosCondicoesComponent,
+                data: { hide: false },
+                title: 'Termos e Condições | PitchLink'
             },
             { 
                 path: 'ideia', 
