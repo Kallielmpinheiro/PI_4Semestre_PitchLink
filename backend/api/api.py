@@ -1,6 +1,6 @@
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation
+from api.schemas import CreateMessageRequest, CreateRoomRequest, ErrorResponse, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
 from api.models import NegotiationMessage, NegotiationRoom, User, Innovation, InnovationImage, ProposalInnovation
 from ninja.security import django_auth, HttpBearer
@@ -974,3 +974,48 @@ def post_reject_proposal_innovation(request, payload: RejectProposalInnovation):
     }
     
     return 200, {'message': 'Proposta rejeitada com sucesso!', 'proposal': proposal_data}
+
+
+
+@api.get("/get-user-innovations", auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
+def get_user_innovations(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        innovations = Innovation.objects.filter(owner=user)
+        if not innovations.exists():
+            return 404, {'message': 'Nenhuma inovação encontrada'}
+        
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
+        ideas = []
+        for innovation in innovations:
+            imagens = []
+            list_imagem_url = innovation.get_all_images()
+            for imagem_url in list_imagem_url:
+                if imagem_url.startswith('/media/'):
+                    imagens.append(f"{base_url}{imagem_url}")
+                else:
+                    imagens.append(imagem_url)
+            
+            ideas.append({
+                'id': innovation.id,
+                'created': innovation.created.isoformat(),
+                'modified': innovation.modified.isoformat(),
+                'owner_id': innovation.owner.id,
+                'partners': list(map(lambda p: {'id': p.id, 'nome': p.first_name}, innovation.partners.all())),
+                'nome': innovation.nome,
+                'descricao': innovation.descricao,
+                'investimento_minimo': innovation.investimento_minimo,
+                'porcentagem_cedida': innovation.porcentagem_cedida,
+                'categorias': innovation.categorias,
+                'imagens': imagens
+            })
+        
+    except Exception as e:
+        return 404, {'message': f'Erro: {str(e)}'}
+    
+    return 200, {'message': ideas}
