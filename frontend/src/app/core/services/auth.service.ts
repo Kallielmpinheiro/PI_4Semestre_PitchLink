@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment.prod';
 import { api, socialAccounts } from '../../../providers';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { UserProfile, ProfileFormData } from '../models/model';
 
 @Injectable({
@@ -22,6 +22,7 @@ export class AuthService {
   getNeedsProfileCompletion(): boolean {
     return this.needsProfileCompletion;
   }
+  
   loginWithGoogle(): void {
     window.location.href = `${this.baseUrl}${socialAccounts.google}`;
   }
@@ -39,7 +40,6 @@ export class AuthService {
       this.token = token;
     }
   }
-
 
   checkAuth(): Observable<any> {
     const token = this.token || localStorage.getItem('jwt_token');
@@ -60,7 +60,6 @@ export class AuthService {
       catchError(error => of({ status: error.status, message: error.message }))
     );
   }
-
 
   logout(): Observable<any> {
     localStorage.removeItem('jwt_token');
@@ -113,7 +112,6 @@ export class AuthService {
         Authorization: `Bearer ${token}`
       }
     });
-  
   }
 
   private handleError(error: HttpErrorResponse): Observable<any> {
@@ -165,7 +163,6 @@ export class AuthService {
       }
     });
   }
-  
 
   postCreateProposalInnovation(payload: any): Observable<any> {
     const token = localStorage.getItem('jwt_token');
@@ -213,15 +210,15 @@ export class AuthService {
   }
 
   postEnterNegotiationRoom(payload: { id: string }): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.post(`${this.baseUrl}${api.postEnterNegotiationRoom}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-}
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postEnterNegotiationRoom}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
-getAllRooms(): Observable<any> {
+  getAllRooms(): Observable<any> {
     const token = localStorage.getItem('jwt_token');
     return this.http.get(`${this.baseUrl}${api.getAllRooms}`, {
       headers: {
@@ -230,55 +227,54 @@ getAllRooms(): Observable<any> {
     });
   }
 
+  postSearchMensagensRelated(payload: { id: string }): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postSearchMensagensRelated}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
-postSearchMensagensRelated(payload: { id: string }): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.post(`${this.baseUrl}${api.postSearchMensagensRelated}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-}
+  postSearchInnovation(payload: { id: Number }): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postSearchInnovation}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
-postSearchInnovation(payload: { id: Number }): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.post(`${this.baseUrl}${api.postSearchInnovation}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-}
+  postAcceptProposalInnovation(id: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { id };
+    return this.http.post(`${this.baseUrl}${api.postAcceptProposalInnovation}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  }
 
-postAcceptProposalInnovation(id: number): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  const payload = { id };
-  return this.http.post(`${this.baseUrl}${api.postAcceptProposalInnovation}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }
-  });
-}
+  postRejectProposalInnovation(id: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { id };
+    return this.http.post(`${this.baseUrl}${api.postRejectProposalInnovation}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  }
 
-postRejectProposalInnovation(id: number): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  const payload = { id };
-  return this.http.post(`${this.baseUrl}${api.postRejectProposalInnovation}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }
-  });
-}
+  createRoom(payload: any): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.createRoom}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  }
 
-createRoom(payload: any): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.post(`${this.baseUrl}${api.createRoom}`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }
-  });
-}
-
-getUserInnovations(): Observable<any> {
+  getUserInnovations(): Observable<any> {
     const token = localStorage.getItem('jwt_token');
     return this.http.get(`${this.baseUrl}${api.getUserInnovations}`, {
       headers: {
@@ -287,24 +283,54 @@ getUserInnovations(): Observable<any> {
     });
   }
 
-postUpdateInnovationDetails(formData: FormData): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.post(`${this.baseUrl}${api.postUpdateInnovationDetails}`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    }
-  });
-}
+  postUpdateInnovationDetails(formData: FormData): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.post(`${this.baseUrl}${api.postUpdateInnovationDetails}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  }
 
-getInnovationImages(innovationId: number): Observable<any> {
-  const token = localStorage.getItem('jwt_token');
-  return this.http.get(`${this.baseUrl}${api.getInnovationimages}/${innovationId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-}
+  getInnovationImages(innovationId: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getInnovationimages}/${innovationId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
+  getPaymentPlans(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getPaymentPlans}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
 
+  createPaymentIntent(plan: string): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { plan };
+    return this.http.post(`${this.baseUrl}${api.postCreatePaymentIntent}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+  }
+
+  confirmPayment(plan: string, paymentIntentId: string): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { 
+      plan: plan, 
+      payment_method_id: paymentIntentId
+    };
+    return this.http.post(`${this.baseUrl}${api.postConfirmPayment}`, payload, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    })
+  }
 
 }

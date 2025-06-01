@@ -28,8 +28,12 @@ export const api = {
     postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation",
     getUserInnovations: prefix + "/get-user-innovations",
     postUpdateInnovationDetails: prefix + "/post-update-innovation-details",
-    getInnovationimages: prefix + '/get-innovation-images'
-
+    getInnovationimages: prefix + '/get-innovation-images',
+    getPaymentPlans: prefix + '/get-payment-plans',
+    postCreatePaymentIntent: prefix + '/post-create-payment-intent',
+    postConfirmPayment: prefix + '/post-confirm-payment',
+    getPaymentHistory: prefix + '/get-payment-history',
+    stripeWebhook: prefix + '/stripe-webhook'
 }
 
 export const socialAccounts = {
