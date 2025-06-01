@@ -3,24 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { CATEGORIES } from '../../../../../core/constants/categories';
-
-interface Innovation {
-  id: number;
-  created: string;
-  modified: string;
-  owner_id: number;
-  partners: any[];
-  nome: string;
-  descricao: string;
-  investimento_minimo: string;
-  porcentagem_cedida: string;
-  categorias: string[];
-  imagens: string[];
-}
+import { ResponseModalComponent } from '../../../response-modal/response-modal.component';
+import { ModalConfig, Innovation, ImageData } from '../../../../../shared/interfaces/common.interfaces';
 
 @Component({
   selector: 'app-lista-ideias',
-  imports: [NgFor, NgIf, NgClass, CommonModule, FormsModule],
+  imports: [NgFor, NgIf, CommonModule, FormsModule, ResponseModalComponent],
   templateUrl: './lista-ideias.component.html',
   styleUrl: './lista-ideias.component.css'
 })
@@ -38,6 +26,19 @@ export class ListaIdeiasComponent implements OnInit {
   selectedInnovation: Innovation | null = null;
   isEditMode = false;
   originalInnovation: Innovation | null = null;
+  
+  currentImages: ImageData[] = [];
+  newImages: File[] = [];
+  imagesToDelete: number[] = [];
+  previewUrls: string[] = [];
+
+  responseModalConfig: ModalConfig = {
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    showCancel: false
+  };
+  responseModalVisible: boolean = false;
 
   ngOnInit() {
     this.loadInnovations();
@@ -47,15 +48,15 @@ export class ListaIdeiasComponent implements OnInit {
     this.isLoading = true;
     this.authService.getInnovation().subscribe({
       next: (response) => {
-        console.log('Resposta das inovações:', response);
         const innovations = response.message || response.data || response;
         
         this.innovations = Array.isArray(innovations) ? innovations : [];
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Erro ao carregar inovações:', error);
+        console.error(error);
         this.isLoading = false;
+        this.showResponseModal('Erro ao carregar inovações', error);
       }
     });
   }
@@ -80,6 +81,7 @@ export class ListaIdeiasComponent implements OnInit {
     this.originalInnovation = { ...innovation };
     this.isEditMode = false;
     this.isModalOpen = true;
+    this.loadInnovationImages(innovation.id);
   }
 
   editInnovation(innovation: Innovation) {
@@ -87,12 +89,28 @@ export class ListaIdeiasComponent implements OnInit {
     this.originalInnovation = { ...innovation };
     this.isEditMode = true;
     this.isModalOpen = true;
+    this.loadInnovationImages(innovation.id);
+  }
+
+  loadInnovationImages(innovationId: number) {
+    this.authService.getInnovationImages(innovationId).subscribe({
+      next: (response) => {
+        this.currentImages = response.images;
+      },
+      error: (error) => {
+        console.error(error);
+        this.currentImages = [];
+        const messageerror = error
+        this.showResponseModal(messageerror, 'error');
+      }
+    });
   }
 
   toggleEditMode() {
     this.isEditMode = !this.isEditMode;
     if (this.isEditMode && this.selectedInnovation) {
       this.originalInnovation = { ...this.selectedInnovation };
+      this.resetImageState();
     }
   }
 
@@ -101,6 +119,7 @@ export class ListaIdeiasComponent implements OnInit {
     this.selectedInnovation = null;
     this.originalInnovation = null;
     this.isEditMode = false;
+    this.resetImageState();
   }
 
   cancelEdit() {
@@ -108,19 +127,91 @@ export class ListaIdeiasComponent implements OnInit {
       this.selectedInnovation = { ...this.originalInnovation };
     }
     this.isEditMode = false;
+    this.resetImageState();
+  }
+
+  resetImageState() {
+    this.newImages = [];
+    this.imagesToDelete = [];
+    this.previewUrls = [];
   }
 
   saveChanges() {
     if (!this.selectedInnovation) return;
 
+    const formData = new FormData();
     
-    const index = this.innovations.findIndex(inn => inn.id === this.selectedInnovation!.id);
-    if (index !== -1) {
-      this.innovations[index] = { ...this.selectedInnovation };
+    formData.append('id', this.selectedInnovation.id.toString());
+    formData.append('nome', this.selectedInnovation.nome);
+    formData.append('descricao', this.selectedInnovation.descricao);
+    formData.append('investimento_minimo', this.selectedInnovation.investimento_minimo);
+    formData.append('porcentagem_cedida', this.selectedInnovation.porcentagem_cedida);
+    formData.append('categorias', this.selectedInnovation.categorias.join(','));
+    
+    if (this.imagesToDelete.length > 0) {
+      formData.append('delete_image_ids', this.imagesToDelete.join(','));
+    }
+    
+    this.newImages.forEach((file, index) => {
+      formData.append('novas_imagens', file);
+    });
+    
+    if (this.currentImages.length === this.imagesToDelete.length && this.newImages.length === 0) {
+      formData.append('keep_existing_images', 'false');
     }
 
-    this.isEditMode = false;
-    this.closeModal();
+    this.authService.postUpdateInnovationDetails(formData).subscribe({
+      next: (response) => {
+        
+        const index = this.innovations.findIndex(inn => inn.id === this.selectedInnovation!.id);
+        if (index !== -1) {
+          this.innovations[index] = { ...this.selectedInnovation! };
+        }
+
+        if (this.selectedInnovation) {
+          this.loadInnovationImages(this.selectedInnovation.id);
+        }
+        
+        this.isEditMode = false;
+        this.resetImageState();
+        
+        const message = response.message;
+        this.showResponseModal(message, 'success');
+      },
+      error: (error) => {
+        console.error(error);
+        
+        if (this.originalInnovation) {
+          this.selectedInnovation = { ...this.originalInnovation };
+        }
+        this.resetImageState();
+        
+        const errorMessage = error?.error?.message || error?.message;
+        this.showResponseModal(errorMessage, 'error');
+      }
+    });
+  }
+
+  showResponseModal(message: string, type: 'success' | 'error' | 'warning' | 'info') {
+    this.responseModalConfig = {
+      message: message,
+      type: type,
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
+  }
+
+  onResponseModalClose() {
+    this.responseModalVisible = false;
+  }
+
+  onResponseModalConfirm() {
+    this.responseModalVisible = false;
+  }
+
+  saveInnovation() {
+    this.saveChanges();
   }
 
   toggleCategory(category: string) {
@@ -136,24 +227,69 @@ export class ListaIdeiasComponent implements OnInit {
 
   onFileSelect(event: any) {
     const files = event.target.files;
-    if (!files || !this.selectedInnovation) return;
+    if (!files) return;
 
     for (let file of files) {
-      if (file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
+      if (this.isValidImageFile(file) && (this.currentImages.length + this.newImages.length - this.imagesToDelete.length) < 6) {
+        this.newImages.push(file);
+        
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          if (this.selectedInnovation) {
-            this.selectedInnovation.imagens.push(e.target.result);
-          }
+          this.previewUrls.push(e.target.result);
         };
         reader.readAsDataURL(file);
+      } else if (!this.isValidImageFile(file)) {
+        this.showResponseModal('Arquivo inválido. Use apenas JPG ou PNG com até 5MB.', 'warning');
+      } else if ((this.currentImages.length + this.newImages.length - this.imagesToDelete.length) >= 6) {
+        this.showResponseModal('Limite máximo de 6 imagens atingido.', 'warning');
+        break;
       }
+    }
+    
+    event.target.value = '';
+  }
+
+  isValidImageFile(file: File): boolean {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    return validTypes.includes(file.type) && file.size <= maxSize;
+  }
+
+  removeExistingImage(imageId: number) {
+    if (!this.imagesToDelete.includes(imageId)) {
+      this.imagesToDelete.push(imageId);
     }
   }
 
-  removeImage(index: number) {
-    if (!this.selectedInnovation) return;
-    this.selectedInnovation.imagens.splice(index, 1);
+  restoreImage(imageId: number) {
+    const index = this.imagesToDelete.indexOf(imageId);
+    if (index > -1) {
+      this.imagesToDelete.splice(index, 1);
+    }
+  }
+
+  removeNewImage(index: number) {
+    this.newImages.splice(index, 1);
+    this.previewUrls.splice(index, 1);
+  }
+
+  isImageMarkedForDeletion(imageId: number): boolean {
+    return this.imagesToDelete.includes(imageId);
+  }
+
+  getAllCurrentImages(): any[] {
+    const existingImages = this.currentImages
+      .filter(img => !this.imagesToDelete.includes(img.id))
+      .map(img => ({ ...img, type: 'existing' }));
+    
+    const newImages = this.previewUrls.map((url, index) => ({
+      id: `new_${index}`,
+      url: url,
+      name: this.newImages[index].name,
+      type: 'new'
+    }));
+    
+    return [...existingImages, ...newImages];
   }
 
   formatCurrency(value: string): string {

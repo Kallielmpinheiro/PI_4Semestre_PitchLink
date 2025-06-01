@@ -6,9 +6,9 @@ export const PLANOS: Record<string, Plano> = {
     imagem: "assets/imgs/planos/Rubi.png",
     corGradiente: "from-[#e0115f] to-[#9b3e63]",
     preco: {
-      semana: { valor: 10.0 },
-      mes: { valor: 5.12, economia: "56%" },
-      semestre: { valor: 3.43, economia: "78%" }
+      semana: { valor: 99.90 },
+      mes: { valor: 99.90, economia: "56%" },
+      semestre: { valor: 99.90, economia: "78%" }
     },
     curtidas: [
       { nome: "Curtidas ilimitadas", status: true },
@@ -63,9 +63,9 @@ export const PLANOS: Record<string, Plano> = {
     imagem: "assets/imgs/planos/Safira.png",
     corGradiente: "from-[#385f8f] to-[#004268]",
     preco: {
-      semana: { valor: 16.0 },
-      mes: { valor: 8.0, economia: "51%" },
-      semestre: { valor: 5.21, economia: "76%" }
+      semana: { valor: 59.90 },
+      mes: { valor: 59.90, economia: "56%" },
+      semestre: { valor:59.90, economia: "78%" }
     },
     curtidas: [
       { nome: "Curtidas ilimitadas", status: true },
@@ -120,9 +120,9 @@ export const PLANOS: Record<string, Plano> = {
     imagem: "assets/imgs/planos/Esmeralda.png",
     corGradiente: "from-[#50C878] to-[#24753f]",
     preco: {
-      semana: { valor: 35.0 },
-      mes: { valor: 17.48, economia: "52%" },
-      semestre: { valor: 11.21, economia: "76%" }
+      semana: { valor: 29.90 },
+      mes: { valor: 29.90, economia: "52%" },
+      semestre: { valor: 29.90, economia: "76%" }
     },
     curtidas: [
       { nome: "Curtidas ilimitadas", status: true },

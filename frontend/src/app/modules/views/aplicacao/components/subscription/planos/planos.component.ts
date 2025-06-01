@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Plano } from '../../../interface/IPlanos.interface';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -13,11 +13,15 @@ import { ModalLoginComponent } from '../../../../../pitchlink/components/modal-l
   templateUrl: './planos.component.html',
   styleUrls: ['./planos.component.css']
 })
-export class PlanosComponent {
+export class PlanosComponent implements OnInit {
   planosKeys: string[] = [];
   planos: Record<string, Plano> = PLANOS;
 
-  constructor(private route: ActivatedRoute, private sanitizer: DomSanitizer, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private sanitizer: DomSanitizer, 
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -28,6 +32,11 @@ export class PlanosComponent {
 
   isInAppRoute(): boolean {
     return this.router.url.includes('/app');
+  }
+
+  // Método para navegar para pagamento
+  goToPayment(planoNome: string) {
+    this.router.navigate(['/app/test'], { queryParams: { plan: planoNome.toLowerCase() } });
   }
 
   getStatusIcon(status: boolean) {

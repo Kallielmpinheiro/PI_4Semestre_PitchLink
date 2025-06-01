@@ -8,6 +8,14 @@ from asgiref.sync import async_to_sync
 # Create your models here.
 
 class User(models.Model):
+    
+    PLAN_CHOICES = [
+        ('no_plan', _('No plan')),
+        ('esmerald', _('Esmerald')),
+        ('sapphire', _('Sapphire')),
+        ('ruby', _('Ruby')),
+    ]
+
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
     modified = models.DateTimeField(_('Alterado em'), auto_now=True)
     first_name = models.CharField(_('Nome'), max_length=255, blank=True, null=True)
@@ -17,6 +25,7 @@ class User(models.Model):
     profile_picture_url = models.URLField(_('Foto URL'), max_length=500, blank=True, null=True)
     data_nasc = models.DateField(_('Data Nasc.'), blank=True, null=True)
     categories = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
+    plan = models.CharField(_('Plano'), max_length=20, choices=PLAN_CHOICES, default='no_plan')
 
     class Meta:
         verbose_name = _('Usuario')
@@ -33,6 +42,9 @@ class User(models.Model):
             return self.profile_picture_url
         return None
 
+    @property
+    def get_plan(self):
+        return self.plan
 
 class Innovation(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
@@ -160,3 +172,45 @@ class ProposalInnovation(models.Model):
 
     def __str__(self):
             return f"Proposta de {self.investor.first_name} para {self.innovation.nome}"
+
+class PaymentTransaction(models.Model):
+    
+    PLAN_PRICES = {
+        'esmerald': 29.90,
+        'sapphire': 59.90,
+        'ruby': 99.90,
+    }
+    
+    STATUS_CHOICES = [
+        ('pending', _('Pendente')),
+        ('processing', _('Processando')),
+        ('succeeded', _('Sucesso')),
+        ('failed', _('Falhou')),
+        ('cancelled', _('Cancelado')),
+        ('requires_action', _('Requer Ação')),
+    ]
+
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payment_transactions')
+    plan = models.CharField(_('Plano'), max_length=20, choices=User.PLAN_CHOICES)
+    amount = models.DecimalField(_('Valor'), max_digits=10, decimal_places=2)
+    status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='pending')
+    stripe_payment_intent_id = models.CharField(_('Stripe Payment Intent ID'), max_length=100, unique=True)
+    stripe_client_secret = models.CharField(_('Stripe Client Secret'), max_length=200, blank=True, null=True)
+    payment_method_id = models.CharField(_('Payment Method ID'), max_length=100, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = _('Transação de Pagamento')
+        verbose_name_plural = _('Transações de Pagamento')
+        ordering = ['-created']
+
+    def __str__(self):
+        return f"Pagamento {self.plan} - {self.user.first_name} - {self.status}"
+    
+    @classmethod
+    def get_plan_prices(cls):
+        return cls.PLAN_PRICES
+    
+    def get_amount_in_cents(self):
+        return int(self.amount * 100)

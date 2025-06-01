@@ -24,6 +24,10 @@ export class SubscriptionComponent {
     return this.router.url.includes('/app');
   }
 
+  goToPayment(planoNome: string) {
+    this.router.navigate(['/app/test'], { queryParams: { plan: planoNome.toLowerCase() } });
+  }
+
   getStatusIcon(status: boolean) {
     let svg;
     if (status) {
