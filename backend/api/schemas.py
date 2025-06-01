@@ -85,4 +85,30 @@ class UpdateInovattionReq(Schema):
     investimento_minimo: Optional[float] = None
     porcentagem_cedida: Optional[float] = None
     categorias: Optional[List[str]] = None
+    delete_image_ids: Optional[List[int]] = None
+    keep_existing_images: Optional[bool] = True
+
+class PaymentPlanReq(Schema):
+    plan: str
+    payment_method_id: str
+    
+    
+class CreatePaymentIntentReq(Schema):
+    plan: str
+    
+class PaymentResponse(Schema):
+    success: bool
+    message: str
+    plan: str = None
+    client_secret: str = None
+    payment_intent_id: str = None
+    amount: float = None
+    
+class PaymentHistoryResponse(Schema):
+    id: int
+    plan: str
+    amount: float
+    created: str
+    status: str
+    stripe_payment_intent_id: str
 

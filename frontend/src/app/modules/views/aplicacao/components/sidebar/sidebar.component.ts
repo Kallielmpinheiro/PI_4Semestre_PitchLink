@@ -30,6 +30,7 @@ export class SidebarComponent implements OnInit {
   email: string = '';
   data_nasc: string = '';
   categories: string = '';
+  plan: string = '';
 
   imagem: string = '';
 
@@ -78,13 +79,19 @@ export class SidebarComponent implements OnInit {
 
     this.authService.getUser().subscribe(
       dataResponse => {
+        
         this.nome = dataResponse.data.first_name;
         this.sobrenome = dataResponse.data.last_name;
         this.email = dataResponse.data.email;
+        this.plan = dataResponse.data.plan
         this.data_nasc = dataResponse.data.data_nasc;
         this.categories = dataResponse.data.categories;
       },
-      error => console.error('Erro ao buscar dados do usuário:', error)
+      error => console.error(error)
     );
   }
+  abrirModalPagamento(): void {
+    
+    console.log('Abrindo modal de pagamento...');
+}
 }

@@ -143,12 +143,12 @@
             </div>
 
             <!-- Galeria de Imagens -->
-            <div *ngIf="selectedInnovation.imagens && selectedInnovation.imagens.length > 0">
+            <div *ngIf="currentImages && currentImages.length > 0">
               <h4 class="text-lg font-medium text-white mb-3">Galeria de Imagens</h4>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div *ngFor="let imagem of selectedInnovation.imagens; let i = index" 
+                <div *ngFor="let imagem of currentImages; let i = index" 
                   class="relative group">
-                  <img [src]="imagem" [alt]="'Imagem ' + (i + 1)" 
+                  <img [src]="imagem.url" [alt]="imagem.name || 'Imagem ' + (i + 1)" 
                     class="w-full h-32 object-cover rounded-lg border border-gray-600">
                   <div *ngIf="i === 0" class="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">
                     Principal
@@ -227,36 +227,91 @@
                   <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-gray-500 transition-colors">
                     <input type="file" 
                       multiple 
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/jpg"
                       (change)="onFileSelect($event)"
                       class="hidden"
                       #fileInput>
                     <button type="button" 
                       (click)="fileInput.click()"
-                      class="text-blue-400 hover:text-blue-300">
+                      class="text-blue-400 hover:text-blue-300"
+                      [disabled]="getAllCurrentImages().length >= 6">
                       <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                       </svg>
                       Adicionar Imagens
                     </button>
-                    <p class="text-gray-400 text-sm mt-2">PNG, JPG até 5MB cada</p>
+                    <p class="text-gray-400 text-sm mt-2">PNG, JPG até 5MB cada (máx. 6 imagens)</p>
+                    <p class="text-gray-500 text-xs mt-1">
+                      {{ getAllCurrentImages().length }}/6 imagens
+                    </p>
                   </div>
 
-                  <!-- Preview das Imagens -->
-                  <div *ngIf="selectedInnovation.imagens && selectedInnovation.imagens.length > 0" 
-                    class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div *ngFor="let imagem of selectedInnovation.imagens; let i = index" 
-                      class="relative group">
-                      <img [src]="imagem" [alt]="'Imagem ' + (i + 1)" 
+                  <!-- Preview das Imagens Atuais e Novas -->
+                  <div *ngIf="getAllCurrentImages().length > 0" 
+                    class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    
+                    <!-- Imagens Existentes -->
+                    <div *ngFor="let image of currentImages; let i = index" 
+                      class="relative group"
+                      [class.opacity-50]="isImageMarkedForDeletion(image.id)">
+                      <img [src]="image.url" [alt]="image.name" 
                         class="w-full h-24 object-cover rounded-lg border border-gray-600">
+                      
+                      <!-- Botão de deletar/restaurar -->
                       <button type="button"
-                        (click)="removeImage(i)"
+                        *ngIf="!isImageMarkedForDeletion(image.id)"
+                        (click)="removeExistingImage(image.id)"
                         class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity">
                         ×
                       </button>
-                      <div *ngIf="i === 0" class="absolute bottom-1 left-1 bg-green-600 text-white px-1 py-0.5 rounded text-xs">
+                      
+                      <!-- Botão de restaurar -->
+                      <button type="button"
+                        *ngIf="isImageMarkedForDeletion(image.id)"
+                        (click)="restoreImage(image.id)"
+                        class="absolute -top-2 -right-2 bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-green-700 transition-colors">
+                        ↶
+                      </button>
+                      
+                      <!-- Indicador de principal -->
+                      <div *ngIf="i === 0 && !isImageMarkedForDeletion(image.id)" 
+                        class="absolute bottom-1 left-1 bg-green-600 text-white px-1 py-0.5 rounded text-xs">
                         Principal
                       </div>
+                      
+                      <!-- Indicador de exclusão -->
+                      <div *ngIf="isImageMarkedForDeletion(image.id)" 
+                        class="absolute bottom-1 left-1 bg-red-600 text-white px-1 py-0.5 rounded text-xs">
+                        Será removida
+                      </div>
+                    </div>
+                    
+                    <!-- Novas Imagens -->
+                    <div *ngFor="let previewUrl of previewUrls; let i = index" 
+                      class="relative group">
+                      <img [src]="previewUrl" [alt]="'Nova imagem ' + (i + 1)" 
+                        class="w-full h-24 object-cover rounded-lg border border-green-600">
+                      
+                      <button type="button"
+                        (click)="removeNewImage(i)"
+                        class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-700 transition-colors">
+                        ×
+                      </button>
+                      
+                      <div class="absolute bottom-1 left-1 bg-blue-600 text-white px-1 py-0.5 rounded text-xs">
+                        Nova
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Informações sobre alterações -->
+                  <div *ngIf="imagesToDelete.length > 0 || newImages.length > 0" 
+                    class="text-sm text-gray-400 bg-gray-700 rounded-lg p-3">
+                    <div *ngIf="imagesToDelete.length > 0" class="text-red-400">
+                      {{ imagesToDelete.length }} imagem(ns) será(ão) removida(s)
+                    </div>
+                    <div *ngIf="newImages.length > 0" class="text-green-400">
+                      {{ newImages.length }} nova(s) imagem(ns) será(ão) adicionada(s)
                     </div>
                   </div>
                 </div>
@@ -288,4 +343,32 @@
       </div>
     </div>
   </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && totalPages > 1" class="flex justify-center space-x-2">
+    <button (click)="setPage(page - 1)" [disabled]="page === 1"
+      class="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600">
+      Anterior
+    </button>
+    
+    <span *ngFor="let p of [].constructor(totalPages); let i = index" 
+      class="px-3 py-2 rounded cursor-pointer"
+      [class]="(i + 1) === page ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'"
+      (click)="setPage(i + 1)">
+      {{ i + 1 }}
+    </span>
+    
+    <button (click)="setPage(page + 1)" [disabled]="page === totalPages"
+      class="px-3 py-2 bg-gray-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600">
+      Próxima
+    </button>
+  </div>
+
+  <!-- Response Modal -->
+  <app-response-modal
+    [visible]="responseModalVisible"
+    [config]="responseModalConfig"
+    (onClose)="onResponseModalClose()"
+    (onConfirm)="onResponseModalConfirm()">
+  </app-response-modal>
 </div>

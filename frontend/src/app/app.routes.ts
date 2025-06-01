@@ -21,6 +21,7 @@ import { RegrasComunidadeComponent } from './modules/views/aplicacao/pages/regra
 import { SegurancaPoliticaComponent } from './modules/views/aplicacao/pages/seguranca-politica/seguranca-politica.component';
 import { PoliticaCookiesComponent } from './modules/views/aplicacao/pages/politica-cookies/politica-cookies.component';
 import { DicasSegurancaComponent } from './modules/views/aplicacao/pages/dicas-seguranca/dicas-seguranca.component';
+import { PaymentComponent } from './modules/user/components/payment/payment.component';
 
 export const routes: Routes = [
     {
@@ -81,6 +82,10 @@ export const routes: Routes = [
             {
                 path:'recs', 
                 component: SwingComponent
+            },
+                        {
+                path:'test', 
+                component: PaymentComponent
             },
             {
                 path:'perfil', 
