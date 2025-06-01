@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 
@@ -30,6 +31,7 @@ interface PaymentTransaction {
 })
 export class PaymentComponent implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   
   plans: PaymentPlan[] = [];
   paymentHistory: PaymentTransaction[] = [];
@@ -50,9 +52,31 @@ export class PaymentComponent implements OnInit {
   
   ngOnInit() {
     this.loadPlans();
+    
+    this.route.queryParams.subscribe(params => {
+      if (params['plan']) {
+        const planId = this.mapPlanNameToId(params['plan']);
+        if (planId) {
+          this.selectedPlan = planId;
+          setTimeout(() => {
+            if (this.selectedPlan && this.stripe) {
+              this.mountCardElement();
+            }
+          }, 1000);
+        }
+      }
+    });
   }
   
-  // Add helper method to get selected plan price
+  private mapPlanNameToId(planName: string): string {
+    const planMapping: { [key: string]: string } = {
+      'ruby': 'ruby',
+      'sapphire': 'sapphire', 
+      'emerald': 'esmerald' 
+    };
+    return planMapping[planName] || '';
+  }
+  
   getSelectedPlanPrice(): number {
     if (!this.selectedPlan) return 0;
     const plan = this.plans.find(p => p.id === this.selectedPlan);
@@ -126,8 +150,6 @@ export class PaymentComponent implements OnInit {
     });
   }
   
-  
-  
   selectPlan(planId: string) {
     this.selectedPlan = planId;
     this.clearMessages();
@@ -146,14 +168,12 @@ export class PaymentComponent implements OnInit {
     this.clearMessages();
     
     try {
-      // 1. Criar Payment Intent
       const intentResponse = await this.authService.createPaymentIntent(this.selectedPlan).toPromise();
       
       if (!intentResponse.success) {
         throw new Error(intentResponse.message);
       }
       
-      // 2. Confirmar pagamento com Stripe
       const { error, paymentIntent } = await this.stripe.confirmCardPayment(
         intentResponse.client_secret,
         {
@@ -171,7 +191,6 @@ export class PaymentComponent implements OnInit {
       }
       
       if (paymentIntent.status === 'succeeded') {
-        // 3. Confirmar no backend
         const confirmResponse = await this.authService.confirmPayment(
           this.selectedPlan,
           paymentIntent.id
@@ -182,7 +201,6 @@ export class PaymentComponent implements OnInit {
           this.currentPlan = this.selectedPlan;
           this.selectedPlan = '';
           
-          // Limpar formulário
           if (this.cardElement) {
             this.cardElement.clear();
           }
