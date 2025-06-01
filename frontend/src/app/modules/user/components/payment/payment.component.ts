@@ -105,7 +105,7 @@ export class PaymentComponent implements OnInit {
         style: {
           base: {
             fontSize: '16px',
-            color: '#424770',
+            color: '#ffffff',
             '::placeholder': {
               color: '#aab7c4',
             },

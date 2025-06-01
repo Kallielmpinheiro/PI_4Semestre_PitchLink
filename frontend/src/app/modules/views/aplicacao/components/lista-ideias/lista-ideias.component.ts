@@ -45,22 +45,31 @@ export class ListaIdeiasComponent implements OnInit {
   }
 
   loadInnovations() {
-    this.isLoading = true;
-    this.authService.getInnovation().subscribe({
-      next: (response) => {
-        const innovations = response.message || response.data || response;
-        
-        this.innovations = Array.isArray(innovations) ? innovations : [];
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error(error);
-        this.isLoading = false;
-        this.showResponseModal('Erro ao carregar inovações', error);
-      }
-    });
-  }
+  this.isLoading = true;
+  this.authService.getInnovationDetails().subscribe({
+    next: (response) => {
+      const innovations = response.message || response.data || response;
+      
+      this.innovations = Array.isArray(innovations) ? innovations : [];
+      this.isLoading = false;
+    },
+    error: (error) => {
+      console.error(error);
+      this.isLoading = false;
+      
+      const isNotFoundError = error.status === 404 && 
+        error.error?.message === 'Nenhuma inovação encontrada';
+      
+      if (isNotFoundError) {
 
+        this.innovations = [];
+      } else {
+        const errorMessage = error?.error?.message || error?.message || 'Erro ao carregar inovações';
+        this.showResponseModal(errorMessage, 'error');
+      }
+    }
+  });
+}
   get paginatedInnovations(): Innovation[] {
     const start = (this.page - 1) * this.pageSize;
     return this.innovations.slice(start, start + this.pageSize);

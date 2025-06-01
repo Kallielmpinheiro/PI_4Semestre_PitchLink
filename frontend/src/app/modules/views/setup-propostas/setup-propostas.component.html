@@ -1,0 +1,218 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+  <!-- Header with improved styling -->
+  <div class="mb-8">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl font-bold text-slate-900 mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        Gestão de Propostas
+      </h1>
+      <p class="text-slate-600 text-lg">
+        Acompanhe suas propostas canceladas, rejeitadas e negócios fechados
+      </p>
+    </div>
+  </div>
+
+  <!-- Loading State with improved animation -->
+  <div *ngIf="loading" class="flex justify-center items-center py-20">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-200"></div>
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading" class="max-w-7xl mx-auto">
+    <!-- Enhanced Navigation Cards -->
+    <div class="mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Propostas Canceladas Card -->
+        <div 
+          (click)="setActiveTab('canceled')"
+          [class]="'relative group cursor-pointer transform transition-all duration-300 hover:scale-105 ' + 
+            (activeTab === 'canceled' ? 'scale-105 shadow-xl' : 'hover:shadow-lg')"
+        >
+          <div [class]="'p-6 rounded-2xl border-2 transition-all duration-300 ' + 
+            (activeTab === 'canceled' 
+              ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-red-200 shadow-lg' 
+              : 'border-slate-200 bg-white hover:border-red-300 hover:shadow-md')"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div [class]="'p-3 rounded-xl ' + (activeTab === 'canceled' ? 'bg-red-500' : 'bg-slate-100 group-hover:bg-red-100')">
+                <svg [class]="'w-6 h-6 ' + (activeTab === 'canceled' ? 'text-white' : 'text-slate-600 group-hover:text-red-600')" 
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+              <div *ngIf="activeTab === 'canceled'" class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Propostas Canceladas</h3>
+            <p [class]="'text-3xl font-bold mb-2 ' + (activeTab === 'canceled' ? 'text-red-600' : 'text-slate-700')">
+              {{ proposalsCanceled.length }}
+            </p>
+            <p class="text-sm text-slate-500">Canceladas pelo cliente</p>
+          </div>
+        </div>
+
+        <!-- Propostas Rejeitadas Card -->
+        <div 
+          (click)="setActiveTab('rejected')"
+          [class]="'relative group cursor-pointer transform transition-all duration-300 hover:scale-105 ' + 
+            (activeTab === 'rejected' ? 'scale-105 shadow-xl' : 'hover:shadow-lg')"
+        >
+          <div [class]="'p-6 rounded-2xl border-2 transition-all duration-300 ' + 
+            (activeTab === 'rejected' 
+              ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-orange-100 shadow-orange-200 shadow-lg' 
+              : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-md')"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div [class]="'p-3 rounded-xl ' + (activeTab === 'rejected' ? 'bg-orange-500' : 'bg-slate-100 group-hover:bg-orange-100')">
+                <svg [class]="'w-6 h-6 ' + (activeTab === 'rejected' ? 'text-white' : 'text-slate-600 group-hover:text-orange-600')" 
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z">
+                  </path>
+                </svg>
+              </div>
+              <div *ngIf="activeTab === 'rejected'" class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Propostas Rejeitadas</h3>
+            <p [class]="'text-3xl font-bold mb-2 ' + (activeTab === 'rejected' ? 'text-orange-600' : 'text-slate-700')">
+              {{ proposalsRejected.length }}
+            </p>
+            <p class="text-sm text-slate-500">Não aprovadas</p>
+          </div>
+        </div>
+
+        <!-- Negócios Fechados Card -->
+        <div 
+          (click)="setActiveTab('closed')"
+          [class]="'relative group cursor-pointer transform transition-all duration-300 hover:scale-105 ' + 
+            (activeTab === 'closed' ? 'scale-105 shadow-xl' : 'hover:shadow-lg')"
+        >
+          <div [class]="'p-6 rounded-2xl border-2 transition-all duration-300 ' + 
+            (activeTab === 'closed' 
+              ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-green-200 shadow-lg' 
+              : 'border-slate-200 bg-white hover:border-green-300 hover:shadow-md')"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <div [class]="'p-3 rounded-xl ' + (activeTab === 'closed' ? 'bg-green-500' : 'bg-slate-100 group-hover:bg-green-100')">
+                <svg [class]="'w-6 h-6 ' + (activeTab === 'closed' ? 'text-white' : 'text-slate-600 group-hover:text-green-600')" 
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div *ngIf="activeTab === 'closed'" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-800 mb-2">Negócios Fechados</h3>
+            <p [class]="'text-3xl font-bold mb-2 ' + (activeTab === 'closed' ? 'text-green-600' : 'text-slate-700')">
+              {{ proposalsClosed.length }}
+            </p>
+            <p class="text-sm text-slate-500">Contratos assinados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Table with better styling -->
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      <!-- Table Header with gradient -->
+      <div [class]="'px-8 py-6 border-b border-slate-200 ' + getTabConfig()[activeTab].bgColor">
+        <div class="flex items-center justify-between">
+          <h3 [class]="'text-2xl font-bold flex items-center ' + getTabConfig()[activeTab].headerColor">
+            <div [class]="'p-2 rounded-lg mr-3 ' + (
+              activeTab === 'canceled' ? 'bg-red-500' : 
+              activeTab === 'rejected' ? 'bg-orange-500' : 'bg-green-500')">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  [attr.d]="getTabConfig()[activeTab].icon">
+                </path>
+              </svg>
+            </div>
+            {{ getTabConfig()[activeTab].title }}
+          </h3>
+          <div class="flex items-center space-x-2">
+            <span class="px-3 py-1 text-sm font-medium bg-white/50 rounded-full">
+              {{ getCurrentProposals().length }} item(s)
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Enhanced Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">ID</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Investidor</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Inovação</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Investimento</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Porcentagem</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <span *ngIf="activeTab === 'canceled'">Data Cancelamento</span>
+                <span *ngIf="activeTab === 'rejected'">Data Rejeição</span>
+                <span *ngIf="activeTab === 'closed'">Data Fechamento</span>
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let proposal of getCurrentProposals(); let i = index" 
+                class="hover:bg-slate-50 transition-colors duration-200">
+              <td class="px-6 py-4">
+                <span class="font-mono text-sm font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                  #{{ proposal.id }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                    {{ proposal.investor_name.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="font-medium text-slate-900">{{ proposal.investor_name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-slate-700 font-medium">{{ proposal.innovation_name }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="'font-bold text-lg ' + (activeTab === 'closed' ? 'text-green-600' : 'text-slate-700')">
+                  {{ formatCurrency(proposal.investimento_minimo) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="w-12 h-2 bg-slate-200 rounded-full mr-2">
+                    <div [class]="'h-full rounded-full ' + (activeTab === 'closed' ? 'bg-green-500' : 'bg-blue-500')" 
+                         [style.width.%]="proposal.porcentagem_cedida"></div>
+                  </div>
+                  <span class="font-semibold text-slate-700">{{ proposal.porcentagem_cedida }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-slate-600">
+                {{ formatDate(proposal.modified) }}
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="'px-3 py-1 text-xs font-semibold rounded-full ' + getStatusBadgeClass(proposal.status)">
+                  {{ getStatusText(proposal.status) }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="getCurrentProposals().length === 0">
+              <td colspan="7" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </div>
+                  <h3 class="text-lg font-medium text-slate-600 mb-2">Nenhuma proposta encontrada</h3>
+                  <p class="text-slate-500">Não há propostas nesta categoria no momento.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
