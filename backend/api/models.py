@@ -160,9 +160,9 @@ class ProposalInnovation(models.Model):
     accepted = models.BooleanField('Aceito', default=False)
     status = models.CharField(_('Status'), max_length=50, choices=[
         ('pending', _('Pendente')),
-        ('accepted', _('Aceita')),
+        ('canceled', _('Cancelado')),
         ('rejected', _('Rejeitada')),
-        ('negotiating', _('Em negociação')),
+        ('accepted', _('Aceita')),
     ], default='pending')    
     
     class Meta:

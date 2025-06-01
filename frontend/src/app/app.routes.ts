@@ -22,6 +22,7 @@ import { SegurancaPoliticaComponent } from './modules/views/aplicacao/pages/segu
 import { PoliticaCookiesComponent } from './modules/views/aplicacao/pages/politica-cookies/politica-cookies.component';
 import { DicasSegurancaComponent } from './modules/views/aplicacao/pages/dicas-seguranca/dicas-seguranca.component';
 import { PaymentComponent } from './modules/user/components/payment/payment.component';
+import { SetupPropostasComponent } from './modules/views/setup-propostas/setup-propostas.component';
 
 export const routes: Routes = [
     {
@@ -85,7 +86,7 @@ export const routes: Routes = [
             },
                         {
                 path:'test', 
-                component: PaymentComponent
+                component: SetupPropostasComponent
             },
             {
                 path:'perfil', 

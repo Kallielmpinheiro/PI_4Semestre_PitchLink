@@ -28,27 +28,6 @@ import os
 from django.conf import settings
 from decimal import Decimal
 
-# Configurar Stripe com a chave SECRETA
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
-# Debug: verificar qual chave está sendo usada
-print(f"=== STRIPE CONFIG DEBUG ===")
-print(f"settings.STRIPE_SECRET_KEY: {settings.STRIPE_SECRET_KEY[:7] if settings.STRIPE_SECRET_KEY else 'NENHUMA'}...")
-print(f"stripe.api_key: {stripe.api_key[:7] if stripe.api_key else 'NENHUMA'}...")
-print(f"settings.STRIPE_PUBLISHABLE_KEY: {settings.STRIPE_PUBLISHABLE_KEY[:7] if settings.STRIPE_PUBLISHABLE_KEY else 'NENHUMA'}...")
-print(f"=== END DEBUG ===")
-
-# Log para verificar se está carregando corretamente
-if settings.STRIPE_SECRET_KEY:
-    logging.info(f"Stripe configurado com chave secreta: {settings.STRIPE_SECRET_KEY[:7]}...")
-else:
-    logging.error("STRIPE_SECRET_KEY não encontrada!")
-
-if settings.STRIPE_PUBLISHABLE_KEY:
-    logging.info(f"Chave pública disponível: {settings.STRIPE_PUBLISHABLE_KEY[:7]}...")
-else:
-    logging.error("STRIPE_PUBLISHABLE_KEY não encontrada!")
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -400,6 +379,54 @@ def get_innovation(request):
         return 404, {'message': str(e)}
 
     return 200, {'data': data}
+
+@api.get('/get-innovation-details', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_innovation_details(request):
+
+    try:
+        user = request.auth
+        # user = User.objects.get(id=1)   
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    data = []
+    
+    # Obtenha o domínio base da requisição
+    base_url = f"{request.scheme}://{request.get_host()}"
+    
+    try:
+        inv = Innovation.objects.filter(owner=user)
+        
+        if not inv.exists():
+            return 404, {'message': 'Nenhuma inovação encontrada'}
+        
+        for x in inv:
+            imagens = []
+
+            list_imagem_url = x.get_all_images()
+            for imagem_url in list_imagem_url:
+                if imagem_url.startswith('/media/'):
+                    imagens.append(f"{base_url}{imagem_url}")
+                else:
+                    imagens.append(imagem_url)
+                
+            data.append({
+                    'id': x.id,
+                    'owner_id': x.owner.id,
+                    'owner': x.owner.first_name,
+                    'nome': x.nome,
+                    'descricao': x.descricao,
+                    'investimento_minimo': x.investimento_minimo,
+                    'porcentagem_cedida': x.porcentagem_cedida,
+                    'categorias': x.categorias,
+                    'imagens': imagens,
+            })
+
+    except Exception as e:
+        return 404, {'message': str(e)}
+
+    return 200, {'data': data}
+
 
 @api.post('/post-search-innovation-categories',  auth=AuthBearer(), response={200: dict, 404: dict})
 def search_innovation(request, payload : SearchInnovationReq):
@@ -1430,3 +1457,136 @@ def get_payment_history(request):
         
     except Exception as e:
         return 404, {'message': f'Erro ao carregar histórico: {str(e)}'}
+
+
+@api.get('/proposal-open-sponsored', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_open_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='pending')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta pendente encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-canceled-sponsored', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_canceled_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='canceled')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta cancelada encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-closed-sponsored', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_closed_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-rejected-sponsored', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_rejected_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='rejected')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}

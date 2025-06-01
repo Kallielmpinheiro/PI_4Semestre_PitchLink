@@ -11,6 +11,7 @@ export const api = {
     image : prefix + '/get-image',
     postCreateInnovation: prefix + '/post-create-innovation', 
     getInnovation: prefix + '/get-innovation',
+    getInnovationDetails: prefix + '/get-innovation-details',
     postSearchInnovation: prefix + '/post-search-innovation',
     getUser: prefix + '/get-perfil',
     createRoom: prefix + '/create-room',
@@ -33,7 +34,13 @@ export const api = {
     postCreatePaymentIntent: prefix + '/post-create-payment-intent',
     postConfirmPayment: prefix + '/post-confirm-payment',
     getPaymentHistory: prefix + '/get-payment-history',
-    stripeWebhook: prefix + '/stripe-webhook'
+    stripeWebhook: prefix + '/stripe-webhook',
+    proposalOpenSponsored: prefix + '/proposal-open-sponsored',
+    proposalCanceledSponsored: prefix + '/proposal-canceled-sponsored',
+    proposalClosedSponsored: prefix + '/proposal-closed-sponsored',
+    proposalRejectedSponsored: prefix + '/proposal-rejected-sponsored',
+
+
 }
 
 export const socialAccounts = {
