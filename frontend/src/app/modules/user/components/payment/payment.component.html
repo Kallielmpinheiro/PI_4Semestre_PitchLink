@@ -1,29 +1,30 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8 text-gray-200">
   <div class="max-w-7xl mx-auto">
     
     <!-- Header -->
     <div class="text-center mb-16">
-      <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+      <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
         Planos de <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Assinatura</span>
       </h1>
-      <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+      <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
         Escolha o melhor plano para impulsionar suas inovações e transformar suas ideias em realidade
       </p>
       
       <!-- Current Plan Badge -->
-      <div class="inline-flex items-center px-6 py-3 rounded-full bg-white shadow-lg border border-gray-100 backdrop-blur-sm">
-        <span class="text-sm text-gray-600 mr-3">Plano atual:</span>
-        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200">
-          <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+      <div class="inline-flex items-center px-6 py-3 rounded-full bg-gray-800/80 shadow-lg border border-gray-700 backdrop-blur-sm">
+        <span class="text-sm text-gray-300 mr-3">Plano atual:</span>
+        <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-green-700 to-emerald-700 text-green-200 border border-green-600">
+          <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
           {{ getPlanDisplayName(currentPlan) }}
         </span>
       </div>
     </div>
 
+
     <!-- Messages -->
     <div *ngIf="successMessage" class="mb-8 max-w-md mx-auto">
-      <div class="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50" role="alert">
-        <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <div class="flex items-center p-4 mb-4 text-sm text-green-200 border border-green-600 rounded-lg bg-green-900/20" role="alert">
+        <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
         </svg>
         <span class="sr-only">Sucesso</span>
@@ -32,8 +33,8 @@
     </div>
 
     <div *ngIf="errorMessage" class="mb-8 max-w-md mx-auto">
-      <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50" role="alert">
-        <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <div class="flex items-center p-4 mb-4 text-sm text-red-200 border border-red-600 rounded-lg bg-red-900/20" role="alert">
+        <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
         </svg>
         <span class="sr-only">Erro</span>
@@ -45,24 +46,24 @@
     <div *ngIf="loading" class="flex justify-center items-center py-20">
       <div class="text-center">
         <div role="status">
-          <svg aria-hidden="true" class="inline w-12 h-12 mr-2 text-gray-200 animate-spin fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg aria-hidden="true" class="inline w-12 h-12 mr-2 text-gray-700 animate-spin fill-blue-500" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
             <path d="m93.9676 39.0409c1.3069 5.77 1.9935 11.7888 1.9935 17.9409 0 5.3357-2.5589 10.3718-6.5896 13.1749l-2.7158-6.0079c2.6924-1.7654 4.3024-4.8275 4.3024-8.1670 0-3.3885-1.6590-6.5076-4.4524-8.3010l2.9619-8.0998z" fill="currentFill"/>
           </svg>
           <span class="sr-only">Carregando...</span>
         </div>
-        <p class="text-gray-600 mt-4 text-lg">Carregando planos...</p>
+        <p class="text-gray-300 mt-4 text-lg">Carregando planos...</p>
       </div>
     </div>
 
     <!-- Plans Grid -->
     <div *ngIf="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-      <div *ngFor="let plan of plans" 
-           class="relative bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group"
-           [class.ring-2]="plan.popular"
-           [class.ring-blue-500]="plan.popular"
-           [class.scale-105]="plan.popular"
-           [class.z-10]="plan.popular">
+      <div *ngFor="let plan of plans"
+          class="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 group"
+          [class.ring-2]="plan.popular"
+          [class.ring-blue-500]="plan.popular"
+          [class.scale-105]="plan.popular"
+          [class.z-10]="plan.popular">
         
         <!-- Popular Badge -->
         <div *ngIf="plan.popular" class="absolute -top-3 left-1/2 transform -translate-x-1/2 z-20">
@@ -73,14 +74,14 @@
             Mais Popular
           </span>
         </div>
-        
+
         <div class="p-8 pt-10">
           <!-- Plan Header -->
           <div class="text-center mb-8">
-            <h3 class="text-2xl font-bold text-gray-900 mb-4">{{ plan.name }}</h3>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">{{ plan.name }}</h3>
             <div class="flex items-baseline justify-center mb-6">
-              <span class="text-5xl font-bold text-gray-900">{{ formatCurrency(plan.price) }}</span>
-              <span class="text-gray-500 ml-2 text-lg">/mês</span>
+              <span class="text-5xl font-bold text-gray-900 dark:text-white">{{ formatCurrency(plan.price) }}</span>
+              <span class="text-gray-500 dark:text-gray-300 ml-2 text-lg">/mês</span>
             </div>
           </div>
           
@@ -92,17 +93,19 @@
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
               </div>
-              <span class="text-gray-700 text-sm">{{ feature }}</span>
+              <span class="text-gray-700 dark:text-gray-300 text-sm">{{ feature }}</span>
             </li>
           </ul>
-          
+
           <!-- Action Button -->
           <div class="mt-auto">
             <button 
               *ngIf="currentPlan !== plan.id"
               type="button"
               class="w-full text-white font-bold rounded-2xl text-base px-6 py-4 text-center transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-              [class]="plan.popular ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'"
+              [class]="plan.popular ? 
+                'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 
+                'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'"
               [disabled]="processingPayment"
               (click)="selectPlan(plan.id)">
               
@@ -118,9 +121,9 @@
                 Escolher Plano
               </span>
             </button>
-            
+
             <div *ngIf="currentPlan === plan.id" class="text-center">
-              <div class="inline-flex items-center px-6 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-200 shadow-lg">
+              <div class="inline-flex items-center px-6 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 text-green-800 dark:text-green-200 border-2 border-green-200 dark:border-green-700 shadow-lg">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
@@ -131,6 +134,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Payment Modal -->
     <div *ngIf="selectedPlan" 
@@ -144,7 +148,7 @@
            (click)="cancelPlan()"></div>
 
       <!-- Modal panel -->
-      <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-auto overflow-hidden transform transition-all duration-300 scale-100">
+      <div class="relative bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg mx-auto overflow-hidden transform transition-all duration-300 scale-100">
         
         <!-- Modal Header -->
         <div class="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-6 py-6">
@@ -160,7 +164,7 @@
                 <p class="text-blue-100">{{ getPlanDisplayName(selectedPlan) }}</p>
               </div>
             </div>
-            
+
             <!-- Close button -->
             <button 
               type="button"
@@ -173,32 +177,32 @@
             </button>
           </div>
         </div>
-        
+
         <!-- Modal Body -->
         <div class="px-6 py-6">
           <!-- Price Display -->
-          <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 mb-6 text-center border border-blue-100">
-            <div class="text-3xl font-bold text-gray-900 mb-1">
+          <div class="bg-gradient-to-br from-blue-900 to-purple-900 border border-blue-900 rounded-2xl p-6 mb-6 text-center">
+            <div class="text-3xl font-bold text-gray-100 mb-1">
               {{ formatCurrency(getSelectedPlanPrice()) }}
             </div>
-            <div class="text-gray-600">por mês</div>
-            <div class="text-xs text-gray-500 mt-1">Cobrança recorrente mensal</div>
+            <div class="text-gray-300">por mês</div>
+            <div class="text-xs text-gray-400 mt-1">Cobrança recorrente mensal</div>
           </div>
-          
+
           <!-- Card Input -->
           <div class="mb-6">
-            <label class="block text-sm font-bold text-gray-700 mb-3">
+            <label class="block text-sm font-bold text-gray-200 mb-3">
               Dados do Cartão
             </label>
             <div class="relative">
               <div id="card-element" 
-                   class="block w-full px-4 py-4 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50">
+                  class="text-white block w-full px-4 py-4 border-2 border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-800">
               </div>
             </div>
           </div>
-          
+
           <!-- Security Info -->
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div class="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
             <div class="flex items-center space-x-3">
               <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,29 +210,29 @@
                 </svg>
               </div>
               <div>
-                <p class="text-sm font-bold text-blue-900 mb-1">
+                <p class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">
                   Pagamento 100% Seguro
                 </p>
-                <p class="text-xs text-blue-700">
+                <p class="text-xs text-blue-700 dark:text-blue-400">
                   Processado pelo Stripe com criptografia SSL de 256 bits
                 </p>
               </div>
             </div>
           </div>
-          
+
           <!-- Terms -->
-          <div class="text-xs text-gray-600 mb-6 text-center bg-gray-50 rounded-xl p-3">
+          <div class="text-xs text-gray-600 dark:text-gray-300 mb-6 text-center bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
             Ao confirmar o pagamento, você concorda com nossos 
-            <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors">Termos de Uso</a> e 
-            <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors">Política de Privacidade</a>
+            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold hover:underline transition-colors">Termos de Uso</a> e 
+            <a href="#" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold hover:underline transition-colors">Política de Privacidade</a>
           </div>
         </div>
-        
+
         <!-- Modal Footer -->
-        <div class="bg-gray-50 px-6 py-4 flex space-x-3">
+        <div class="bg-gray-50 dark:bg-gray-800 px-6 py-4 flex space-x-3">
           <button 
             type="button"
-            class="flex-1 bg-white py-3 px-4 border-2 border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50 transition-all duration-200 shadow-sm"
+            class="flex-1 bg-white dark:bg-gray-900 py-3 px-4 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-gray-600 disabled:opacity-50 transition-all duration-200 shadow-sm"
             (click)="cancelPlan()"
             [disabled]="processingPayment">
             Cancelar
