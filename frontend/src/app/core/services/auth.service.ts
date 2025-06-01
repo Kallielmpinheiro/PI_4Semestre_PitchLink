@@ -287,4 +287,24 @@ getUserInnovations(): Observable<any> {
     });
   }
 
+postUpdateInnovationDetails(formData: FormData): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.post(`${this.baseUrl}${api.postUpdateInnovationDetails}`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  });
+}
+
+getInnovationImages(innovationId: number): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  return this.http.get(`${this.baseUrl}${api.getInnovationimages}/${innovationId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+
+
 }

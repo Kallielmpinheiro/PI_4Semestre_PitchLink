@@ -27,7 +27,8 @@ export const api = {
     postAcceptProposalInnovation : prefix + "/post-accept-proposal-innovation",
     postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation",
     getUserInnovations: prefix + "/get-user-innovations",
-
+    postUpdateInnovationDetails: prefix + "/post-update-innovation-details",
+    getInnovationimages: prefix + '/get-innovation-images'
 
 }
 

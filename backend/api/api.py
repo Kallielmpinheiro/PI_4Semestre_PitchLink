@@ -1019,3 +1019,119 @@ def get_user_innovations(request):
         return 404, {'message': f'Erro: {str(e)}'}
     
     return 200, {'message': ideas}
+
+
+@api.post('/post-update-innovation-details', auth=AuthBearer(), response={200: dict, 404: dict, 500: dict})
+def post_update_innovation_details(request: HttpRequest):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    data = request.POST
+    innovation_id = data.get('id')
+    
+    if not innovation_id:
+        return 404, {'message': 'ID da inovação é obrigatório'}
+    try:
+        innovation = Innovation.objects.get(id=innovation_id)
+        
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada ou você não tem permissão'}
+    
+    if data.get('nome'):
+        innovation.nome = data.get('nome')
+    
+    if data.get('descricao'):
+        innovation.descricao = data.get('descricao')
+    
+    if data.get('investimento_minimo'):
+        try:
+            innovation.investimento_minimo = float(data.get('investimento_minimo'))
+        except ValueError:
+            return 404, {'message': 'Valor de investimento inválido'}
+    
+    if data.get('porcentagem_cedida'):
+        try:
+            innovation.porcentagem_cedida = float(data.get('porcentagem_cedida'))
+        except ValueError:
+            return 404, {'message': 'Valor de porcentagem inválido'}
+    
+    if data.get('categorias'):
+        categorias = data.get('categorias').split(',') if data.get('categorias') else []
+        innovation.categorias = categorias
+    
+    try:
+        with transaction.atomic():
+            innovation.save()
+            
+            delete_image_ids = data.get('delete_image_ids')
+            if delete_image_ids:
+                if isinstance(delete_image_ids, str):
+                    delete_image_ids = [int(id.strip()) for id in delete_image_ids.split(',') if id.strip()]
+                
+                images_to_delete = InnovationImage.objects.filter(
+                    id__in=delete_image_ids,
+                    innovation=innovation,
+                    owner=user
+                )
+                
+                for img in images_to_delete:
+                    if img.imagem and os.path.exists(img.imagem.path):
+                        os.remove(img.imagem.path)
+                    img.delete()
+            
+            keep_existing = data.get('keep_existing_images', 'true').lower() == 'true'
+            if not keep_existing:
+                existing_images = InnovationImage.objects.filter(innovation=innovation)
+                for img in existing_images:
+                    if img.imagem and os.path.exists(img.imagem.path):
+                        os.remove(img.imagem.path)
+                    img.delete()
+            
+            new_images = request.FILES.getlist('novas_imagens')
+            if new_images:
+                images_to_create = []
+                for image_file in new_images:
+                    images_to_create.append(
+                        InnovationImage(
+                            owner=user,
+                            innovation=innovation,
+                            imagem=image_file
+                        )
+                    )
+                InnovationImage.objects.bulk_create(images_to_create)
+    
+    except Exception as e:
+        return 500, {"message": f"Erro ao atualizar inovação: {str(e)}"}
+    
+    return 200, {'message': 'Inovação atualizada com sucesso'}
+
+@api.get('/get-innovation-images/{innovation_id}', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_innovation_images(request, innovation_id: int):
+    
+    logging.info(f"{innovation_id} test")
+
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        innovation = Innovation.objects.get(id=innovation_id)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+    
+    images = InnovationImage.objects.filter(innovation=innovation)
+    base_url = f"{request.scheme}://{request.get_host()}"
+    
+    image_data = []
+    for img in images:
+        image_url = f"{base_url}{img.imagem.url}" if img.imagem else None
+        image_data.append({
+            'id': img.id,
+            'url': image_url,
+            'name': os.path.basename(img.imagem.name) if img.imagem else None
+        })
+    
+    return 200, {'images': image_data}

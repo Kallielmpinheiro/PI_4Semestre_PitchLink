@@ -85,4 +85,6 @@ class UpdateInovattionReq(Schema):
     investimento_minimo: Optional[float] = None
     porcentagem_cedida: Optional[float] = None
     categorias: Optional[List[str]] = None
+    delete_image_ids: Optional[List[int]] = None
+    keep_existing_images: Optional[bool] = True
 

@@ -7,11 +7,23 @@ export interface User {
 
 export interface Innovation {
   id: number;
+  created: string;
+  modified: string;
+  owner_id: number;
+  owner?: string;
+  partners: any[];
   nome: string;
   descricao: string;
-  owner?: string; 
-  investimento_minimo?: string;
-  porcentagem_cedida?: string;
+  investimento_minimo: string;
+  porcentagem_cedida: string;
+  categorias: string[];
+  imagens: string[];
+}
+
+export interface ImageData {
+  id: number;
+  url: string;
+  name: string;
 }
 
 export interface ProposalInnovation {
