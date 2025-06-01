@@ -155,6 +155,15 @@ export class AuthService {
     });
   }
 
+  getInnovationDetails(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getInnovationDetails}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
   getNegociacao(): Observable<any> {
     const token = localStorage.getItem('jwt_token');
     return this.http.get(`${this.baseUrl}${api.getNegociacao}`, {
@@ -329,6 +338,40 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}${api.postConfirmPayment}`, payload, {
       headers: {
         'Authorization': `Bearer ${token}`,
+      }
+    })
+  }
+
+  proposalOpenSponsored(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.proposalOpenSponsored}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+  proposalCanceledSponsored(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.proposalCanceledSponsored}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+  proposalClosedSponsored(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.proposalClosedSponsored}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+  
+  proposalRejectedSponsored(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.proposalRejectedSponsored}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     })
   }
