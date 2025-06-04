@@ -284,7 +284,6 @@ export class SwingComponent implements OnInit, AfterViewInit {
       newCards.forEach((card, index) => {
         const cardElement = card as HTMLElement;
         cardElement.style.zIndex = (allCards.length - index).toString();
-        cardElement.style.transform = `scale(${(20 - index) / 20}) translateY(-${30 * index}px)`;
         cardElement.style.opacity = ((10 - index) / 10).toString();
       });
 

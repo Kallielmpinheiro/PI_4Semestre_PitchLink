@@ -157,9 +157,8 @@
                         @for (planoKey of planosKeys; track $index) {
                         <td class="text-center p-4">
                             <button type="button"
-                                (click)="goToPayment(planos[planoKey].nome)"
                                 class="font-bold uppercase text-white bg-gradient-to-r {{ planos[planoKey].corGradiente }} hover:bg-gradient-to-br rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2">
-                                a partir de R$ {{planos[planoKey].preco.semana.valor}}
+                                a partir de {{planos[planoKey].preco.semana.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR'}}
                             </button>
                         </td>
                         }

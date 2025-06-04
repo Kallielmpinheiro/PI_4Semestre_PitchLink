@@ -62,7 +62,7 @@ export class SidebarComponent implements OnInit {
     url.includes( '/app/seguranca-politica') ||
     url.includes( '/app/dicas-seguranca') ||
     url.includes( '/app/politicas-privacidade') ||
-    url.includes( 'app/termos-servico') ||
+    url.includes( '/app/termos-servico') ||
     url.includes( '/app/payment') ||
     url.includes( '/app/proposta-recebidas') ||
     url.includes( '/app/proposta-enviadas') ||

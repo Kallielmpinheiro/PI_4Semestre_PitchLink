@@ -46,6 +46,7 @@ export const routes: Routes = [
             },
             {
                 path: 'politicas',
+                data: { hide: true },
                 component: PoliticasPrivacidadeComponent,
                 title: 'Políticas de Privacidade | PitchLink'
             },
@@ -57,6 +58,7 @@ export const routes: Routes = [
             {
                 path: 'termos',
                 component: TermosCondicoesComponent,
+                data: { hide: true },
                 title: 'Termos e Condições | PitchLink'
             },
         ]

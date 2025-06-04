@@ -211,7 +211,7 @@ export class SetupEnviadasComponent implements OnInit {
   cancelar(): void {
     this.showCancelModal = false;
 
-    const sucesso = false;
+    const sucesso = true;
 
     if (sucesso) {
       this.showFeedback('Proposta cancelada com sucesso!', 'success');

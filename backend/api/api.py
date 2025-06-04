@@ -867,11 +867,14 @@ def get_all_rooms(request):
         salas = NegotiationRoom.objects.filter(participants=user)
         rooms = []
         for sala in salas:
+            f = InnovationImage.objects.get(pk=sala.innovation.id)
+            logging.info(f)
             rooms.append({
                 'id': str(sala.idRoom),
                 'status': sala.status,
                 'innovation_id': sala.innovation.id,
                 'innovation_name': sala.innovation.nome,
+                'img': str(f.imagem),
                 'participants': [{'id': p.id, 'name': p.first_name} for p in sala.participants.all()],
                 'created': sala.created.isoformat()
             })

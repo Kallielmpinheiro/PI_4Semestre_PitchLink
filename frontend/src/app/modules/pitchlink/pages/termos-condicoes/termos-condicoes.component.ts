@@ -17,7 +17,7 @@ export class TermosCondicoesComponent {
 
   constructor() {
     this.route.data.subscribe(data => {
-      this.hide.set(data['hideNav'] || false);
+      this.hide.set(data['hide']);
     });
   }
 }

@@ -131,6 +131,7 @@ export class SdbrMensagensComponent implements OnInit {
     this.authService.getAllRooms().subscribe({
       next: (response) => {
         if (response && response.data) {
+          console.log(response)
           this.todasAsSalas.set(response.data);
           console.log(response.data);
         } else {
