@@ -34,6 +34,8 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
 api = NinjaAPI()
 
 class AuthBearer(HttpBearer):

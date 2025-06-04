@@ -6,13 +6,13 @@ import { ResponseModalComponent } from '../../../response-modal/response-modal.c
 import { ModalConfig } from '../../../../../shared/interfaces/common.interfaces';
 
 @Component({
-  selector: 'app-sdbr-propostas',
+  selector: 'app-sdbr-solicitacoes',
   standalone: true,
   imports: [CommonModule, ResponseModalComponent],
-  templateUrl: './sdbr-propostas.component.html',
-  styleUrl: './sdbr-propostas.component.css'
+  templateUrl: './sdbr-solicitacoes.component.html',
+  styleUrl: './sdbr-solicitacoes.component.css'
 })
-export class SdbrPropostasComponent implements OnInit {
+export class SdbrSolicitacoesComponent implements OnInit {
   private authService = inject(AuthService);
   
   baseUrl = environment.baseUrl;
@@ -126,7 +126,7 @@ formatMoneyCompact(value: number | string | null | undefined): string {
     this.authService.postAcceptProposalInnovation(id).subscribe({
       next: (response) => {
         this.error = null;
-        // this.criarSalaParaProposta(response.proposal);
+        this.criarSalaParaProposta(response.proposal);
       },
       error: (error) => {
         let errorMessage = error.error?.message || error.message;
@@ -136,24 +136,24 @@ formatMoneyCompact(value: number | string | null | undefined): string {
     });
   }
 
-  // private criarSalaParaProposta(proposta: any) {
-  //   if (!proposta) {
-  //     return;
-  //   }
+  private criarSalaParaProposta(proposta: any) {
+    if (!proposta) {
+      return;
+    }
 
-  //   const criarSalaPayload = {
-  //     innovation_id: proposta.innovation?.id || proposta.innovation_id,
-  //     investor_id: proposta.investor?.id || proposta.investor_id
-  //   };
-  //   this.authService.createRoom(criarSalaPayload).subscribe({
-  //     next: (roomResponse) => {
-  //       this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
-  //     },
-  //     error: (roomError) => {
-  //       this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
-  //     }
-  //   });
-  // }
+    const criarSalaPayload = {
+      innovation_id: proposta.innovation?.id || proposta.innovation_id,
+      investor_id: proposta.investor?.id || proposta.investor_id
+    };
+    this.authService.createRoom(criarSalaPayload).subscribe({
+      next: (roomResponse) => {
+        this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
+      },
+      error: (roomError) => {
+        this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
+      }
+    });
+  }
 
   private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
     this.carregarPropostas();
