@@ -2,6 +2,7 @@ from typing import List, Optional
 from ninja import NinjaAPI, Schema, Form, File
 from ninja.files import UploadedFile
 from uuid import UUID
+from decimal import Decimal
 # Schemas payloads para requests
 
 class ErrorResponse(Schema):
@@ -111,4 +112,10 @@ class PaymentHistoryResponse(Schema):
     created: str
     status: str
     stripe_payment_intent_id: str
+
+class CreateCreditPaymentIntentReq(Schema):
+    amount: float
+
+class ConfirmCreditPaymentReq(Schema):
+    payment_intent_id: str
 

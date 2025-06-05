@@ -39,8 +39,10 @@ export const api = {
     proposalCanceledSponsored: prefix + '/proposal-canceled-sponsored',
     proposalClosedSponsored: prefix + '/proposal-closed-sponsored',
     proposalRejectedSponsored: prefix + '/proposal-rejected-sponsored',
-
-
+    createCreditPaymentIntent: prefix +'/post-create-credit-payment-intent',
+    postConfirmCreditPayment : prefix + '/post-confirm-credit-payment',
+    getUserBalance : prefix + '/get-user-balance',
+    getCreditHistory : prefix + '/get-credit-history',
 }
 
 export const socialAccounts = {

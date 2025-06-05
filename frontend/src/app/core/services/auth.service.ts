@@ -342,6 +342,29 @@ export class AuthService {
     })
   }
 
+
+  createCreditPaymentIntent(amount: string): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  const payload = { amount: parseFloat(amount) };
+  return this.http.post(`${this.baseUrl}${api.createCreditPaymentIntent}`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  })
+}
+
+postConfirmCreditPayment(plan: string, payment_intent_id: string): Observable<any> {
+  const token = localStorage.getItem('jwt_token');
+  const payload = { 
+    payment_intent_id: payment_intent_id
+  };
+  return this.http.post(`${this.baseUrl}${api.postConfirmCreditPayment}`, payload, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    }
+  })
+}
+
   proposalOpenSponsored(): Observable<any> {
     const token = localStorage.getItem('jwt_token');
     return this.http.get(`${this.baseUrl}${api.proposalOpenSponsored}`, {
@@ -375,5 +398,24 @@ export class AuthService {
       }
     })
   }
+
+  getUserBalance(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getUserBalance}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+
+  getCreditHistory(): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.getCreditHistory}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  }
+
 
 }

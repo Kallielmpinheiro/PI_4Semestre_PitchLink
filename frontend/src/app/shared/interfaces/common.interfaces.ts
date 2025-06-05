@@ -83,3 +83,23 @@ export interface Sala {
 export interface RoomsResponse {
   data: Sala[];
 }
+
+
+
+
+export interface CreditHistoryItem {
+  id: number;
+  amount: number;
+  formatted_amount: string;
+  status: string;
+  stripe_payment_intent_id: string;
+  created: string;
+}
+
+export interface CreditHistoryResponse {
+  history: CreditHistoryItem[];
+  current_balance: number;
+  formatted_balance: string;
+  total_accumulated: number;
+  message: string;
+}

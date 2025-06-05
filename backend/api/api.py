@@ -1,9 +1,9 @@
 import json
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
+from api.schemas import ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
-from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation
+from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta
@@ -1362,6 +1362,7 @@ def stripe_webhook(request: HttpRequest):
         if event['type'] == 'payment_intent.succeeded':
             payment_intent = event['data']['object']
             
+            # Verificar se é transação de plano
             try:
                 payment_transaction = PaymentTransaction.objects.get(
                     stripe_payment_intent_id=payment_intent['id']
@@ -1376,7 +1377,21 @@ def stripe_webhook(request: HttpRequest):
                     user.save()
                     
             except PaymentTransaction.DoesNotExist:
-                pass
+                try:
+                    credit_transaction = CreditTransactions.objects.get(
+                        stripe_payment_intent_id=payment_intent['id']
+                    )
+                    
+                    with transaction.atomic():
+                        credit_transaction.status = 'succeeded'
+                        credit_transaction.save()
+                        
+                        user = credit_transaction.user
+                        user.balance += credit_transaction.amount
+                        user.save()
+                        
+                except CreditTransactions.DoesNotExist:
+                    pass
                 
         elif event['type'] == 'payment_intent.payment_failed':
             payment_intent = event['data']['object']
@@ -1389,7 +1404,15 @@ def stripe_webhook(request: HttpRequest):
                 payment_transaction.save()
                 
             except PaymentTransaction.DoesNotExist:
-                pass
+                try:
+                    credit_transaction = CreditTransactions.objects.get(
+                        stripe_payment_intent_id=payment_intent['id']
+                    )
+                    credit_transaction.status = 'failed'
+                    credit_transaction.save()
+                    
+                except CreditTransactions.DoesNotExist:
+                    pass
         
         return 200, {'status': 'success'}
         
@@ -1621,3 +1644,168 @@ def get_proposal_rejected_sponsored(request):
         })
     
     return 200, {'data': data}
+
+
+@api.post('/post-create-credit-payment-intent', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict})
+def post_create_credit_payment_intent(request, payload: CreateCreditPaymentIntentReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    if payload.amount < 1.00:
+        return 400, {'message': 'Valor mínimo para recarga é R$ 1,00'}
+    
+    try:
+        amount_cents = int(payload.amount * 100)
+        
+        intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency='brl',
+            metadata={
+                'user_id': user.id,
+                'transaction_type': 'credit_purchase',
+                'user_email': user.email or 'no-email'
+            },
+            description=f'Recarga de créditos R$ {payload.amount:.2f} - {user.first_name or "Usuário"}'
+        )
+        
+        
+        credit_transaction = CreditTransactions.objects.create(
+            user=user,
+            amount=Decimal(str(payload.amount)),
+            stripe_payment_intent_id=intent.id,
+            stripe_client_secret=intent.client_secret,
+            status='pending'
+        )
+        
+        
+        return 200, {
+            'success': True,
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id,
+            'amount': payload.amount,
+            'message': 'Payment Intent para créditos criado com sucesso'
+        }
+        
+    except stripe.error.StripeError as e:
+        logging.error(f"Erro do Stripe: {str(e)}")
+        return 400, {
+            'success': False,
+            'message': f'Erro do Stripe: {str(e)}'
+        }
+    except Exception as e:
+        logging.error(f"Erro interno: {str(e)}")
+        return 500, {
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }
+
+@api.post('/post-confirm-credit-payment', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict})
+def post_confirm_credit_payment(request, payload: ConfirmCreditPaymentReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        credit_transaction = CreditTransactions.objects.get(
+            stripe_payment_intent_id=payload.payment_intent_id,
+            user=user
+        )
+        
+        intent = stripe.PaymentIntent.retrieve(credit_transaction.stripe_payment_intent_id)
+        
+        if intent.status == 'succeeded':
+            with transaction.atomic():
+                credit_transaction.status = 'succeeded'
+                credit_transaction.save()
+                
+                user.balance += credit_transaction.amount
+                user.save()
+                
+                return 200, {
+                    'success': True,
+                    'message': f'Pagamento confirmado! R$ {float(credit_transaction.amount):.2f} adicionados ao seu saldo!',
+                    'amount': float(credit_transaction.amount),
+                    'new_balance': float(user.balance)
+                }
+        else:
+            status_mapping = {
+                'processing': 'processing',
+                'requires_action': 'requires_action',
+                'canceled': 'cancelled',
+                'payment_failed': 'failed'
+            }
+            
+            credit_transaction.status = status_mapping.get(intent.status, 'failed')
+            credit_transaction.save()
+            
+            return 400, {
+                'success': False,
+                'message': f'Pagamento não foi processado. Status: {intent.status}',
+                'status': intent.status
+            }
+            
+    except CreditTransactions.DoesNotExist:
+        return 404, {'message': 'Transação não encontrada'}
+    except stripe.error.StripeError as e:
+        return 400, {
+            'success': False,
+            'message': f'Erro do Stripe: {str(e)}'
+        }
+    except Exception as e:
+        return 500, {
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }
+
+@api.get('/get-user-balance', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_user_balance(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    return 200, {
+        'balance': user.get_balance,
+        'formatted_balance': f'R$ {user.get_balance:.2f}',
+        'message': 'Saldo obtido com sucesso'
+    }
+
+@api.get('/get-credit-history', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_credit_history(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        transactions = CreditTransactions.objects.filter(user=user).order_by('-created')
+        
+        history = []
+        total_accumulated = Decimal('0.00')
+        
+        for transaction in transactions:
+            if transaction.status == 'succeeded':
+                total_accumulated += transaction.amount
+            
+            history.append({
+                'id': transaction.id,
+                'amount': float(transaction.amount),
+                'formatted_amount': f'R$ {float(transaction.amount):.2f}',
+                'status': transaction.status,
+                'stripe_payment_intent_id': transaction.stripe_payment_intent_id,
+                'created': transaction.created.isoformat()
+            })
+        
+        return 200, {
+            'history': history,
+            'current_balance': user.get_balance,
+            'formatted_balance': f'R$ {user.get_balance:.2f}',
+            'total_accumulated': float(total_accumulated),
+            'message': 'Histórico de créditos carregado com sucesso'
+        }
+        
+    except Exception as e:
+        return 404, {'message': f'Erro ao carregar histórico: {str(e)}'}
