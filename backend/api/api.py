@@ -1,12 +1,12 @@
 import json
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
+from api.schemas import CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
 from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 from ninja import NinjaAPI
 from typing import Any
@@ -20,6 +20,7 @@ import jwt
 from django.http import HttpResponse, Http404, JsonResponse, HttpRequest
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone as django_timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import logging
@@ -397,7 +398,7 @@ def get_innovation_details(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     
     try:
-        inv = Innovation.objects.filter(owner=user)
+        inv = Innovation.objects.filter(owner=user, status='active')
         
         if not inv.exists():
             return 404, {'message': 'Nenhuma inovação encontrada'}
@@ -810,7 +811,7 @@ def get_search_proposal_innovation(request, payload : SearchroposalInnovationReq
         
     return 200 ,{ "message": data}
 
-@api.get('/get-user-proposals-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+@api.get('/get-user-proposals-innovations-requests', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_search_proposal_innovation(request):
     
     try:
@@ -850,6 +851,45 @@ def get_search_proposal_innovation(request):
         
     return 200 ,{ "message": data}
 
+@api.get('/get-user-proposals-innovations-proposals', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request):
+    
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=False, status='accepted').order_by("-created")
+    
+    if not ppi.exists():
+        return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
+        
+    data = []
+    for x in ppi:
+        profile_picture = None
+        if x.investor.profile_picture:
+            profile_picture = str(x.investor.profile_picture)
+            
+        data.append({
+            'id': x.id,
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'investor_nome': x.investor.first_name,
+            'investor_profile_picture': profile_picture,
+            'investor_profile_picture_url': x.investor.profile_picture_url,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'innovation_nome': x.innovation.nome,
+            'innovation_categorias': x.innovation.categorias,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+         
+    return 200 ,{ "message": data}
 
 
 @api.get('/get-all-rooms', auth=AuthBearer(), response={200: dict, 404: dict})
@@ -986,8 +1026,51 @@ def post_accept_proposal_innovation(request, payload: AcceptedProposalInnovation
     if proposal.sponsored.id != user.id:
          return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
     
-    proposal.accepted = True
     proposal.status = 'accepted'
+    proposal.save()
+    
+    proposal_data = {
+        'id': proposal.id,
+        'created': proposal.created.isoformat(),
+        'investor': {
+            'id': proposal.investor.id,
+            'name': proposal.investor.first_name
+        },
+        'sponsored': {
+            'id': proposal.sponsored.id,
+            'name': proposal.sponsored.first_name
+        },
+        'innovation': {
+            'id': proposal.innovation.id,
+            'name': proposal.innovation.nome
+        },
+        'descricao': proposal.descricao,
+        'investimento_minimo': proposal.investimento_minimo,
+        'porcentagem_cedida': proposal.porcentagem_cedida,
+        'accepted': proposal.accepted,
+        'status': proposal.status
+    }
+    
+    
+    
+    return 200, {'message': 'Proposta aceita com sucesso!', 'proposal': proposal_data}
+
+@api.post('/post-accept-proposal-innovation-proposal',auth=AuthBearer(),response={200: dict, 404: dict, 403: dict})
+def post_accept_proposal_innovation_proposal(request, payload: AcceptedProposalInnovation):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+    
+    if proposal.sponsored.id != user.id:
+         return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
+    
+    proposal.accepted=True
     proposal.save()
     
     proposal_data = {
@@ -1586,7 +1669,7 @@ def get_proposal_closed_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted')
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted', accepted=True)
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta aceita encontrada'}
@@ -1809,3 +1892,196 @@ def get_credit_history(request):
         
     except Exception as e:
         return 404, {'message': f'Erro ao carregar histórico: {str(e)}'}
+    
+    
+@api.post('/cancel-innovation', auth=AuthBearer(), response={200: dict, 404: dict, 403: dict, 400: dict, 500: dict})
+def post_cancel_innovation(request, payload: CancelReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        innovation = Innovation.objects.get(id=payload.id)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+    
+    if innovation.owner != user:
+        return 403, {'message': 'Você não tem permissão para cancelar esta inovação'}
+    
+    if innovation.status == 'cancelled':
+        return 400, {'message': 'Esta inovação já está cancelada'}
+    
+    try:
+        with transaction.atomic():
+            innovation.status = 'cancelled'
+            innovation.save()
+            
+            proposals_to_cancel = ProposalInnovation.objects.filter(
+                innovation=innovation,
+                status__in=['pending', 'accepted']
+            )
+            
+            cancelled_proposals_count = proposals_to_cancel.count()
+            proposals_to_cancel.update(
+                status='canceled',
+                accepted=False,
+                modified=django_timezone.now()
+            )
+            
+            negotiation_rooms = NegotiationRoom.objects.filter(innovation=innovation)
+            closed_rooms_count = negotiation_rooms.count()
+            
+            negotiation_rooms.update(
+                status='closed',
+                modified=django_timezone.now()
+            )
+            
+            
+            return 200, {
+                'message': 'Inovação cancelada com sucesso',
+                'innovation_id': innovation.id,
+                'innovation_name': innovation.nome,
+                'cancelled_proposals': cancelled_proposals_count,
+                'closed_rooms': closed_rooms_count,
+                'details': {
+                    'innovation_status': innovation.status,
+                    'cancelled_at': innovation.modified.isoformat()
+                }
+            }
+            
+    except Exception as e:
+        return 500, {'message': f'Erro ao cancelar inovação: {str(e)}'}
+    
+    
+@api.get('/proposal-open-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_open_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='pending')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta pendente encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-canceled-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_canceled_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='canceled')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta cancelada encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-closed-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_closed_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='accepted', accepted=True)
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-rejected-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_rejected_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='rejected')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}

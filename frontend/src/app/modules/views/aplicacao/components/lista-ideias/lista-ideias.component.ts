@@ -215,106 +215,86 @@ export class ListaIdeiasComponent implements OnInit {
     this.responseModalVisible = false;
   }
 
+  cancelInnovation(innovation: Innovation) {
+    if (!innovation) return;
+
+    this.responseModalConfig = {
+      title: 'Confirmar Cancelamento',
+      message: `Tem certeza que deseja cancelar a inovação "${innovation.nome}"? Esta ação não pode ser desfeita e todas as propostas pendentes serão canceladas.`,
+      type: 'warning',
+      confirmText: 'Sim, Cancelar',
+      cancelText: 'Não, Manter',
+      showCancel: true
+    };
+    this.responseModalVisible = true;
+    
+    this.innovationToCancel = innovation;
+  }
+
+  private innovationToCancel: Innovation | null = null;
+
   onResponseModalConfirm() {
     this.responseModalVisible = false;
-  }
-
-  saveInnovation() {
-    this.saveChanges();
-  }
-
-  toggleCategory(category: string) {
-    if (!this.selectedInnovation) return;
-
-    const index = this.selectedInnovation.categorias.indexOf(category);
-    if (index > -1) {
-      this.selectedInnovation.categorias.splice(index, 1);
-    } else {
-      this.selectedInnovation.categorias.push(category);
+    
+    if (this.innovationToCancel) {
+      this.executeCancelInnovation(this.innovationToCancel);
+      this.innovationToCancel = null;
     }
   }
 
-  onFileSelect(event: any) {
-    const files = event.target.files;
-    if (!files) return;
+  onResponseModalCancel() {
+    this.responseModalVisible = false;
+    this.innovationToCancel = null;
+  }
 
-    for (let file of files) {
-      if (this.isValidImageFile(file) && (this.currentImages.length + this.newImages.length - this.imagesToDelete.length) < 6) {
-        this.newImages.push(file);
+  private executeCancelInnovation(innovation: Innovation) {
+    this.authService.cancelInovation(innovation.id).subscribe({
+      next: (response) => {
+        const index = this.innovations.findIndex(inn => inn.id === innovation.id);
+        if (index !== -1) {
+          this.innovations[index] = { 
+            ...this.innovations[index], 
+            status: 'cancelled' 
+          };
+        }
+
+        if (this.selectedInnovation && this.selectedInnovation.id === innovation.id) {
+          this.closeModal();
+        }
         
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.previewUrls.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else if (!this.isValidImageFile(file)) {
-        this.showResponseModal('Arquivo inválido. Use apenas JPG ou PNG com até 5MB.', 'warning');
-      } else if ((this.currentImages.length + this.newImages.length - this.imagesToDelete.length) >= 6) {
-        this.showResponseModal('Limite máximo de 6 imagens atingido.', 'warning');
-        break;
+        const message = response.message;
+        this.showResponseModal(message, 'success');
+      },
+      error: (error) => {
+        console.error('Erro ao cancelar inovação:', error);
+        const errorMessage = error?.error?.message || error?.message || 'Erro ao cancelar inovação';
+        this.showResponseModal(errorMessage, 'error');
       }
-    }
-    
-    event.target.value = '';
+    });
   }
 
-  isValidImageFile(file: File): boolean {
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    return validTypes.includes(file.type) && file.size <= maxSize;
+  canCancelInnovation(innovation: Innovation): boolean {
+    return innovation.status !== 'cancelled' && innovation.status !== 'completed';
   }
 
-  removeExistingImage(imageId: number) {
-    if (!this.imagesToDelete.includes(imageId)) {
-      this.imagesToDelete.push(imageId);
-    }
+  getStatusText(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'active': 'Ativa',
+      'cancelled': 'Cancelada',
+      'completed': 'Concluída',
+      'pending': 'Pendente'
+    };
+    return statusMap[status] || status;
   }
 
-  restoreImage(imageId: number) {
-    const index = this.imagesToDelete.indexOf(imageId);
-    if (index > -1) {
-      this.imagesToDelete.splice(index, 1);
-    }
-  }
-
-  removeNewImage(index: number) {
-    this.newImages.splice(index, 1);
-    this.previewUrls.splice(index, 1);
-  }
-
-  isImageMarkedForDeletion(imageId: number): boolean {
-    return this.imagesToDelete.includes(imageId);
-  }
-
-  getAllCurrentImages(): any[] {
-    const existingImages = this.currentImages
-      .filter(img => !this.imagesToDelete.includes(img.id))
-      .map(img => ({ ...img, type: 'existing' }));
-    
-    const newImages = this.previewUrls.map((url, index) => ({
-      id: `new_${index}`,
-      url: url,
-      name: this.newImages[index].name,
-      type: 'new'
-    }));
-    
-    return [...existingImages, ...newImages];
-  }
-
-  formatCurrency(value: string): string {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return 'R$ 0,00';
-    
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numValue);
-  }
-
-  formatPercentage(value: string): string {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return '0%';
-    return `${numValue}%`;
+  getStatusColor(status: string): string {
+    const colorMap: { [key: string]: string } = {
+      'active': 'bg-green-600 text-green-200',
+      'cancelled': 'bg-red-600 text-red-200',
+      'completed': 'bg-blue-600 text-blue-200',
+      'pending': 'bg-yellow-600 text-yellow-200'
+    };
+    return colorMap[status] || 'bg-gray-600 text-gray-200';
   }
 
   getMainImage(imagens: string[]): string {
@@ -346,5 +326,100 @@ export class ListaIdeiasComponent implements OnInit {
 
   trackByInnovationId(index: number, innovation: Innovation): number {
     return innovation.id;
+  }
+
+  formatCurrency(value: string | number): string {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(numValue);
+  }
+
+  formatPercentage(value: string | number): string {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${numValue}%`;
+  }
+
+  toggleCategory(category: string): void {
+    if (!this.selectedInnovation) return;
+    
+    const index = this.selectedInnovation.categorias.indexOf(category);
+    if (index > -1) {
+      this.selectedInnovation.categorias.splice(index, 1);
+    } else {
+      this.selectedInnovation.categorias.push(category);
+    }
+  }
+
+  onFileSelect(event: any): void {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const totalImages = this.getAllCurrentImages().length;
+    const maxImages = 6;
+    const availableSlots = maxImages - totalImages;
+
+    if (availableSlots <= 0) {
+      this.showResponseModal('Máximo de 6 imagens permitido', 'warning');
+      return;
+    }
+
+    const filesToAdd = Math.min(files.length, availableSlots);
+    
+    for (let i = 0; i < filesToAdd; i++) {
+      const file = files[i];
+      
+      // Validar tipo de arquivo
+      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+        this.showResponseModal(`Arquivo ${file.name} não é uma imagem válida`, 'error');
+        continue;
+      }
+      
+      // Validar tamanho (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.showResponseModal(`Arquivo ${file.name} é muito grande (máx. 5MB)`, 'error');
+        continue;
+      }
+      
+      this.newImages.push(file);
+      
+      // Criar preview
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.previewUrls.push(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Limpar input
+    event.target.value = '';
+  }
+
+  getAllCurrentImages(): any[] {
+    const existingImages = this.currentImages.filter(img => !this.imagesToDelete.includes(img.id));
+    return [...existingImages, ...this.newImages];
+  }
+
+  isImageMarkedForDeletion(imageId: number): boolean {
+    return this.imagesToDelete.includes(imageId);
+  }
+
+  removeExistingImage(imageId: number): void {
+    if (!this.imagesToDelete.includes(imageId)) {
+      this.imagesToDelete.push(imageId);
+    }
+  }
+
+  restoreImage(imageId: number): void {
+    const index = this.imagesToDelete.indexOf(imageId);
+    if (index > -1) {
+      this.imagesToDelete.splice(index, 1);
+    }
+  }
+
+  removeNewImage(index: number): void {
+    this.newImages.splice(index, 1);
+    this.previewUrls.splice(index, 1);
   }
 }

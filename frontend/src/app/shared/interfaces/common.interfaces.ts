@@ -16,6 +16,7 @@ export interface Innovation {
   descricao: string;
   investimento_minimo: string;
   porcentagem_cedida: string;
+  status?: string;
   categorias: string[];
   imagens: string[];
 }

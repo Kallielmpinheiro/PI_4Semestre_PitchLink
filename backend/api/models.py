@@ -61,6 +61,10 @@ class Innovation(models.Model):
     investimento_minimo = models.CharField(_('Investimento Mínimo'), max_length=255, blank=True, null=True)
     porcentagem_cedida = models.CharField(_('Porcentagem Cedida'), max_length=255, blank=True, null=True)
     categorias = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
+    status = models.CharField(_('Status'), max_length=50, choices=[
+        ('active', _('Ativa')),
+        ('cancelled', _('Cancelada')),
+    ], default='active')
 
     class Meta:
         verbose_name = _('Ideia')

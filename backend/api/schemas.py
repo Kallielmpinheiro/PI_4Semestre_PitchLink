@@ -119,3 +119,5 @@ class CreateCreditPaymentIntentReq(Schema):
 class ConfirmCreditPaymentReq(Schema):
     payment_intent_id: str
 
+class CancelReq(Schema):
+    id: str
