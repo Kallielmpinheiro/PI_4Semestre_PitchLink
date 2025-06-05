@@ -48,3 +48,38 @@ export interface ModalConfig {
   cancelText?: string;
   showCancel?: boolean;
 }
+
+export interface Mensagem {
+  id: string;
+  sender: string;
+  sender_id: number;
+  sender_img_url: string | null;
+  sender_img: string | null;
+  receiver_id: number;
+  room_id: string;
+  content: string;
+  created: string;
+  is_read: boolean;
+  profile_picture_url?: string;
+}
+
+export interface Participant {
+  id: number;
+  name: string;
+  img_url: string;
+}
+
+export interface Sala {
+  id: string;
+  status: 'open' | 'active' | 'pending' | 'closed';
+  innovation_id: number;
+  innovation_name: string;
+  img: string;
+  participants: Participant[];
+  created: string;
+  last_activity?: string;
+}
+
+export interface RoomsResponse {
+  data: Sala[];
+}

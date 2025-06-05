@@ -66,9 +66,13 @@
           <div class="flex items-center space-x-4 rtl:space-x-reverse">
             <div class="relative">
               <img class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-600 shadow-md"
-                [src]="mensagem.sender_img_url" alt="{{ mensagem.sender }}">
-              <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-gray-800"
-                [ngClass]="{'bg-green-500': true}"></span>
+                [src]="mensagem.sender_img_url" 
+                [alt]="mensagem.sender"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="hidden w-12 h-12 rounded-full bg-blue-600 ring-2 ring-gray-600 items-center justify-center text-white text-lg font-bold">
+                {{ mensagem.sender.charAt(0).toUpperCase()}}
+              </div>
+              <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-gray-800 bg-green-500"></span>
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between mb-1">
@@ -107,45 +111,27 @@
       class="bg-gradient-to-r from-gray-800 to-gray-750 rounded-xl shadow-lg border border-gray-700 hover:shadow-xl transition-all duration-300 hover:border-gray-600">
       <div class="flex items-center justify-between p-4 border-b border-gray-700">
         <div class="flex items-center space-x-3">
-          <div class="bg-gradient-to-r from-blue-600 to-blue-500 rounded-full p-1.5 shadow-md">
-            <img [src]="" alt="">
-            <!-- <svg class="w-4 h-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-              viewBox="0 0 20 18">
-              <path
-                d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
-            </svg> -->
+          <div class="relative">
+            <img class="w-12 h-12 rounded-full object-cover ring-2 ring-gray-600 shadow-md"
+              [src]="sala.img" 
+              [alt]="sala.innovation_name"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            
           </div>
           <div>
-            <h4 class="text-md font-medium text-white truncate max-w-[150px]">{{ sala.innovation_name }}</h4>
-            <div class="flex items-center mt-1">
+              <h4 class="text-md font-semibold text-white truncate max-w-[200px] mb-1">
+                {{ sala.innovation_name }}
+              </h4>            <div class="flex items-center mt-1">
               <span class="relative flex h-3 w-3 me-2">
                 <span class="relative inline-flex rounded-full h-3 w-3 shadow-sm"
-                  [ngClass]="{'bg-green-500': sala.status === 'active', 'bg-yellow-500': sala.status === 'pending', 'bg-gray-500': sala.status === 'closed'}"></span>
+                  [ngClass]="{'bg-green-500': sala.status === 'active' || sala.status === 'open', 'bg-yellow-500': sala.status === 'pending', 'bg-gray-500': sala.status === 'closed'}"></span>
               </span>
               <span class="text-xs text-gray-400">
-                {{ sala.participants?.length || 0 }} participantes
+                {{ sala.participants.length }} participantes
               </span>
             </div>
           </div>
         </div>
-
-        <!-- Status badges coloridos conforme o status -->
-        <span class="px-3 py-1 rounded-full text-xs font-medium shadow-sm" [ngClass]="{
-                        'bg-green-100 text-green-800': sala.status === 'open' || sala.status === 'active',
-                        'bg-yellow-100 text-yellow-800': sala.status === 'pending',
-                        'bg-red-100 text-red-800': sala.status === 'closed',
-                        'bg-blue-100 text-blue-800': !['open', 'active', 'pending', 'closed'].includes(sala.status)
-                      }">
-          <span class="flex items-center">
-            <span class="h-2 w-2 rounded-full mr-1.5" [ngClass]="{
-                            'bg-green-500': sala.status === 'open' || sala.status === 'active',
-                            'bg-yellow-500': sala.status === 'pending',
-                            'bg-red-500': sala.status === 'closed',
-                            'bg-blue-500': !['open', 'active', 'pending', 'closed'].includes(sala.status)
-                          }"></span>
-            {{ sala.status }}
-          </span>
-        </span>
       </div>
 
       <div class="p-4 border-t border-gray-700 bg-gray-800/30">
@@ -156,33 +142,35 @@
               d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z" />
           </svg>
 
-          <!-- Lista de participantes com avatares quando disponível -->
+          <!-- Lista de participantes com avatares reais -->
           <div class="flex -space-x-2 overflow-hidden">
-            <ng-container *ngFor="let participant of sala.participants?.slice(0, 3)">
-              <div *ngIf="participant?.profile_image" class="inline-block h-6 w-6 rounded-full ring-2 ring-gray-800">
-                <img [src]="participant.profile_image" class="h-6 w-6 rounded-full object-cover"
-                  [alt]="participant.name">
+            @for (participant of sala.participants.slice(0, 3); track participant.id) {
+              <div class="inline-block h-6 w-6 rounded-full ring-2 ring-gray-800 relative">
+                <img [src]="participant.img_url" 
+                     class="w-6 h-6 rounded-full object-cover"
+                     [alt]="participant.name"
+                     [title]="participant.name"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="hidden w-6 h-6 rounded-full bg-blue-600 ring-2 ring-gray-800 items-center justify-center text-white text-xs font-bold"
+                     [title]="participant.name">
+                  {{ participant.name.charAt(0).toUpperCase()}}
+                </div>
               </div>
-              <div *ngIf="!participant?.profile_image"
-                class="inline-block h-6 w-6 rounded-full bg-blue-600 ring-2 ring-gray-800 flex items-center justify-center text-white text-xs font-bold">
-                {{ participant?.name?.charAt(0) || '?' }}
+            }
+
+            @if ((sala.participants.length || 0) > 3) {
+              <div class="inline-block h-6 w-6 rounded-full bg-gray-700 ring-2 ring-gray-800 flex items-center justify-center text-white text-xs font-medium"
+                   [title]="'Mais ' + (sala.participants!.length - 3) + ' participantes'">
+                +{{ sala.participants!.length - 3 }}
               </div>
-            </ng-container>
+            }
 
-            <div *ngIf="(sala.participants?.length || 0) > 3"
-              class="inline-block h-6 w-6 rounded-full bg-gray-700 ring-2 ring-gray-800 flex items-center justify-center text-white text-xs">
-              +{{ sala.participants!.length - 3 }}
-            </div>
-
-            <div *ngIf="!sala.participants?.length" class="text-sm text-gray-400 ml-2">
-              Nenhum participante ativo
-            </div>
+            @if (!sala.participants.length) {
+              <div class="text-sm text-gray-400 ml-2">
+                Nenhum participante ativo
+              </div>
+            }
           </div>
-        </div>
-
-        <!-- Informações adicionais sobre a sala -->
-        <div *ngIf="sala.last_activity" class="text-xs text-gray-500 mt-2">
-          Última atividade: {{ formatarData(sala.last_activity) }}
         </div>
       </div>
 
@@ -196,28 +184,30 @@
                           'bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600': sala.status === 'pending',
                           'bg-gray-600 cursor-not-allowed': sala.status === 'closed'
                         }">
-          <svg *ngIf="isLoading()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
-          <svg *ngIf="!isLoading() && (sala.status === 'open' || sala.status === 'active')" class="w-4 h-4 mr-2"
-            aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 1v16M1 9h16" />
-          </svg>
-          <svg *ngIf="!isLoading() && sala.status === 'pending'" class="w-4 h-4 mr-2" aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
-          <svg *ngIf="!isLoading() && sala.status === 'closed'" class="w-4 h-4 mr-2" aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M6 14H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h9v4a1 1 0 0 0 1 1h4v8a1 1 0 0 1-1 1h-1M6 14v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-6M6 14h12" />
-          </svg>
+          @if (isLoading()) {
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+          } @else if (sala.status === 'open' || sala.status === 'active') {
+            <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 1v16M1 9h16" />
+            </svg>
+          } @else if (sala.status === 'pending') {
+            <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          } @else if (sala.status === 'closed') {
+            <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 14H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h9v4a1 1 0 0 0 1 1h4v8a1 1 0 0 1-1 1h-1M6 14v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-6M6 14h12" />
+            </svg>
+          }
           {{ sala.status === 'closed' ? 'Sala fechada' : 'Entrar na sala' }}
         </button>
       </div>

@@ -862,20 +862,46 @@ def get_all_rooms(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    
     try:
         salas = NegotiationRoom.objects.filter(participants=user)
         rooms = []
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
         for sala in salas:
-            f = InnovationImage.objects.get(pk=sala.innovation.id)
-            logging.info(f)
+            innovation_image = InnovationImage.objects.filter(innovation=sala.innovation).first()
+            
+            img_url = None
+            if innovation_image and innovation_image.imagem:
+                if innovation_image.imagem.url.startswith('/media/'):
+                    img_url = f"{base_url}{innovation_image.imagem.url}"
+                else:
+                    img_url = innovation_image.imagem.url
+            
+            participants_data = []
+            for participant in sala.participants.all():
+                participant_img_url = None
+                
+                if participant.profile_picture and participant.profile_picture.name:
+                    if participant.profile_picture.url.startswith('/media/'):
+                        participant_img_url = f"{base_url}{participant.profile_picture.url}"
+                    else:
+                        participant_img_url = participant.profile_picture.url
+                elif participant.profile_picture_url:
+                    participant_img_url = participant.profile_picture_url
+                
+                participants_data.append({
+                    'id': participant.id,
+                    'name': participant.first_name,
+                    'img_url': participant_img_url
+                })
+            
             rooms.append({
                 'id': str(sala.idRoom),
                 'status': sala.status,
                 'innovation_id': sala.innovation.id,
                 'innovation_name': sala.innovation.nome,
-                'img': str(f.imagem),
-                'participants': [{'id': p.id, 'name': p.first_name} for p in sala.participants.all()],
+                'img': img_url,
+                'participants': participants_data,
                 'created': sala.created.isoformat()
             })
             
