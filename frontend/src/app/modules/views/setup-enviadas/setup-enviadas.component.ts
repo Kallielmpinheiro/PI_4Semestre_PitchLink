@@ -118,7 +118,7 @@ export class SetupEnviadasComponent implements OnInit {
       }
     };
     
-    this.authService.proposalOpenSponsored().subscribe({
+    this.authService.proposalOpenSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsOpen = response.data || [];
         checkComplete();
@@ -130,7 +130,7 @@ export class SetupEnviadasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalCanceledSponsored().subscribe({
+    this.authService.proposalCanceledSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsCanceled = response.data || [];
         checkComplete();
@@ -142,7 +142,7 @@ export class SetupEnviadasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalClosedSponsored().subscribe({
+    this.authService.proposalClosedSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsClosed = response.data || [];
         checkComplete();
@@ -154,7 +154,7 @@ export class SetupEnviadasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalRejectedSponsored().subscribe({
+    this.authService.proposalRejectedSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsRejected = response.data || [];
         checkComplete();

@@ -34,12 +34,12 @@ export class SdbrSolicitacoesComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.carregarPropostas();
+    this.carregarSolicitacoes();
   }
 
-  carregarPropostas() {
+  carregarSolicitacoes() {
     this.loading = true;
-    this.authService.userProposalsInnovations().subscribe({
+    this.authService.userProposalsInnovationsRequests().subscribe({
       next: (response) => {
         this.propostas = response.message;
         this.loading = false;
@@ -156,7 +156,7 @@ formatMoneyCompact(value: number | string | null | undefined): string {
   }
 
   private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
-    this.carregarPropostas();
+    this.carregarSolicitacoes();
     this.fecharModal();
     this.showSuccessModal(mensagem);
   }
@@ -166,7 +166,7 @@ formatMoneyCompact(value: number | string | null | undefined): string {
     this.authService.postRejectProposalInnovation(id).subscribe({
       next: (response) => {
         this.error = null;
-        this.carregarPropostas();
+        this.carregarSolicitacoes();
         this.fecharModal();
         this.showSuccessModal('Proposta rejeitada com sucesso!');
       },

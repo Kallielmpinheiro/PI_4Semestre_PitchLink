@@ -2,20 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-
-interface Mensagem {
-  id: string;
-  sender: string;
-  sender_id: number;
-  sender_img_url: string | null;
-  sender_img: string | null;
-  receiver_id: number;
-  room_id: string;
-  content: string;
-  created: string;
-  is_read: boolean;
-  profile_picture_url?: string;
-}
+import { Mensagem, Participant, Sala, RoomsResponse } from '../../../../../shared/interfaces/common.interfaces';
 
 @Component({
   selector: 'app-sdbr-mensagens',
@@ -30,7 +17,7 @@ export class SdbrMensagensComponent implements OnInit {
   
   userId = signal<number | null>(null);
   mensagensRecebidas = signal<Mensagem[]>([]);
-  todasAsSalas = signal<any[]>([]); 
+  todasAsSalas = signal<Sala[]>([]); 
   salasSelecionadas = signal<string>('recentes'); 
   userName = signal<string>('');
   userProfilePic = signal<string>('');
@@ -71,7 +58,6 @@ export class SdbrMensagensComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error(error);
         if (error.status === 404 && error.error?.message === 'Você não participa de nenhuma sala de negociação') {
           this.mensagensRecebidas.set([]);
           this.semSalasDeNegociacao.set(true);
@@ -108,40 +94,35 @@ export class SdbrMensagensComponent implements OnInit {
   }
   
   postEnterNegotiationRoom(roomId: string): void {
-  this.isLoading.set(true);
-  
-  const payload = {
-    id: roomId
-  };
-  
-  this.authService.postEnterNegotiationRoom(payload).subscribe({
-    next: (response) => {
-      this.router.navigate(['app/mensagens'], { queryParams: { roomId: roomId } });
-    },
-    error: (error) => {
-      console.error(error);
-      this.isLoading.set(false);
-    },
-    complete: () => {
-      this.isLoading.set(false);
-    }
-  });
-}
+    this.isLoading.set(true);
+    
+    const payload = {
+      id: roomId
+    };
+    
+    this.authService.postEnterNegotiationRoom(payload).subscribe({
+      next: (response) => {
+        this.router.navigate(['app/mensagens'], { queryParams: { roomId: roomId } });
+      },
+      error: (error) => {
+        console.error(error);
+        this.isLoading.set(false);
+      },
+      complete: () => {
+        this.isLoading.set(false);
+      }
+    });
+  }
+
   getAllRooms() {
     this.authService.getAllRooms().subscribe({
-      next: (response) => {
+      next: (response: RoomsResponse) => {
         if (response && response.data) {
-          console.log(response)
           this.todasAsSalas.set(response.data);
-          console.log(response.data);
         } else {
           this.todasAsSalas.set([]);
         }
       },
-      error: (error) => {
-        console.error(error);
-        this.todasAsSalas.set([]);
-      }
     });
   }
 

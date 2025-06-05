@@ -1,12 +1,12 @@
 import json
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
+from api.schemas import CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
-from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation
+from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 from ninja import NinjaAPI
 from typing import Any
@@ -20,6 +20,7 @@ import jwt
 from django.http import HttpResponse, Http404, JsonResponse, HttpRequest
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone as django_timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import logging
@@ -397,7 +398,7 @@ def get_innovation_details(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     
     try:
-        inv = Innovation.objects.filter(owner=user)
+        inv = Innovation.objects.filter(owner=user, status='active')
         
         if not inv.exists():
             return 404, {'message': 'Nenhuma inovação encontrada'}
@@ -810,7 +811,7 @@ def get_search_proposal_innovation(request, payload : SearchroposalInnovationReq
         
     return 200 ,{ "message": data}
 
-@api.get('/get-user-proposals-innovations', auth=AuthBearer(), response={200: dict, 404: dict})
+@api.get('/get-user-proposals-innovations-requests', auth=AuthBearer(), response={200: dict, 404: dict})
 def get_search_proposal_innovation(request):
     
     try:
@@ -850,6 +851,45 @@ def get_search_proposal_innovation(request):
         
     return 200 ,{ "message": data}
 
+@api.get('/get-user-proposals-innovations-proposals', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_search_proposal_innovation(request):
+    
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        
+        return 404, {'message': 'Conta não encontrada'}
+    
+    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=False, status='accepted').order_by("-created")
+    
+    if not ppi.exists():
+        return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
+        
+    data = []
+    for x in ppi:
+        profile_picture = None
+        if x.investor.profile_picture:
+            profile_picture = str(x.investor.profile_picture)
+            
+        data.append({
+            'id': x.id,
+            'created': x.created.isoformat() if hasattr(x.created, 'isoformat') else str(x.created),
+            'investor_id': x.investor.id,
+            'investor_nome': x.investor.first_name,
+            'investor_profile_picture': profile_picture,
+            'investor_profile_picture_url': x.investor.profile_picture_url,
+            'sponsored_id': x.sponsored.id,
+            'innovation_id': x.innovation.id,
+            'innovation_nome': x.innovation.nome,
+            'innovation_categorias': x.innovation.categorias,
+            'descricao': x.descricao,
+            'investimento_minimo': x.investimento_minimo,
+            'porcentagem_cedida': x.porcentagem_cedida,
+            'accepted': x.accepted,
+            'status': x.status
+        })
+         
+    return 200 ,{ "message": data}
 
 
 @api.get('/get-all-rooms', auth=AuthBearer(), response={200: dict, 404: dict})
@@ -862,20 +902,46 @@ def get_all_rooms(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    
     try:
         salas = NegotiationRoom.objects.filter(participants=user)
         rooms = []
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
         for sala in salas:
-            f = InnovationImage.objects.get(pk=sala.innovation.id)
-            logging.info(f)
+            innovation_image = InnovationImage.objects.filter(innovation=sala.innovation).first()
+            
+            img_url = None
+            if innovation_image and innovation_image.imagem:
+                if innovation_image.imagem.url.startswith('/media/'):
+                    img_url = f"{base_url}{innovation_image.imagem.url}"
+                else:
+                    img_url = innovation_image.imagem.url
+            
+            participants_data = []
+            for participant in sala.participants.all():
+                participant_img_url = None
+                
+                if participant.profile_picture and participant.profile_picture.name:
+                    if participant.profile_picture.url.startswith('/media/'):
+                        participant_img_url = f"{base_url}{participant.profile_picture.url}"
+                    else:
+                        participant_img_url = participant.profile_picture.url
+                elif participant.profile_picture_url:
+                    participant_img_url = participant.profile_picture_url
+                
+                participants_data.append({
+                    'id': participant.id,
+                    'name': participant.first_name,
+                    'img_url': participant_img_url
+                })
+            
             rooms.append({
                 'id': str(sala.idRoom),
                 'status': sala.status,
                 'innovation_id': sala.innovation.id,
                 'innovation_name': sala.innovation.nome,
-                'img': str(f.imagem),
-                'participants': [{'id': p.id, 'name': p.first_name} for p in sala.participants.all()],
+                'img': img_url,
+                'participants': participants_data,
                 'created': sala.created.isoformat()
             })
             
@@ -960,8 +1026,51 @@ def post_accept_proposal_innovation(request, payload: AcceptedProposalInnovation
     if proposal.sponsored.id != user.id:
          return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
     
-    proposal.accepted = True
     proposal.status = 'accepted'
+    proposal.save()
+    
+    proposal_data = {
+        'id': proposal.id,
+        'created': proposal.created.isoformat(),
+        'investor': {
+            'id': proposal.investor.id,
+            'name': proposal.investor.first_name
+        },
+        'sponsored': {
+            'id': proposal.sponsored.id,
+            'name': proposal.sponsored.first_name
+        },
+        'innovation': {
+            'id': proposal.innovation.id,
+            'name': proposal.innovation.nome
+        },
+        'descricao': proposal.descricao,
+        'investimento_minimo': proposal.investimento_minimo,
+        'porcentagem_cedida': proposal.porcentagem_cedida,
+        'accepted': proposal.accepted,
+        'status': proposal.status
+    }
+    
+    
+    
+    return 200, {'message': 'Proposta aceita com sucesso!', 'proposal': proposal_data}
+
+@api.post('/post-accept-proposal-innovation-proposal',auth=AuthBearer(),response={200: dict, 404: dict, 403: dict})
+def post_accept_proposal_innovation_proposal(request, payload: AcceptedProposalInnovation):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+    
+    if proposal.sponsored.id != user.id:
+         return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
+    
+    proposal.accepted=True
     proposal.save()
     
     proposal_data = {
@@ -1336,6 +1445,7 @@ def stripe_webhook(request: HttpRequest):
         if event['type'] == 'payment_intent.succeeded':
             payment_intent = event['data']['object']
             
+            # Verificar se é transação de plano
             try:
                 payment_transaction = PaymentTransaction.objects.get(
                     stripe_payment_intent_id=payment_intent['id']
@@ -1350,7 +1460,21 @@ def stripe_webhook(request: HttpRequest):
                     user.save()
                     
             except PaymentTransaction.DoesNotExist:
-                pass
+                try:
+                    credit_transaction = CreditTransactions.objects.get(
+                        stripe_payment_intent_id=payment_intent['id']
+                    )
+                    
+                    with transaction.atomic():
+                        credit_transaction.status = 'succeeded'
+                        credit_transaction.save()
+                        
+                        user = credit_transaction.user
+                        user.balance += credit_transaction.amount
+                        user.save()
+                        
+                except CreditTransactions.DoesNotExist:
+                    pass
                 
         elif event['type'] == 'payment_intent.payment_failed':
             payment_intent = event['data']['object']
@@ -1363,7 +1487,15 @@ def stripe_webhook(request: HttpRequest):
                 payment_transaction.save()
                 
             except PaymentTransaction.DoesNotExist:
-                pass
+                try:
+                    credit_transaction = CreditTransactions.objects.get(
+                        stripe_payment_intent_id=payment_intent['id']
+                    )
+                    credit_transaction.status = 'failed'
+                    credit_transaction.save()
+                    
+                except CreditTransactions.DoesNotExist:
+                    pass
         
         return 200, {'status': 'success'}
         
@@ -1537,7 +1669,7 @@ def get_proposal_closed_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted')
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted', accepted=True)
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta aceita encontrada'}
@@ -1571,6 +1703,364 @@ def get_proposal_rejected_sponsored(request):
         return 404, {'message': 'Conta não encontrada'}
     
     proposals = ProposalInnovation.objects.filter(sponsored=user, status='rejected')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+
+@api.post('/post-create-credit-payment-intent', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict})
+def post_create_credit_payment_intent(request, payload: CreateCreditPaymentIntentReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    if payload.amount < 1.00:
+        return 400, {'message': 'Valor mínimo para recarga é R$ 1,00'}
+    
+    try:
+        amount_cents = int(payload.amount * 100)
+        
+        intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency='brl',
+            metadata={
+                'user_id': user.id,
+                'transaction_type': 'credit_purchase',
+                'user_email': user.email or 'no-email'
+            },
+            description=f'Recarga de créditos R$ {payload.amount:.2f} - {user.first_name or "Usuário"}'
+        )
+        
+        
+        credit_transaction = CreditTransactions.objects.create(
+            user=user,
+            amount=Decimal(str(payload.amount)),
+            stripe_payment_intent_id=intent.id,
+            stripe_client_secret=intent.client_secret,
+            status='pending'
+        )
+        
+        
+        return 200, {
+            'success': True,
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id,
+            'amount': payload.amount,
+            'message': 'Payment Intent para créditos criado com sucesso'
+        }
+        
+    except stripe.error.StripeError as e:
+        logging.error(f"Erro do Stripe: {str(e)}")
+        return 400, {
+            'success': False,
+            'message': f'Erro do Stripe: {str(e)}'
+        }
+    except Exception as e:
+        logging.error(f"Erro interno: {str(e)}")
+        return 500, {
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }
+
+@api.post('/post-confirm-credit-payment', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict})
+def post_confirm_credit_payment(request, payload: ConfirmCreditPaymentReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        credit_transaction = CreditTransactions.objects.get(
+            stripe_payment_intent_id=payload.payment_intent_id,
+            user=user
+        )
+        
+        intent = stripe.PaymentIntent.retrieve(credit_transaction.stripe_payment_intent_id)
+        
+        if intent.status == 'succeeded':
+            with transaction.atomic():
+                credit_transaction.status = 'succeeded'
+                credit_transaction.save()
+                
+                user.balance += credit_transaction.amount
+                user.save()
+                
+                return 200, {
+                    'success': True,
+                    'message': f'Pagamento confirmado! R$ {float(credit_transaction.amount):.2f} adicionados ao seu saldo!',
+                    'amount': float(credit_transaction.amount),
+                    'new_balance': float(user.balance)
+                }
+        else:
+            status_mapping = {
+                'processing': 'processing',
+                'requires_action': 'requires_action',
+                'canceled': 'cancelled',
+                'payment_failed': 'failed'
+            }
+            
+            credit_transaction.status = status_mapping.get(intent.status, 'failed')
+            credit_transaction.save()
+            
+            return 400, {
+                'success': False,
+                'message': f'Pagamento não foi processado. Status: {intent.status}',
+                'status': intent.status
+            }
+            
+    except CreditTransactions.DoesNotExist:
+        return 404, {'message': 'Transação não encontrada'}
+    except stripe.error.StripeError as e:
+        return 400, {
+            'success': False,
+            'message': f'Erro do Stripe: {str(e)}'
+        }
+    except Exception as e:
+        return 500, {
+            'success': False,
+            'message': f'Erro interno: {str(e)}'
+        }
+
+@api.get('/get-user-balance', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_user_balance(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    return 200, {
+        'balance': user.get_balance,
+        'formatted_balance': f'R$ {user.get_balance:.2f}',
+        'message': 'Saldo obtido com sucesso'
+    }
+
+@api.get('/get-credit-history', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_credit_history(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        transactions = CreditTransactions.objects.filter(user=user).order_by('-created')
+        
+        history = []
+        total_accumulated = Decimal('0.00')
+        
+        for transaction in transactions:
+            if transaction.status == 'succeeded':
+                total_accumulated += transaction.amount
+            
+            history.append({
+                'id': transaction.id,
+                'amount': float(transaction.amount),
+                'formatted_amount': f'R$ {float(transaction.amount):.2f}',
+                'status': transaction.status,
+                'stripe_payment_intent_id': transaction.stripe_payment_intent_id,
+                'created': transaction.created.isoformat()
+            })
+        
+        return 200, {
+            'history': history,
+            'current_balance': user.get_balance,
+            'formatted_balance': f'R$ {user.get_balance:.2f}',
+            'total_accumulated': float(total_accumulated),
+            'message': 'Histórico de créditos carregado com sucesso'
+        }
+        
+    except Exception as e:
+        return 404, {'message': f'Erro ao carregar histórico: {str(e)}'}
+    
+    
+@api.post('/cancel-innovation', auth=AuthBearer(), response={200: dict, 404: dict, 403: dict, 400: dict, 500: dict})
+def post_cancel_innovation(request, payload: CancelReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        innovation = Innovation.objects.get(id=payload.id)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+    
+    if innovation.owner != user:
+        return 403, {'message': 'Você não tem permissão para cancelar esta inovação'}
+    
+    if innovation.status == 'cancelled':
+        return 400, {'message': 'Esta inovação já está cancelada'}
+    
+    try:
+        with transaction.atomic():
+            innovation.status = 'cancelled'
+            innovation.save()
+            
+            proposals_to_cancel = ProposalInnovation.objects.filter(
+                innovation=innovation,
+                status__in=['pending', 'accepted']
+            )
+            
+            cancelled_proposals_count = proposals_to_cancel.count()
+            proposals_to_cancel.update(
+                status='canceled',
+                accepted=False,
+                modified=django_timezone.now()
+            )
+            
+            negotiation_rooms = NegotiationRoom.objects.filter(innovation=innovation)
+            closed_rooms_count = negotiation_rooms.count()
+            
+            negotiation_rooms.update(
+                status='closed',
+                modified=django_timezone.now()
+            )
+            
+            
+            return 200, {
+                'message': 'Inovação cancelada com sucesso',
+                'innovation_id': innovation.id,
+                'innovation_name': innovation.nome,
+                'cancelled_proposals': cancelled_proposals_count,
+                'closed_rooms': closed_rooms_count,
+                'details': {
+                    'innovation_status': innovation.status,
+                    'cancelled_at': innovation.modified.isoformat()
+                }
+            }
+            
+    except Exception as e:
+        return 500, {'message': f'Erro ao cancelar inovação: {str(e)}'}
+    
+    
+@api.get('/proposal-open-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_open_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='pending')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta pendente encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-canceled-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_canceled_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='canceled')
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta cancelada encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-closed-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_closed_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='accepted', accepted=True)
+    
+    if not proposals.exists():
+        return 404, {'message': 'Nenhuma proposta aceita encontrada'}
+    
+    data = []
+    for proposal in proposals:
+        data.append({
+            'id': proposal.id,
+            'created': proposal.created.isoformat(),
+            'modified': proposal.modified.isoformat(),
+            'investor_id': proposal.investor.id,
+            'investor_name': proposal.investor.first_name,
+            'sponsored_id': proposal.sponsored.id,
+            'sponsored_name': proposal.sponsored.first_name,
+            'innovation_id': proposal.innovation.id,
+            'innovation_name': proposal.innovation.nome,
+            'descricao': proposal.descricao,
+            'investimento_minimo': proposal.investimento_minimo,
+            'porcentagem_cedida': proposal.porcentagem_cedida,
+            'accepted': proposal.accepted,
+            'status': proposal.status
+        })
+    
+    return 200, {'data': data}
+
+@api.get('/proposal-rejected-sponsored-investor', auth=AuthBearer(), response={200: dict, 404: dict})
+def get_proposal_rejected_sponsored(request):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+    
+    proposals = ProposalInnovation.objects.filter(investor=user, status='rejected')
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta aceita encontrada'}
