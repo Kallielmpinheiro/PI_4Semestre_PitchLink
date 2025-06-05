@@ -23,6 +23,8 @@ import { PoliticaCookiesComponent } from './modules/views/aplicacao/pages/politi
 import { DicasSegurancaComponent } from './modules/views/aplicacao/pages/dicas-seguranca/dicas-seguranca.component';
 import { PaymentComponent } from './modules/user/components/payment/payment.component';
 import { SetupPropostasComponent } from './modules/views/setup-propostas/setup-propostas.component';
+import { SetupEnviadasComponent } from './modules/views/setup-enviadas/setup-enviadas.component';
+import { FinanceiroComponent } from './modules/views/financeiro/financeiro.component';
 
 export const routes: Routes = [
     {
@@ -44,6 +46,7 @@ export const routes: Routes = [
             },
             {
                 path: 'politicas',
+                data: { hide: true },
                 component: PoliticasPrivacidadeComponent,
                 title: 'Políticas de Privacidade | PitchLink'
             },
@@ -55,6 +58,7 @@ export const routes: Routes = [
             {
                 path: 'termos',
                 component: TermosCondicoesComponent,
+                data: { hide: true },
                 title: 'Termos e Condições | PitchLink'
             },
         ]
@@ -84,9 +88,25 @@ export const routes: Routes = [
                 path:'recs', 
                 component: SwingComponent
             },
-                        {
-                path:'test', 
+            {
+                title: 'Propostas Recebidas | PitchLink',
+                path:'proposta-recebidas', 
                 component: SetupPropostasComponent
+            },
+            {
+                title: 'Propostas Enviadas | PitchLink',
+                path:'proposta-enviadas', 
+                component: SetupEnviadasComponent
+            },
+            {
+                title: 'Planos | PitchLink',
+                path:'payment', 
+                component: PaymentComponent
+            },
+            {
+                title: 'Financeiro | PitchLink',
+                path:'financeiro', 
+                component: FinanceiroComponent
             },
             {
                 path:'perfil', 

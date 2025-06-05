@@ -6,13 +6,13 @@ import { ResponseModalComponent } from '../../../response-modal/response-modal.c
 import { ModalConfig } from '../../../../../shared/interfaces/common.interfaces';
 
 @Component({
-  selector: 'app-sdbr-propostas',
+  selector: 'app-sdbr-solicitacoes',
   standalone: true,
   imports: [CommonModule, ResponseModalComponent],
-  templateUrl: './sdbr-propostas.component.html',
-  styleUrl: './sdbr-propostas.component.css'
+  templateUrl: './sdbr-solicitacoes.component.html',
+  styleUrl: './sdbr-solicitacoes.component.css'
 })
-export class SdbrPropostasComponent implements OnInit {
+export class SdbrSolicitacoesComponent implements OnInit {
   private authService = inject(AuthService);
   
   baseUrl = environment.baseUrl;
@@ -20,6 +20,7 @@ export class SdbrPropostasComponent implements OnInit {
   propostas: any[] = [];
   loading = false;
   error: string | null = null;
+  
   mostrarModal = false;
   propostaSelecionada: any = null;
   
@@ -33,12 +34,12 @@ export class SdbrPropostasComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.carregarPropostas();
+    this.carregarSolicitacoes();
   }
 
-  carregarPropostas() {
+  carregarSolicitacoes() {
     this.loading = true;
-    this.authService.userProposalsInnovationsProposals().subscribe({
+    this.authService.userProposalsInnovationsRequests().subscribe({
       next: (response) => {
         this.propostas = response.message;
         this.loading = false;
@@ -76,44 +77,37 @@ export class SdbrPropostasComponent implements OnInit {
     return 'assets/images/default-avatar.png';
   }
 
-  formatMoneyCompact(value: number | string | null | undefined): string {
-    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+formatMoneyCompact(value: number | string | null | undefined): string {
+  const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
 
-    if (!value || isNaN(numVal)) {
-      return 'R$ 0,00';
-    }
-
-    if (numVal <= 999_999_999.99) {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(numVal);
-    }
-
-    // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
-    const abbreviations = [
-      { limit: 1_000_000_000_000, suffix: 'T' },
-      { limit: 1_000_000_000, suffix: 'B' },
-      { limit: 1_000_000, suffix: 'M' },
-      { limit: 1_000, suffix: 'K' },
-    ];
-
-    for (const { limit, suffix } of abbreviations) {
-      if (numVal >= limit) {
-        const short = (numVal / limit).toFixed(1).replace('.', ',');
-        return `R$ ${short}${suffix}`;
-      }
-    }
-
-    return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
+  if (!value || isNaN(numVal)) {
+    return 'R$ 0,00';
   }
 
-  getStatusText(accepted: boolean | null | undefined): string {
-    if (accepted === null || accepted === undefined) {
-      return 'Pendente';
-    }
-    return accepted ? 'Aceita' : 'Rejeitada';
+  if (numVal <= 999_999_999.99) {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(numVal);
   }
+
+  // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
+  const abbreviations = [
+    { limit: 1_000_000_000_000, suffix: 'T' },
+    { limit: 1_000_000_000, suffix: 'B' },
+    { limit: 1_000_000, suffix: 'M' },
+    { limit: 1_000, suffix: 'K' },
+  ];
+
+  for (const { limit, suffix } of abbreviations) {
+    if (numVal >= limit) {
+      const short = (numVal / limit).toFixed(1).replace('.', ',');
+      return `R$ ${short}${suffix}`;
+    }
+  }
+
+  return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
+}
 
   handlePropostaClick(proposta: any) {
     this.propostaSelecionada = proposta;
@@ -126,14 +120,13 @@ export class SdbrPropostasComponent implements OnInit {
   }
 
   aceitarProposta(propostaId: number) {
+
     const id = propostaId;
     
-    this.authService.postAcceptProposalInnovationProposal(id).subscribe({
+    this.authService.postAcceptProposalInnovation(id).subscribe({
       next: (response) => {
         this.error = null;
-        this.carregarPropostas(); 
-        this.fecharModal();
-        this.showSuccessModal('Proposta aceita com sucesso!');
+        this.criarSalaParaProposta(response.proposal);
       },
       error: (error) => {
         let errorMessage = error.error?.message || error.message;
@@ -143,9 +136,27 @@ export class SdbrPropostasComponent implements OnInit {
     });
   }
 
-  
+  private criarSalaParaProposta(proposta: any) {
+    if (!proposta) {
+      return;
+    }
+
+    const criarSalaPayload = {
+      innovation_id: proposta.innovation?.id || proposta.innovation_id,
+      investor_id: proposta.investor?.id || proposta.investor_id
+    };
+    this.authService.createRoom(criarSalaPayload).subscribe({
+      next: (roomResponse) => {
+        this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
+      },
+      error: (roomError) => {
+        this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
+      }
+    });
+  }
+
   private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
-    this.carregarPropostas();
+    this.carregarSolicitacoes();
     this.fecharModal();
     this.showSuccessModal(mensagem);
   }
@@ -155,7 +166,7 @@ export class SdbrPropostasComponent implements OnInit {
     this.authService.postRejectProposalInnovation(id).subscribe({
       next: (response) => {
         this.error = null;
-        this.carregarPropostas();
+        this.carregarSolicitacoes();
         this.fecharModal();
         this.showSuccessModal('Proposta rejeitada com sucesso!');
       },

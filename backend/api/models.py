@@ -26,6 +26,7 @@ class User(models.Model):
     data_nasc = models.DateField(_('Data Nasc.'), blank=True, null=True)
     categories = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
     plan = models.CharField(_('Plano'), max_length=20, choices=PLAN_CHOICES, default='no_plan')
+    balance = models.DecimalField(_('Saldo'), max_digits=10, decimal_places=2, default=0.00)
 
     class Meta:
         verbose_name = _('Usuario')
@@ -45,6 +46,10 @@ class User(models.Model):
     @property
     def get_plan(self):
         return self.plan
+    
+    @property
+    def get_balance(self):
+        return float(self.balance)
 
 class Innovation(models.Model):
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
@@ -56,6 +61,10 @@ class Innovation(models.Model):
     investimento_minimo = models.CharField(_('Investimento Mínimo'), max_length=255, blank=True, null=True)
     porcentagem_cedida = models.CharField(_('Porcentagem Cedida'), max_length=255, blank=True, null=True)
     categorias = models.JSONField(_('Categorias'), default=list, blank=True, null=True)
+    status = models.CharField(_('Status'), max_length=50, choices=[
+        ('active', _('Ativa')),
+        ('cancelled', _('Cancelada')),
+    ], default='active')
 
     class Meta:
         verbose_name = _('Ideia')
@@ -211,6 +220,36 @@ class PaymentTransaction(models.Model):
     @classmethod
     def get_plan_prices(cls):
         return cls.PLAN_PRICES
+    
+    def get_amount_in_cents(self):
+        return int(self.amount * 100)
+    
+class CreditTransactions(models.Model):
+    STATUS_CHOICES = [
+        ('pending', _('Pendente')),
+        ('processing', _('Processando')),
+        ('succeeded', _('Sucesso')),
+        ('failed', _('Falhou')),
+        ('cancelled', _('Cancelado')),
+        ('requires_action', _('Requer Ação')),
+    ]
+    
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='credit_transactions')
+    amount = models.DecimalField(_('Valor'), max_digits=10, decimal_places=2)
+    status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='pending')
+    stripe_payment_intent_id = models.CharField(_('Stripe Payment Intent ID'), max_length=100, unique=True)
+    stripe_client_secret = models.CharField(_('Stripe Client Secret'), max_length=200, blank=True, null=True)
+    payment_method_id = models.CharField(_('Payment Method ID'), max_length=100, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = _('Transação de Crédito')
+        verbose_name_plural = _('Transações de Crédito')
+        ordering = ['-created']
+
+    def __str__(self):
+        return f"Crédito R$ {self.amount} - {self.user.first_name} - {self.status}"
     
     def get_amount_in_cents(self):
         return int(self.amount * 100)

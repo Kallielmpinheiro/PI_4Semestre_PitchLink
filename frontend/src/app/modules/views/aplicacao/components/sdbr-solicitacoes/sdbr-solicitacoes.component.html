@@ -1,5 +1,5 @@
 <div class="p-4">
-  <h3 class="text-lg font-semibold mb-4 text-white">Propostas Recebidas</h3>
+  <h3 class="text-lg font-semibold mb-4 text-white">Solicitações Recebidas</h3>
   
   <!-- Loading spinner do Flowbite corrigido -->
   <div *ngIf="loading" class="text-center p-4">
@@ -83,7 +83,7 @@
       </div>
       
       <!-- Botões de ação para propostas pendentes - Espaçamento melhorado -->
-      <div *ngIf="proposta.accepted === false" class="flex justify-between gap-4 mt-4">
+      <div *ngIf="proposta.status === 'pending'" class="flex justify-between gap-4 mt-4">
         <button class="inline-flex items-center justify-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 shadow-md"
                 (click)="$event.stopPropagation(); rejeitarProposta(proposta.id)">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -99,7 +99,22 @@
           </svg>
           Aceitar
         </button>
-      </div>      
+      </div>
+
+      <!-- Informações adicionais de status -->
+      <div *ngIf="proposta.status === 'accepted'" class="mt-3 text-sm text-green-400 flex items-center">
+        <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        <span>Proposta aceita em {{ proposta.updated | date:'dd/MM/yyyy' }}</span>
+      </div>
+      
+      <div *ngIf="proposta.status === 'rejected'" class="mt-3 text-sm text-red-400 flex items-center">
+        <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+        </svg>
+        <span>Proposta rejeitada em {{ proposta.updated | date:'dd/MM/yyyy' }}</span>
+      </div>
     </li>
   </ul>
   
@@ -128,11 +143,12 @@
           <span class="mr-2">Detalhes da Proposta</span>
           <div class="px-3 py-1 rounded-full text-sm font-medium ml-2"
                [ngClass]="{
-                 'bg-yellow-800 text-yellow-200': propostaSelecionada.accepted === null || propostaSelecionada.accepted === undefined,
-                 'bg-green-800 text-green-200': propostaSelecionada.accepted === true,
-                 'bg-red-800 text-red-200': propostaSelecionada.accepted === false
+                 'bg-yellow-800 text-yellow-200': propostaSelecionada.status === 'pending',
+                 'bg-green-800 text-green-200': propostaSelecionada.status === 'accepted',
+                 'bg-red-800 text-red-200': propostaSelecionada.status === 'rejected'
                }">
-            {{ getStatusText(propostaSelecionada.accepted) }}
+            {{ propostaSelecionada.status === 'pending' ? 'Pendente' : 
+               propostaSelecionada.status === 'accepted' ? 'Aceita' : 'Rejeitada' }}
           </div>
         </h3>
         <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-700 hover:text-white rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
@@ -213,8 +229,7 @@
       
       <!-- Botões do modal - Corrigidos -->
       <div class="flex items-center justify-end p-6 space-x-2 border-t border-gray-700">
-        <!-- Verifica se a proposta ainda está pendente (não foi aceita nem rejeitada) -->
-        <ng-container *ngIf="propostaSelecionada.accepted === null || propostaSelecionada.accepted === undefined">
+        <ng-container *ngIf="propostaSelecionada.status === 'pending'">
           <div class="flex items-center justify-between w-full">
             <button type="button" 
                     class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-500 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center justify-center min-w-[120px]"
@@ -235,8 +250,7 @@
           </div>
         </ng-container>
         
-        <!-- Mostra apenas o botão Fechar se a proposta já foi processada -->
-        <ng-container *ngIf="propostaSelecionada.accepted !== null && propostaSelecionada.accepted !== undefined">
+        <ng-container *ngIf="propostaSelecionada.status !== 'pending'">
           <button type="button" 
                   class="text-gray-300 bg-gray-700 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-500 font-medium rounded-lg text-sm px-5 py-2.5"
                   (click)="fecharModal()">

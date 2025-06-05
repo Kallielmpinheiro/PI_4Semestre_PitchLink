@@ -14,6 +14,7 @@
         <th class="px-6 py-3 text-left">Inovação</th>
         <th class="px-6 py-3 text-left">Investimento</th>
         <th class="px-6 py-3 text-left">Participação</th>
+        <th class="px-6 py-3 text-left">Status</th>
         <th class="px-6 py-3 text-left">Categorias</th>
         <th class="px-6 py-3 text-left">Ações</th>
       </tr>
@@ -40,6 +41,12 @@
           </span>
         </td>
         <td class="px-6 py-4">
+          <span [class]="getStatusColor(innovation.status || 'active')" 
+                class="px-2 py-1 rounded-full text-xs font-medium">
+            {{ getStatusText(innovation.status || 'active') }}
+          </span>
+        </td>
+        <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
             <span *ngFor="let categoria of innovation.categorias.slice(0, 3)" 
               [class]="getCategoryColor(categoria)"
@@ -53,14 +60,20 @@
           </div>
         </td>
         <td class="px-6 py-4">
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <button (click)="viewInnovation(innovation)"
               class="text-blue-400 hover:underline hover:text-blue-300 transition-colors duration-150">
               Ver Detalhes
             </button>
-            <button (click)="editInnovation(innovation)"
+            <button *ngIf="canCancelInnovation(innovation)" 
+                    (click)="editInnovation(innovation)"
               class="text-yellow-400 hover:underline hover:text-yellow-300 transition-colors duration-150">
               Editar
+            </button>
+            <button *ngIf="canCancelInnovation(innovation)" 
+                    (click)="cancelInnovation(innovation)"
+              class="text-red-400 hover:underline hover:text-red-300 transition-colors duration-150">
+              Cancelar
             </button>
           </div>
         </td>
@@ -86,12 +99,27 @@
           <div class="flex items-center space-x-3">
             <img class="w-12 h-12 rounded-lg object-cover" [src]="getMainImage(selectedInnovation.imagens)" [alt]="selectedInnovation.nome" />
             <div>
-              <h3 class="text-xl font-semibold text-white">{{ selectedInnovation.nome }}</h3>
+              <div class="flex items-center gap-2">
+                <h3 class="text-xl font-semibold text-white">{{ selectedInnovation.nome }}</h3>
+                <span [class]="getStatusColor(selectedInnovation.status || 'active')" 
+                      class="px-2 py-1 rounded-full text-xs font-medium">
+                  {{ getStatusText(selectedInnovation.status || 'active') }}
+                </span>
+              </div>
               <p class="text-gray-300 text-sm mt-1">{{ isEditMode ? 'Editando Inovação' : 'Detalhes da Inovação' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button *ngIf="!isEditMode" (click)="toggleEditMode()"
+            <button *ngIf="!isEditMode && canCancelInnovation(selectedInnovation)" 
+                    (click)="cancelInnovation(selectedInnovation)"
+              class="text-red-400 hover:text-red-300 hover:bg-gray-700 rounded-lg text-sm px-3 py-2 transition-all duration-200">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              Cancelar Inovação
+            </button>
+            <button *ngIf="!isEditMode && canCancelInnovation(selectedInnovation)" 
+                    (click)="toggleEditMode()"
               class="text-yellow-400 hover:text-yellow-300 hover:bg-gray-700 rounded-lg text-sm px-3 py-2 transition-all duration-200">
               <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -369,6 +397,7 @@
     [visible]="responseModalVisible"
     [config]="responseModalConfig"
     (onClose)="onResponseModalClose()"
-    (onConfirm)="onResponseModalConfirm()">
+    (onConfirm)="onResponseModalConfirm()"
+    (onCancel)="onResponseModalCancel()">
   </app-response-modal>
 </div>

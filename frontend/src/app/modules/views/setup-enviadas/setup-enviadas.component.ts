@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { initFlowbite } from 'flowbite';
 
 interface ProposalData {
   id: number;
@@ -25,10 +26,10 @@ type TabType = 'open' | 'canceled' | 'rejected' | 'closed';
   selector: 'app-setup-propostas',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './setup-propostas.component.html',
-  styleUrl: './setup-propostas.component.css'
+  templateUrl: './setup-enviadas.component.html',
+  styleUrl: './setup-enviadas.component.css'
 })
-export class SetupPropostasComponent implements OnInit {
+export class SetupEnviadasComponent implements OnInit {
   private authService = inject(AuthService);
 
   proposalsOpen: ProposalData[] = [];
@@ -39,9 +40,14 @@ export class SetupPropostasComponent implements OnInit {
   loading = true;
   error = '';
   activeTab: TabType = 'open';
+  showCancelModal = false;
+  showStatus = false;
+  statusMessage = '';
+  statusClasses = '';
 
   ngOnInit() {
     this.loadAllProposals();
+    initFlowbite();
   }
 
   setActiveTab(tab: TabType) {
@@ -112,7 +118,7 @@ export class SetupPropostasComponent implements OnInit {
       }
     };
     
-    this.authService.proposalOpenSponsored().subscribe({
+    this.authService.proposalOpenSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsOpen = response.data || [];
         checkComplete();
@@ -124,7 +130,7 @@ export class SetupPropostasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalCanceledSponsored().subscribe({
+    this.authService.proposalCanceledSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsCanceled = response.data || [];
         checkComplete();
@@ -136,7 +142,7 @@ export class SetupPropostasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalClosedSponsored().subscribe({
+    this.authService.proposalClosedSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsClosed = response.data || [];
         checkComplete();
@@ -148,7 +154,7 @@ export class SetupPropostasComponent implements OnInit {
       }
     });
 
-    this.authService.proposalRejectedSponsored().subscribe({
+    this.authService.proposalRejectedSponsoredInvestor().subscribe({
       next: (response) => {
         this.proposalsRejected = response.data || [];
         checkComplete();
@@ -201,4 +207,30 @@ export class SetupPropostasComponent implements OnInit {
         return status;
     }
   }
+
+  cancelar(): void {
+    this.showCancelModal = false;
+
+    const sucesso = true;
+
+    if (sucesso) {
+      this.showFeedback('Proposta cancelada com sucesso!', 'success');
+    } else {
+      this.showFeedback('Erro ao cancelar a proposta!', 'error');
+    }
+  }
+
+  showFeedback(message: string, type: 'success' | 'error') {
+    this.statusMessage = message;
+
+    if (type === 'success') {
+      this.statusClasses = 'bg-gradient-to-r from-emerald-700 to-emerald-800 border border-green-200';
+    } else if (type === 'error') {
+      this.statusClasses = 'bg-gradient-to-r from-red-700 to-red-800 border border-red-200';
+    }
+
+    this.showStatus = true;
+    setTimeout(() => this.showStatus = false, 3000);
+  }
 }
+

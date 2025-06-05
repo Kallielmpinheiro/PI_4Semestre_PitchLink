@@ -21,11 +21,13 @@ export const api = {
     postCreateProposalInnovation: prefix+ "/post-create-proposal-innovation",
     getProposalInnovations: prefix + '/get-proposal-innovations',
     postSearchProposalInnovations: prefix + '/post-search-proposal-innovations',
-    userProposalsInnovations : prefix + '/get-user-proposals-innovations',
+    userProposalsInnovationsRequests : prefix + '/get-user-proposals-innovations-requests',
+    userProposalsInnovationsProposals : prefix + '/get-user-proposals-innovations-proposals',
     postEnterNegotiationRoom: prefix + '/post-enter-negotiation-room',
     getAllRooms: prefix+'/get-all-rooms',
     postSearchMensagensRelated :prefix+'/post-search-mensagens-related',
     postAcceptProposalInnovation : prefix + "/post-accept-proposal-innovation",
+    postAcceptProposalInnovationProposal : prefix + "/post-accept-proposal-innovation-proposal",
     postRejectProposalInnovation : prefix + "/post-reject-proposal-innovation",
     getUserInnovations: prefix + "/get-user-innovations",
     postUpdateInnovationDetails: prefix + "/post-update-innovation-details",
@@ -39,7 +41,15 @@ export const api = {
     proposalCanceledSponsored: prefix + '/proposal-canceled-sponsored',
     proposalClosedSponsored: prefix + '/proposal-closed-sponsored',
     proposalRejectedSponsored: prefix + '/proposal-rejected-sponsored',
-
+    createCreditPaymentIntent: prefix +'/post-create-credit-payment-intent',
+    postConfirmCreditPayment : prefix + '/post-confirm-credit-payment',
+    getUserBalance : prefix + '/get-user-balance',
+    getCreditHistory : prefix + '/get-credit-history',
+    cancelInovation: prefix + '/cancel-innovation',
+    proposalOpenSponsoredInvestor: prefix + '/proposal-open-sponsored-investor',
+    proposalCanceledSponsoredInvestor: prefix + '/proposal-canceled-sponsored-investor',
+    proposalClosedSponsoredInvestor: prefix + '/proposal-closed-sponsored-investor',
+    proposalRejectedSponsoredInvestor: prefix + '/proposal-rejected-sponsored-investor',
 
 }
 

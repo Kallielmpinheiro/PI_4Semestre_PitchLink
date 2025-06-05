@@ -4,13 +4,13 @@ import { PLANOS } from '../../data/planos';
 import { DomSanitizer } from '@angular/platform-browser';
 import { HeaderComponent } from '../../../../pitchlink/components/header/header.component';
 import { Router } from '@angular/router';
-import { NgClass } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { ModalLoginComponent } from '../../../../pitchlink/components/modal-login/modal-login.component';
 
 
 @Component({
   selector: 'app-subscription',
-  imports: [HeaderComponent, NgClass, ModalLoginComponent],
+  imports: [CommonModule, HeaderComponent, NgClass, ModalLoginComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.css'
 })

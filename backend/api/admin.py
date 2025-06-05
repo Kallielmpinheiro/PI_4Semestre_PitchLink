@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.models import PaymentTransaction, User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom, ProposalInnovation
+from api.models import CreditTransactions, PaymentTransaction, User, Innovation,InnovationImage, NegotiationMessage, NegotiationRoom, ProposalInnovation
 
 # Register your models here.
 
@@ -61,6 +61,18 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
 
 admin.site.register(PaymentTransaction, PaymentTransactionAdmin)
 
+
+class CreditTransactionAdmin(admin.ModelAdmin):
+    list_display = ('created', 'id', 'user', 'amount', 'status', 'stripe_payment_intent_id')
+    list_filter = ('status', 'created', 'modified')
+    search_fields = ('user__first_name', 'user__email', 'stripe_payment_intent_id')
+    readonly_fields = ('stripe_payment_intent_id', 'stripe_client_secret', 'get_amount_in_cents')
+    
+    def get_amount_in_cents(self, obj):
+        return obj.get_amount_in_cents()
+    get_amount_in_cents.short_description = 'Amount in Cents'
+
+admin.site.register(CreditTransactions, CreditTransactionAdmin)
 # admin
 admin.site.site_header = 'PitchLink Admin'
 admin.site.index_title = 'Painel Administrativo'
