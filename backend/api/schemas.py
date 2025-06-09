@@ -121,3 +121,17 @@ class ConfirmCreditPaymentReq(Schema):
 
 class CancelReq(Schema):
     id: str
+
+class PaymentProposalReq(Schema):
+    id_inovation: str
+    id_proposal: str
+    amount : Decimal
+    id_sponsored : int
+    
+class SignatureContractReq(Schema):
+    proposalId: int
+    contractDetails: dict
+    securityInfo: dict
+    signatureInfo: dict
+    signedPdfBase64: Optional[str] = None
+    pdfFileName: Optional[str] = None

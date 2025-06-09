@@ -100,20 +100,24 @@ export class PaymentComponent implements OnInit {
   }
   
   private setupCardElement() {
-    if (this.elements) {
-      this.cardElement = this.elements.create('card', {
-        style: {
-          base: {
-            fontSize: '16px',
-            color: '#ffffff',
-            '::placeholder': {
-              color: '#aab7c4',
-            },
+  if (this.elements) {
+    this.cardElement = this.elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#ffffff',
+          '::placeholder': {
+            color: '#aab7c4',
           },
         },
-      });
-    }
+      },
+      hidePostalCode: true, 
+      fields: {
+        postalCode: 'never'
+      }
+    });
   }
+}
   
   mountCardElement() {
     if (this.cardElement) {

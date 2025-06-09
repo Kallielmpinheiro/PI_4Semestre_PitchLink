@@ -52,6 +52,9 @@ export const api = {
     proposalRejectedSponsoredInvestor: prefix + '/proposal-rejected-sponsored-investor',
     proposal: prefix + '/proposal',
     getProposalCompleted: prefix + '',
+    paymentProposal: prefix + '/payment-proposal',
+    signatureContract: prefix + '/signature-contract',
+    checkSignatureStatus: prefix + '/check-contract-signatures'
 }
 
 export const socialAccounts = {

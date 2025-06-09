@@ -105,14 +105,28 @@ export class SdbrPropostasComponent implements OnInit {
       }
     }
 
-    return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
+    return `R$ ${numVal.toFixed(2).replace('.', ',')}`;
   }
 
-  getStatusText(accepted: boolean | null | undefined): string {
-    if (accepted === null || accepted === undefined) {
-      return 'Pendente';
+  getStatusText(proposta: any): string {
+    switch (proposta.status) {
+      case 'pending':
+        return 'Pendente';
+      case 'cancelled':
+        return 'Cancelada';
+      case 'rejected':
+        return 'Rejeitada';
+      case 'accepted_request':
+        return 'Solicitação Aceita';
+      case 'accepted_proposal':
+        return 'Proposta Aceita';
+      case 'accepted_contract':
+        return 'Contrato Aceito';
+      case 'completed':
+        return 'Finalizada';
+      default:
+        return 'Pendente';
     }
-    return accepted ? 'Aceita' : 'Rejeitada';
   }
 
   handlePropostaClick(proposta: any) {
@@ -210,5 +224,22 @@ export class SdbrPropostasComponent implements OnInit {
 
   onModalClose() {
     this.showResponseModal = false;
+  }
+
+  getInvestorDisplayName(proposta: any): string {
+    if (proposta.investor_name && proposta.investor_last_name) {
+      return `${proposta.investor_name} ${proposta.investor_last_name}`;
+    }
+    
+    // Fallback para campos alternativos se existirem
+    if (proposta.investor_nome) {
+      return proposta.investor_nome;
+    }
+    
+    if (proposta.investor_name) {
+      return proposta.investor_name;
+    }
+    
+    return 'Investidor Desconhecido';
   }
 }
