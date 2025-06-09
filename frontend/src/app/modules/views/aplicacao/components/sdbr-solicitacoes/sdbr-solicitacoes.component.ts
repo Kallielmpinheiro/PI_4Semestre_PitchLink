@@ -77,37 +77,37 @@ export class SdbrSolicitacoesComponent implements OnInit {
     return 'assets/images/default-avatar.png';
   }
 
-formatMoneyCompact(value: number | string | null | undefined): string {
-  const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
+  formatMoneyCompact(value: number | string | null | undefined): string {
+    const numVal = typeof value === 'string' ? parseFloat(value) : Number(value);
 
-  if (!value || isNaN(numVal)) {
-    return 'R$ 0,00';
-  }
-
-  if (numVal <= 999_999_999.99) {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(numVal);
-  }
-
-  // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
-  const abbreviations = [
-    { limit: 1_000_000_000_000, suffix: 'T' },
-    { limit: 1_000_000_000, suffix: 'B' },
-    { limit: 1_000_000, suffix: 'M' },
-    { limit: 1_000, suffix: 'K' },
-  ];
-
-  for (const { limit, suffix } of abbreviations) {
-    if (numVal >= limit) {
-      const short = (numVal / limit).toFixed(1).replace('.', ',');
-      return `R$ ${short}${suffix}`;
+    if (!value || isNaN(numVal)) {
+      return 'R$ 0,00';
     }
-  }
 
-  return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
-}
+    if (numVal <= 999_999_999.99) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(numVal);
+    }
+
+    // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
+    const abbreviations = [
+      { limit: 1_000_000_000_000, suffix: 'T' },
+      { limit: 1_000_000_000, suffix: 'B' },
+      { limit: 1_000_000, suffix: 'M' },
+      { limit: 1_000, suffix: 'K' },
+    ];
+
+    for (const { limit, suffix } of abbreviations) {
+      if (numVal >= limit) {
+        const short = (numVal / limit).toFixed(1).replace('.', ',');
+        return `R$ ${short}${suffix}`;
+      }
+    }
+
+    return `R$ ${numVal.toFixed(2).replace('.', ',')}`; // fallback
+  }
 
   handlePropostaClick(proposta: any) {
     this.propostaSelecionada = proposta;
@@ -221,5 +221,22 @@ formatMoneyCompact(value: number | string | null | undefined): string {
 
   onModalClose() {
     this.showResponseModal = false;
+  }
+
+  getInvestorDisplayName(proposta: any): string {
+    if (proposta.investor_name && proposta.investor_last_name) {
+      return `${proposta.investor_name} ${proposta.investor_last_name}`;
+    }
+    
+    // Fallback para campos alternativos se existirem
+    if (proposta.investor_nome) {
+      return proposta.investor_nome;
+    }
+    
+    if (proposta.investor_name) {
+      return proposta.investor_name;
+    }
+    
+    return 'Investidor Desconhecido';
   }
 }

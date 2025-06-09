@@ -1,9 +1,10 @@
+import decimal
 import json
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, RejectProposalInnovation, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
+from api.schemas import CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, PaymentProposalReq, RejectProposalInnovation, SignatureContractReq, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
-from api.models import NegotiationMessage, NegotiationRoom, PaymentTransaction, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
+from api.models import ContractSignature, NegotiationMessage, NegotiationRoom, PaymentTransaction, ProposalPayment, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
 from ninja.security import django_auth, HttpBearer
 from django.contrib.auth import logout
 from datetime import datetime, timedelta, timezone
@@ -821,7 +822,7 @@ def get_search_proposal_innovation(request):
         
         return 404, {'message': 'Conta não encontrada'}
     
-    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=False, status='pending').order_by("-created")
+    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=True, status='pending').order_by("-created")
     
     if not ppi.exists():
         return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
@@ -861,7 +862,7 @@ def get_search_proposal_innovation(request):
         
         return 404, {'message': 'Conta não encontrada'}
     
-    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=False, status='accepted').order_by("-created")
+    ppi = ProposalInnovation.objects.filter(sponsored=user, accepted=True, status='accepted_request').order_by("-created")
     
     if not ppi.exists():
         return 404, {'message': 'Nenhuma proposta encontrada para este usuário'}
@@ -1027,7 +1028,7 @@ def post_accept_proposal_innovation(request, payload: AcceptedProposalInnovation
     if proposal.sponsored.id != user.id:
          return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
     
-    proposal.status = 'accepted'
+    proposal.status = 'accepted_request'
     proposal.save()
     
     proposal_data = {
@@ -1071,7 +1072,7 @@ def post_accept_proposal_innovation_proposal(request, payload: AcceptedProposalI
     if proposal.sponsored.id != user.id:
          return 403, {'message': 'Você não tem permissão para aceitar esta proposta'}
     
-    proposal.accepted=True
+    proposal.status = 'accepted_proposal'
     proposal.save()
     
     proposal_data = {
@@ -1436,7 +1437,6 @@ def post_confirm_payment(request, payload: PaymentPlanReq):
 @api.post('/stripe-webhook', response={200: dict, 400: dict})
 def stripe_webhook(request: HttpRequest):
     payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
     try:
         event = stripe.Event.construct_from(
@@ -1446,7 +1446,6 @@ def stripe_webhook(request: HttpRequest):
         if event['type'] == 'payment_intent.succeeded':
             payment_intent = event['data']['object']
             
-            # Verificar se é transação de plano
             try:
                 payment_transaction = PaymentTransaction.objects.get(
                     stripe_payment_intent_id=payment_intent['id']
@@ -2096,7 +2095,8 @@ def get_proposal_open_sponsored(request):
     
     proposals = ProposalInnovation.objects.filter(
         Q(investor=user) | Q(sponsored=user),
-        status='accepted', accepted=True
+        status__in=['accepted_proposal', 'accepted_contract', 'completed'],
+        accepted=True
     )
     
     if not proposals.exists():
@@ -2124,9 +2124,13 @@ def get_proposal_open_sponsored(request):
             'modified': proposal.modified.isoformat(),
             'investor_id': proposal.investor.id,
             'investor_name': proposal.investor.first_name,
+            'investor_last_name': proposal.investor.last_name,
+            'investor_email': proposal.investor.email,
             'investor_img_url': investor_img_url,
             'sponsored_id': proposal.sponsored.id,
             'sponsored_name': proposal.sponsored.first_name,
+            'sponsored_last_name': proposal.sponsored.last_name,
+            'sponsored_email': proposal.sponsored.email,
             'sponsored_img_url': sponsored_img_url,
             'innovation_id': proposal.innovation.id,
             'innovation_name': proposal.innovation.nome,
@@ -2140,3 +2144,441 @@ def get_proposal_open_sponsored(request):
         })
     
     return 200, {'data': data}
+
+@api.post('/payment-proposal', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict, 500: dict})
+def payment_proposal(request, payload: PaymentProposalReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id_proposal)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+
+    try:
+        innovation = Innovation.objects.get(id=payload.id_inovation)
+    except Innovation.DoesNotExist:
+        return 404, {'message': 'Inovação não encontrada'}
+
+    try:
+        sponsored = User.objects.get(id=payload.id_sponsored)
+    except User.DoesNotExist:
+        return 404, {'message': 'Usuário patrocinado não encontrado'}
+
+    if proposal.investor != user:
+        return 403, {'message': 'Você não tem permissão para fazer este pagamento'}
+
+    if not proposal.accepted or proposal.status != 'accepted_proposal':
+        return 400, {'message': 'A proposta deve estar aceita para realizar o pagamento'}
+
+    if proposal.paid:
+        return 400, {'message': 'Esta proposta já foi paga'}
+
+    if proposal.innovation.id != int(payload.id_inovation):
+        return 400, {'message': 'A proposta não pertence à inovação informada'}
+
+    if proposal.sponsored.id != payload.id_sponsored:
+        return 400, {'message': 'O usuário patrocinado não corresponde à proposta'}
+
+    try:
+        amount = Decimal(str(payload.amount))
+    except (ValueError, TypeError, decimal.InvalidOperation):
+        return 400, {'message': 'Valor de pagamento inválido'}
+
+    if amount <= 0:
+        return 400, {'message': 'O valor deve ser maior que zero'}
+
+    if user.balance < amount:
+        return 400, {
+            'message': 'Saldo insuficiente',
+            'required_amount': float(amount),
+            'current_balance': float(user.balance),
+            'missing_amount': float(amount - user.balance)
+        }
+
+    try:
+        with transaction.atomic():
+            user.balance -= amount
+            user.save()
+
+            sponsored.balance += amount
+            sponsored.save()
+
+            proposal.paid = True
+            proposal.save()
+
+            proposal_payment = ProposalPayment.objects.create(
+                proposal=proposal,
+                investor=user,
+                amount=amount,
+                status='succeeded'
+            )
+
+            investor_transaction = CreditTransactions.objects.create(
+                user=user,
+                amount=-amount, 
+                status='succeeded',
+                stripe_payment_intent_id=f'internal_debit_{proposal_payment.id}',
+                stripe_client_secret='',
+                payment_method_id='internal_balance'
+            )
+
+            sponsored_transaction = CreditTransactions.objects.create(
+                user=sponsored,
+                amount=amount, 
+                status='succeeded',
+                stripe_payment_intent_id=f'internal_credit_{proposal_payment.id}',
+                stripe_client_secret='',
+                payment_method_id='internal_transfer'
+            )
+
+            return 200, {
+                            'message': 'Pagamento realizado com sucesso! Você pode prosseguir com o preenchimento dos campos contratuais.',
+                            'payment_details': {
+                                'payment_id': proposal_payment.id,
+                                'proposal_id': proposal.id,
+                                'innovation_id': innovation.id,
+                                'innovation_name': innovation.nome,
+                                'amount': float(amount),
+                                'formatted_amount': f'R$ {float(amount):.2f}',
+                                'investor_new_balance': float(user.balance),
+                                'sponsored_new_balance': float(sponsored.balance),
+                                'sponsored_name': f"{sponsored.first_name} {sponsored.last_name}".strip(),
+                                'percentage_acquired': proposal.porcentagem_cedida,
+                                'proposal_status': proposal.status,
+                                'payment_date': proposal_payment.created.isoformat(),
+                                'transaction_ids': {
+                                    'investor_transaction_id': investor_transaction.id,
+                                    'sponsored_transaction_id': sponsored_transaction.id
+                                }
+                            }
+                        }
+
+    except Exception as e:
+        logging.error(f"Erro ao processar pagamento: {str(e)}")
+        return 500, {'message': f'Erro ao processar pagamento: {str(e)}'}
+
+
+@api.post('/signature-contract', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict, 500: dict})
+def signature_contract(request, payload: SignatureContractReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.proposalId)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+
+    if proposal.investor != user and proposal.sponsored != user:
+        return 403, {'message': 'Você não tem permissão para assinar este contrato'}
+
+    if not proposal.accepted or proposal.status not in ['accepted_proposal', 'accepted_contract']   :
+        return 400, {'message': 'A proposta deve estar aceita e paga para ser assinada'}
+
+    existing_signature = ContractSignature.objects.filter(
+        proposal=proposal,
+        signer=user,
+        status='signed'
+    ).first()
+
+    if existing_signature:
+        base_url = f"{request.scheme}://{request.get_host()}"
+        pdf_download_url = None
+        if existing_signature.signed_pdf_file:
+            pdf_download_url = f"{base_url}{existing_signature.signed_pdf_file.url}"
+        
+        return 200, {
+            'message': 'Você já assinou este contrato. Aqui estão os detalhes da sua assinatura.',
+            'already_signed': True,
+            'signature_details': {
+                'signature_id': existing_signature.id,
+                'proposal_id': proposal.id,
+                'innovation_id': proposal.innovation.id,
+                'innovation_name': proposal.innovation.nome,
+                'signer_name': existing_signature.signer_name,
+                'user_role': existing_signature.user_role,
+                'signed_at': existing_signature.signed_at.isoformat() if hasattr(existing_signature.signed_at, 'isoformat') else str(existing_signature.signed_at),
+                'contract_hash': existing_signature.contract_hash
+            },
+            'contract_info': {
+                'title': existing_signature.contract_title,
+                'investment_amount': existing_signature.investment_amount,
+                'equity_percentage': existing_signature.equity_percentage,
+                'innovation_name': existing_signature.innovation_name
+            },
+            'pdf_info': {
+                'filename': os.path.basename(existing_signature.signed_pdf_file.name) if existing_signature.signed_pdf_file else None,
+                'download_url': pdf_download_url,
+                'signed_at': existing_signature.created.isoformat()
+            },
+            'security_info': {
+                'ip_address': existing_signature.ip_address,
+                'platform': existing_signature.platform,
+                'timestamp': existing_signature.timestamp.isoformat() if hasattr(existing_signature.timestamp, 'isoformat') else str(existing_signature.timestamp)
+            }
+        }
+
+    if not payload.signedPdfBase64:
+        return 400, {'message': 'PDF assinado é obrigatório'}
+
+    client_ip = request.META.get('HTTP_X_FORWARDED_FOR')
+    if client_ip:
+        client_ip = client_ip.split(',')[0].strip()
+    else:
+        client_ip = request.META.get('REMOTE_ADDR')
+
+    try:
+        with transaction.atomic():
+            signed_at_value = payload.signatureInfo['signedAt']
+            if isinstance(signed_at_value, str):
+                try:
+                    signed_at_value = datetime.fromisoformat(signed_at_value.replace('Z', '+00:00'))
+                except ValueError:
+                    signed_at_value = django_timezone.now()
+            
+            timestamp_value = payload.securityInfo['timestamp']
+            if isinstance(timestamp_value, str):
+                try:
+                    timestamp_value = datetime.fromisoformat(timestamp_value.replace('Z', '+00:00'))
+                except ValueError:
+                    timestamp_value = django_timezone.now()
+
+            signed_pdf_file = None
+            try:
+                if payload.signedPdfBase64.startswith('data:application/pdf;base64,'):
+                    pdf_data = payload.signedPdfBase64.split(',')[1]
+                else:
+                    pdf_data = payload.signedPdfBase64
+                
+                decoded_pdf = base64.b64decode(pdf_data)
+                
+                user_role = payload.signatureInfo['userRole']
+                timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+                pdf_filename = payload.pdfFileName or f"contrato_assinado_proposta_{proposal.id}_{user_role}_{timestamp_str}.pdf"
+                
+                if not pdf_filename.lower().endswith('.pdf'):
+                    pdf_filename += '.pdf'
+                
+                from django.core.files.base import ContentFile
+                pdf_content = ContentFile(decoded_pdf, name=pdf_filename)
+                signed_pdf_file = pdf_content
+                
+            except Exception as e:
+                logging.error(f"Erro ao processar PDF: {str(e)}")
+                return 400, {'message': f'Erro ao processar PDF assinado: {str(e)}'}
+
+            contract_signature = ContractSignature.objects.create(
+                proposal=proposal,
+                signer=user,
+                signer_name=payload.signatureInfo['signerName'],
+                signer_email=payload.signatureInfo['signerEmail'],
+                document_type=payload.signatureInfo['documentType'],
+                document_number=payload.signatureInfo['documentNumber'],
+                user_role=payload.signatureInfo['userRole'],
+                signed_at=signed_at_value,
+                contract_hash=payload.signatureInfo['contractHash'],
+                timestamp=timestamp_value,
+                user_agent=payload.securityInfo['userAgent'],
+                platform=payload.securityInfo['platform'],
+                language=payload.securityInfo['language'],
+                screen_resolution=payload.securityInfo['screenResolution'],
+                timezone=payload.securityInfo['timezone'],
+                ip_address=client_ip,
+                contract_title=payload.contractDetails['title'],
+                contract_subtitle=payload.contractDetails.get('subtitle', ''),
+                contract_description=payload.contractDetails['description'],
+                investment_amount=payload.contractDetails['investmentAmount'],
+                equity_percentage=payload.contractDetails['equityPercentage'],
+                innovation_name=payload.contractDetails['innovationName'],
+                status='signed'
+            )
+
+            if signed_pdf_file:
+                contract_signature.signed_pdf_file.save(pdf_filename, signed_pdf_file, save=True)
+
+            total_signatures = ContractSignature.objects.filter(
+                proposal=proposal,
+                status='signed'
+            ).count()
+
+            proposal_status_updated = False
+            if total_signatures >= 2:
+                proposal.status = 'accepted_contract'
+                proposal.save()
+                proposal_status_updated = True
+
+            base_url = f"{request.scheme}://{request.get_host()}"
+            pdf_download_url = None
+            if contract_signature.signed_pdf_file:
+                pdf_download_url = f"{base_url}{contract_signature.signed_pdf_file.url}"
+        
+            return 200, {
+                'message': 'Contrato assinado com sucesso!',
+                'already_signed': False,
+                'signature_details': {
+                    'signature_id': contract_signature.id,
+                    'proposal_id': proposal.id,
+                    'innovation_id': proposal.innovation.id,
+                    'innovation_name': proposal.innovation.nome,
+                    'signer_name': contract_signature.signer_name,
+                    'user_role': contract_signature.user_role,
+                    'signed_at': contract_signature.signed_at.isoformat() if hasattr(contract_signature.signed_at, 'isoformat') else str(contract_signature.signed_at),
+                    'contract_hash': contract_signature.contract_hash,
+                    'total_signatures': total_signatures,
+                    'contract_fully_signed': total_signatures >= 2,
+                    'proposal_status_updated': proposal_status_updated,
+                    'new_proposal_status': proposal.status if proposal_status_updated else None
+                },
+                'contract_info': {
+                    'title': contract_signature.contract_title,
+                    'investment_amount': contract_signature.investment_amount,
+                    'equity_percentage': contract_signature.equity_percentage,
+                    'innovation_name': contract_signature.innovation_name
+                },
+                'pdf_info': {
+                    'filename': pdf_filename,
+                    'download_url': pdf_download_url,
+                    'file_size': len(decoded_pdf) if 'decoded_pdf' in locals() else 0,
+                    'saved_at': contract_signature.created.isoformat()
+                },
+                'security_info': {
+                    'ip_address': contract_signature.ip_address,
+                    'platform': contract_signature.platform,
+                    'timestamp': contract_signature.timestamp.isoformat() if hasattr(contract_signature.timestamp, 'isoformat') else str(contract_signature.timestamp)
+                }
+            }
+
+    except Exception as e:
+        logging.error(f"Erro ao salvar assinatura do contrato: {str(e)}")
+        return 500, {'message': f'Erro ao processar assinatura: {str(e)}'}
+    
+@api.get('/check-contract-signatures/{proposal_id}', auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
+def check_contract_signatures(request, proposal_id: int):
+    try:
+        user = request.auth
+    except User.DoesNotExist:
+        return 404, {'message': 'Conta não encontrada'}
+
+    try:
+        proposal = ProposalInnovation.objects.get(id=proposal_id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+
+    if proposal.investor != user and proposal.sponsored != user:
+        return 403, {'message': 'Você não tem permissão para ver as assinaturas desta proposta'}
+
+    try:
+        base_url = f"{request.scheme}://{request.get_host()}"
+        
+        signatures = ContractSignature.objects.filter(
+            proposal=proposal,
+            status='signed'
+        ).order_by('created')
+
+        user_signature = ContractSignature.objects.filter(
+            proposal=proposal,
+            signer=user,
+            status='signed'
+        ).first()
+
+        investor_signature = ContractSignature.objects.filter(
+            proposal=proposal,
+            user_role='investor',
+            status='signed'
+        ).first()
+
+        sponsored_signature = ContractSignature.objects.filter(
+            proposal=proposal,
+            user_role='sponsored',
+            status='signed'
+        ).first()
+
+        user_role = 'investor' if proposal.investor == user else 'sponsored'
+
+        signatures_data = []
+        for signature in signatures:
+            pdf_url = None
+            if signature.signed_pdf_file:
+                pdf_url = f"{base_url}{signature.signed_pdf_file.url}"
+            
+            signatures_data.append({
+                'signature_id': signature.id,
+                'signer_id': signature.signer.id,
+                'signer_name': signature.signer_name,
+                'signer_email': signature.signer_email,
+                'user_role': signature.user_role,
+                'signed_at': signature.signed_at.isoformat() if hasattr(signature.signed_at, 'isoformat') else str(signature.signed_at),
+                'contract_hash': signature.contract_hash,
+                'ip_address': signature.ip_address,
+                'platform': signature.platform,
+                'document_type': signature.document_type,
+                'document_number': signature.document_number,
+                'pdf_url': pdf_url,
+                'pdf_filename': os.path.basename(signature.signed_pdf_file.name) if signature.signed_pdf_file else None
+            })
+
+        user_pdf_info = None
+        if user_signature:
+            user_pdf_info = {
+                'pdf_url': f"{base_url}{user_signature.signed_pdf_file.url}" if user_signature.signed_pdf_file else None,
+                'pdf_filename': os.path.basename(user_signature.signed_pdf_file.name) if user_signature.signed_pdf_file else None,
+                'signed_at': user_signature.signed_at.isoformat() if hasattr(user_signature.signed_at, 'isoformat') else str(user_signature.signed_at),
+                'contract_hash': user_signature.contract_hash,
+                'signature_id': user_signature.id
+            }
+
+        return 200, {
+            'proposal_id': proposal.id,
+            'proposal_status': proposal.status,
+            'proposal_paid': proposal.paid,
+            'current_user': {
+                'id': user.id,
+                'role': user_role,
+                'has_signed': user_signature is not None,
+                'can_sign': (
+                    proposal.accepted and 
+                    proposal.status in ['accepted_proposal', 'accepted_contract'] and 
+                    proposal.paid and 
+                    user_signature is None
+                ),
+                'pdf_info': user_pdf_info  
+            },
+            'signatures_summary': {
+                'total_signatures': len(signatures_data),
+                'investor_signed': investor_signature is not None,
+                'sponsored_signed': sponsored_signature is not None,
+                'contract_fully_signed': len(signatures_data) >= 2,
+                'missing_signatures': 2 - len(signatures_data) if len(signatures_data) < 2 else 0
+            },
+            'signatures_details': signatures_data,
+            'investor_info': {
+                'id': proposal.investor.id,
+                'name': f"{proposal.investor.first_name} {proposal.investor.last_name}".strip(),
+                'email': proposal.investor.email,
+                'has_signed': investor_signature is not None,
+                'signed_at': investor_signature.signed_at.isoformat() if investor_signature and hasattr(investor_signature.signed_at, 'isoformat') else (str(investor_signature.signed_at) if investor_signature else None),
+                'pdf_url': f"{base_url}{investor_signature.signed_pdf_file.url}" if investor_signature and investor_signature.signed_pdf_file else None,
+                'pdf_filename': os.path.basename(investor_signature.signed_pdf_file.name) if investor_signature and investor_signature.signed_pdf_file else None
+            },
+            'sponsored_info': {
+                'id': proposal.sponsored.id,
+                'name': f"{proposal.sponsored.first_name} {proposal.sponsored.last_name}".strip(),
+                'email': proposal.sponsored.email,
+                'has_signed': sponsored_signature is not None,
+                'signed_at': sponsored_signature.signed_at.isoformat() if sponsored_signature and hasattr(sponsored_signature.signed_at, 'isoformat') else (str(sponsored_signature.signed_at) if sponsored_signature else None),
+                'pdf_url': f"{base_url}{sponsored_signature.signed_pdf_file.url}" if sponsored_signature and sponsored_signature.signed_pdf_file else None,
+                'pdf_filename': os.path.basename(sponsored_signature.signed_pdf_file.name) if sponsored_signature and sponsored_signature.signed_pdf_file else None
+            },
+            'innovation_info': {
+                'id': proposal.innovation.id,
+                'name': proposal.innovation.nome
+            }
+        }
+
+    except Exception as e:
+        logging.error(f"Erro ao verificar assinaturas do contrato: {str(e)}")
+        return 500, {'message': f'Erro ao verificar assinaturas: {str(e)}'}

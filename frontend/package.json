@@ -22,6 +22,10 @@
     "@stripe/stripe-js": "^7.3.1",
     "flowbite": "^3.1.2",
     "hammerjs": "^2.0.8",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -32,6 +36,7 @@
     "@angular/compiler-cli": "^19.0.0",
     "@types/hammerjs": "^2.0.46",
     "@types/jasmine": "~5.1.0",
+    "@types/pdfjs-dist": "^2.10.377",
     "autoprefixer": "^10.4.20",
     "jasmine-core": "~5.4.0",
     "karma": "~6.4.0",

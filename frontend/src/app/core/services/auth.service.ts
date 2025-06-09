@@ -490,4 +490,82 @@ postConfirmCreditPayment(plan: string, payment_intent_id: string): Observable<an
     })
   }
 
+  paymentProposal(idInovation: string, idProposal: string, amount: string, idSponsored: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { 
+      id_inovation: idInovation,
+      id_proposal: idProposal,
+      amount: parseFloat(amount),
+      id_sponsored: idSponsored
+    };
+    return this.http.post(`${this.baseUrl}${api.paymentProposal}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+  }
+
+  signatureContract(proposalId: number, contractDetails: any, securityInfo: any, signatureInfo: any, pdfBlob?: Blob, fileName?: string): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    
+    if (pdfBlob && fileName) {
+      return new Observable(observer => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64Data = (reader.result as string).split(',')[1]; 
+          
+          const payload = {
+            proposalId: proposalId,
+            contractDetails: contractDetails,
+            securityInfo: securityInfo,
+            signatureInfo: signatureInfo,
+            signedPdfBase64: base64Data,
+            pdfFileName: fileName
+          };
+          
+          this.http.post(`${this.baseUrl}${api.signatureContract}`, payload, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }).subscribe({
+            next: (response) => observer.next(response),
+            error: (error) => observer.error(error),
+            complete: () => observer.complete()
+          });
+        };
+        
+        reader.onerror = () => {
+          observer.error(new Error('Failed to convert PDF to base64'));
+        };
+        
+        reader.readAsDataURL(pdfBlob);
+      });
+    } else {
+      const payload = { 
+        proposalId: proposalId,
+        contractDetails: contractDetails,
+        securityInfo: securityInfo,
+        signatureInfo: signatureInfo,
+        signedPdfBase64: null,
+        pdfFileName: null
+      };
+      return this.http.post(`${this.baseUrl}${api.signatureContract}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+  }
+
+  checkSignatureStatus(proposalId: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    return this.http.get(`${this.baseUrl}${api.checkSignatureStatus}/${proposalId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
+
 }
