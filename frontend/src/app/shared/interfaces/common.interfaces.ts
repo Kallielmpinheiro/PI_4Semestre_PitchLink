@@ -86,7 +86,14 @@ export interface RoomsResponse {
 }
 
 
-
+export interface PdfFormField {
+  name: string;
+  value: string;
+  type: 'text' | 'number' | 'date' | 'cpf_cnpj';
+  x?: number;
+  y?: number;
+  page?: number;
+}
 
 export interface CreditHistoryItem {
   id: number;
@@ -103,4 +110,49 @@ export interface CreditHistoryResponse {
   formatted_balance: string;
   total_accumulated: number;
   message: string;
+}
+
+export interface ProposalData {
+  id: number;
+  created: string;
+  modified: string;
+  investor_id: number;
+  investor_name: string;
+  investor_last_name: string;
+  investor_img_url: string | null;
+  sponsored_id: number;
+  sponsored_name: string;
+  sponsored_last_name: string;
+  sponsored_img_url: string | null;
+  innovation_id: number;
+  innovation_name: string;
+  descricao: string;
+  investimento_minimo: number;
+  porcentagem_cedida: number;
+  accepted: boolean;
+  status: string;
+  user_role: 'investor' | 'sponsored';
+  paid: boolean;
+}
+
+export interface InvestmentSummary {
+  totalInvestment: number;
+  investorEquity: number;
+  sponsoredEquity: number;
+  expectedROI: number;
+  paymentStatus: 'paid' | 'pending' | 'failed';
+  investmentBreakdown: {
+    baseAmount: number;
+    fees: number;
+    taxes: number;
+    finalAmount: number;
+  };
+  timeline: {
+    proposalDate: string;
+    acceptanceDate: string;
+    paymentDate?: string;
+    expectedReturnDate?: string;
+  };
+  riskLevel: 'low' | 'medium' | 'high';
+  category: string;
 }

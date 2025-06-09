@@ -24,7 +24,7 @@
         tabindex="0"
         (click)="handlePropostaClick(proposta)"
         (keydown.enter)="handlePropostaClick(proposta)"
-        [attr.aria-label]="'Proposta de ' + proposta.investor_nome">
+        [attr.aria-label]="'Proposta de ' + getInvestorDisplayName(proposta)">
       
       <!-- Cabeçalho do card com informações do investidor e status -->
       <div class="flex items-center justify-between mb-3">
@@ -37,11 +37,11 @@
                    (error)="proposta.investor_profile_picture = null; proposta.investor_profile_picture_url = null">
             </div>
             <div *ngIf="!proposta.investor_profile_picture_url && !proposta.investor_profile_picture" class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold border-2 border-blue-400">
-              {{ proposta.investor_nome.charAt(0) }}
+              {{ getInvestorDisplayName(proposta).charAt(0) }}
             </div>
           </div>
           <div>
-            <h4 class="font-semibold text-white">{{ proposta.investor_nome }}</h4>
+            <h4 class="font-semibold text-white">{{ getInvestorDisplayName(proposta) }}</h4>
             <div class="flex flex-col sm:flex-row sm:items-center text-sm">
               <!-- Exibição resumida do valor no cabeçalho do card -->
               <span class="text-gray-400">{{ proposta.created | date:'dd/MM/yyyy' }}</span>
@@ -171,11 +171,11 @@
                    (error)="propostaSelecionada.investor_profile_picture = null; propostaSelecionada.investor_profile_picture_url = null">
             </div>
             <div *ngIf="!propostaSelecionada.investor_profile_picture_url && !propostaSelecionada.investor_profile_picture" class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold border-2 border-blue-400">
-              {{ propostaSelecionada.investor_nome.charAt(0) }}
+              {{ getInvestorDisplayName(propostaSelecionada).charAt(0) }}
             </div>
           </div>
           <div>
-            <h4 class="font-bold text-xl text-white">{{ propostaSelecionada.investor_nome }}</h4>
+            <h4 class="font-bold text-xl text-white">{{ getInvestorDisplayName(propostaSelecionada) }}</h4>
             <p class="text-gray-400">{{ propostaSelecionada.investor_email || 'Email não disponível' }}</p>
             <p class="text-gray-400">Proposta criada em {{ propostaSelecionada.created | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>

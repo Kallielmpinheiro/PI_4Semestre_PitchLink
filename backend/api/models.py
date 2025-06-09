@@ -1,9 +1,12 @@
+# filepath: /home/kalliel/Documentos/FATEC/PI_4Semestre_PitchLink/backend/api/models.py
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.db.models import JSONField
 import uuid
+import os
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
 
 # Create your models here.
 
@@ -170,10 +173,13 @@ class ProposalInnovation(models.Model):
     paid = models.BooleanField('Pago', default=False)
     status = models.CharField(_('Status'), max_length=50, choices=[
         ('pending', _('Pendente')),
-        ('canceled', _('Cancelado')),
+        ('cancelled', _('Cancelada')),
         ('rejected', _('Rejeitada')),
-        ('accepted', _('Aceita')),
-    ], default='pending')    
+        ('accepted_request', _('Aceita - Solicitação')),
+        ('accepted_proposal', _('Aceita - Proposta')),
+        ('accepted_contract', _('Aceita - Contrato')),
+        ('completed', _('Finalizada')),
+    ], default='pending')
     
     class Meta:
         verbose_name = _('Proposta de Inovação')
@@ -237,7 +243,7 @@ class CreditTransactions(models.Model):
     
     created = models.DateTimeField(_('Criado em'), auto_now_add=True)
     modified = models.DateTimeField(_('Alterado em'), auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='credit_transactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='credit_transactions')    
     amount = models.DecimalField(_('Valor'), max_digits=10, decimal_places=2)
     status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='pending')
     stripe_payment_intent_id = models.CharField(_('Stripe Payment Intent ID'), max_length=100, unique=True)
@@ -302,3 +308,67 @@ class ProposalPayment(models.Model):
         
         return True, "Pagamento processado com sucesso"
 
+class ContractSignature(models.Model):
+    
+    created = models.DateTimeField(_('Criado em'), auto_now_add=True)
+    modified = models.DateTimeField(_('Alterado em'), auto_now=True)
+    proposal = models.ForeignKey(ProposalInnovation, on_delete=models.CASCADE, related_name='signatures')
+    signer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contract_signatures')
+    signer_name = models.CharField(_('Nome do Signatário'), max_length=255)
+    signer_email = models.EmailField(_('Email do Signatário'))
+    document_type = models.CharField(_('Tipo do Documento'), max_length=50)  # cpf, cnpj
+    document_number = models.CharField(_('Número do Documento'), max_length=50)
+    user_role = models.CharField(_('Papel do Usuário'), max_length=50)  # investor, sponsored
+    signed_at = models.DateTimeField(_('Assinado em'))
+    contract_hash = models.TextField(_('Hash do Contrato'))
+    
+    signed_pdf_file = models.FileField(
+        _('PDF Assinado'), 
+        upload_to='signed_contracts/', 
+        blank=True, 
+        null=True,
+        help_text='Arquivo PDF do contrato assinado'
+    )
+    
+    timestamp = models.DateTimeField(_('Timestamp de Segurança'))
+    ip_address = models.GenericIPAddressField(_('Endereço IP'))
+    user_agent = models.TextField(_('User Agent'))
+    platform = models.CharField(_('Plataforma'), max_length=255)
+    language = models.CharField(_('Idioma'), max_length=10)
+    screen_resolution = models.CharField(_('Resolução da Tela'), max_length=50)
+    timezone = models.CharField(_('Fuso Horário'), max_length=100)
+    
+    contract_title = models.CharField(_('Título do Contrato'), max_length=500)
+    contract_subtitle = models.CharField(_('Subtítulo do Contrato'), max_length=500, blank=True)
+    contract_description = models.TextField(_('Descrição do Contrato'))
+    investment_amount = models.CharField(_('Valor do Investimento'), max_length=255)
+    equity_percentage = models.CharField(_('Porcentagem de Participação'), max_length=255)
+    innovation_name = models.CharField(_('Nome da Inovação'), max_length=255)
+    
+    status = models.CharField(_('Status'), max_length=50, choices=[
+        ('signed', _('Assinado')),
+        ('cancelled', _('Cancelado')),
+    ], default='signed')
+    
+    class Meta:
+        verbose_name = _('Assinatura de Contrato')
+        verbose_name_plural = _('Assinaturas de Contratos')
+        ordering = ['-created']
+    
+    def __str__(self):
+        return f"Contrato {self.proposal.id} - {self.signer_name} ({self.user_role})"
+    
+    @property
+    def pdf_filename(self):
+        if self.signed_pdf_file:
+            return os.path.basename(self.signed_pdf_file.name)
+        return None
+    
+    @property
+    def pdf_size(self):
+        if self.signed_pdf_file:
+            try:
+                return self.signed_pdf_file.size
+            except:
+                return 0
+        return 0
