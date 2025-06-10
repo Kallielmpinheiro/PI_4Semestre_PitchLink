@@ -751,6 +751,7 @@ def post_create_proposal_innovation(request, payload : ProposalInnovationReq):
                 investimento_minimo = payload.investimento_minimo,
                 porcentagem_cedida = payload.porcentagem_cedida
             )
+            ppc.accepted = True
             ppc.save()
             
     except Exception as e:
