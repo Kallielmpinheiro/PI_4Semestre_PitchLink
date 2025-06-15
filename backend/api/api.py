@@ -2,7 +2,7 @@ import decimal
 import json
 import traceback
 from allauth.socialaccount.models import SocialAccount
-from api.schemas import CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, PaymentProposalReq, RejectProposalInnovation, SignatureContractReq, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
+from api.schemas import CancelProposalReq, CancelReq, ConfirmCreditPaymentReq, CreateCreditPaymentIntentReq, CreateMessageRequest, CreatePaymentIntentReq, CreateRoomRequest, ErrorResponse, PaymentPlanReq, PaymentProposalReq, RejectProposalInnovation, SignatureContractReq, SuccessResponse, CreateInnovationReq, EnterNegotiationRomReq, AcceptedProposalInnovation, UpdateInovattionReq
 from api.schemas import SaveReq, UserReq, SearchInnovationReq, ImgInnovationReq, ProposalInnovationReq, SearchroposalInnovationReq, SearchMensagensRelatedReq
 from api.models import ContractSignature, NegotiationMessage, NegotiationRoom, PaymentTransaction, ProposalPayment, User, Innovation, InnovationImage, ProposalInnovation, CreditTransactions
 from ninja.security import django_auth, HttpBearer
@@ -352,7 +352,7 @@ def get_innovation(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     
     try:
-        inv = Innovation.objects.exclude(owner=user)
+        inv = Innovation.objects.exclude(owner=user, status='active')
         
         if not inv.exists():
             return 404, {'message': 'Nenhuma inovação encontrada'}
@@ -400,7 +400,7 @@ def get_innovation_details(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     
     try:
-        inv = Innovation.objects.filter(owner=user, status='active')
+        inv = Innovation.objects.filter(owner=user)
         
         if not inv.exists():
             return 404, {'message': 'Nenhuma inovação encontrada'}
@@ -425,6 +425,7 @@ def get_innovation_details(request):
                     'porcentagem_cedida': x.porcentagem_cedida,
                     'categorias': x.categorias,
                     'imagens': imagens,
+                    'status':x.status,
             })
 
     except Exception as e:
@@ -751,6 +752,7 @@ def post_create_proposal_innovation(request, payload : ProposalInnovationReq):
                 investimento_minimo = payload.investimento_minimo,
                 porcentagem_cedida = payload.porcentagem_cedida
             )
+            ppc.accepted = True
             ppc.save()
             
     except Exception as e:
@@ -1636,7 +1638,7 @@ def get_proposal_canceled_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(sponsored=user, status='canceled')
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='cancelled')
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta cancelada encontrada'}
@@ -1669,7 +1671,7 @@ def get_proposal_closed_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted', accepted=True)
+    proposals = ProposalInnovation.objects.filter(sponsored=user, status='accepted_contract', accepted=True)
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta aceita encontrada'}
@@ -1924,7 +1926,7 @@ def post_cancel_innovation(request, payload: CancelReq):
             
             cancelled_proposals_count = proposals_to_cancel.count()
             proposals_to_cancel.update(
-                status='canceled',
+                status='cancelled',
                 accepted=False,
                 modified=django_timezone.now()
             )
@@ -1994,7 +1996,7 @@ def get_proposal_canceled_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(investor=user, status='canceled')
+    proposals = ProposalInnovation.objects.filter(investor=user, status='cancelled')
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta cancelada encontrada'}
@@ -2027,7 +2029,7 @@ def get_proposal_closed_sponsored(request):
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
     
-    proposals = ProposalInnovation.objects.filter(investor=user, status='accepted', accepted=True)
+    proposals = ProposalInnovation.objects.filter(investor=user, status='accepted_contract', accepted=True, paid=True)
     
     if not proposals.exists():
         return 404, {'message': 'Nenhuma proposta aceita encontrada'}
@@ -2582,3 +2584,20 @@ def check_contract_signatures(request, proposal_id: int):
     except Exception as e:
         logging.error(f"Erro ao verificar assinaturas do contrato: {str(e)}")
         return 500, {'message': f'Erro ao verificar assinaturas: {str(e)}'}
+    
+@api.post('/cancelproposal', auth=AuthBearer(), response={200: dict, 404: dict, 400: dict, 500: dict})
+def cancelproposal(request, payload: CancelProposalReq):
+    try:
+        user = request.auth
+    except User.DoesNotExist:    
+        return 404, {'message': 'Conta não encontrada'}
+    
+    try:
+        proposal = ProposalInnovation.objects.get(id=payload.id)
+    except ProposalInnovation.DoesNotExist:
+        return 404, {'message': 'Proposta não encontrada'}
+    
+    proposal.status = 'cancelled'
+    proposal.save()
+
+    return 200, {'message': 'cancelada'}

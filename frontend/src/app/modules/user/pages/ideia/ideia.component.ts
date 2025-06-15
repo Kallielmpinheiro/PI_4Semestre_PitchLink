@@ -191,12 +191,11 @@ export class IdeiaComponent {
   }
 
   onResponseModalConfirm(): void {
-    if (this.responseModalConfig.type === 'success') {
-      this.router.navigate(['/app/recs']);
-    }
-    this.closeResponseModal();
+  if (this.responseModalConfig.type === 'success') {
+    window.location.href = '/app/listar_ideias';
   }
-
+  this.closeResponseModal();
+}
   closeResponseModal(): void {
     this.responseModalVisible = false;
   }

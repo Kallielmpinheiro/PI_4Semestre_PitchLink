@@ -44,6 +44,10 @@ export class ListaIdeiasComponent implements OnInit {
     this.loadInnovations();
   }
 
+  canCancelInnovation(innovation: Innovation): boolean {
+    return innovation.status === 'active';
+  }
+
   loadInnovations() {
   this.isLoading = true;
   this.authService.getInnovationDetails().subscribe({
@@ -273,9 +277,7 @@ export class ListaIdeiasComponent implements OnInit {
     });
   }
 
-  canCancelInnovation(innovation: Innovation): boolean {
-    return innovation.status !== 'cancelled' && innovation.status !== 'completed';
-  }
+  
 
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {

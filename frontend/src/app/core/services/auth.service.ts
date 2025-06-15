@@ -568,4 +568,15 @@ postConfirmCreditPayment(plan: string, payment_intent_id: string): Observable<an
     });
   }
 
+  cancelProposal(proposal_id: number): Observable<any> {
+    const token = localStorage.getItem('jwt_token');
+    const payload = { id: proposal_id };
+    return this.http.post(`${this.baseUrl}${api.cancelproposal}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
 }

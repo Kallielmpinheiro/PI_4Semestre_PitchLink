@@ -135,3 +135,6 @@ class SignatureContractReq(Schema):
     signatureInfo: dict
     signedPdfBase64: Optional[str] = None
     pdfFileName: Optional[str] = None
+    
+class CancelProposalReq(Schema):
+    id: int
