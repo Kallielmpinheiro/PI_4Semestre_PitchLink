@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { initFlowbite } from 'flowbite';
+import { ModalConfig } from '../../../shared/interfaces/common.interfaces';
+import { ResponseModalComponent } from '../response-modal/response-modal.component';
 
 interface ProposalData {
   id: number;
@@ -25,7 +27,7 @@ type TabType = 'open' | 'canceled' | 'rejected' | 'closed';
 @Component({
   selector: 'app-setup-propostas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ResponseModalComponent],
   templateUrl: './setup-enviadas.component.html',
   styleUrl: './setup-enviadas.component.css'
 })
@@ -44,6 +46,18 @@ export class SetupEnviadasComponent implements OnInit {
   showStatus = false;
   statusMessage = '';
   statusClasses = '';
+
+  proposalToCancel: ProposalData | null = null;
+
+
+  // Response Modal Configuration
+  responseModalConfig: ModalConfig = {
+    message: '',
+    type: 'info',
+    confirmText: 'OK',
+    showCancel: false
+  };
+  responseModalVisible: boolean = false;
 
   ngOnInit() {
     this.loadAllProposals();
@@ -208,18 +222,6 @@ export class SetupEnviadasComponent implements OnInit {
     }
   }
 
-  cancelar(): void {
-    this.showCancelModal = false;
-
-    const sucesso = true;
-
-    if (sucesso) {
-      this.showFeedback('Proposta cancelada com sucesso!', 'success');
-    } else {
-      this.showFeedback('Erro ao cancelar a proposta!', 'error');
-    }
-  }
-
   showFeedback(message: string, type: 'success' | 'error') {
     this.statusMessage = message;
 
@@ -231,6 +233,57 @@ export class SetupEnviadasComponent implements OnInit {
 
     this.showStatus = true;
     setTimeout(() => this.showStatus = false, 3000);
+  }
+
+  cancelar(): void {
+    if (!this.proposalToCancel) {
+      this.showResponseModal('Nenhuma proposta selecionada para cancelamento!', 'error');
+      return;
+    }
+
+    this.showCancelModal = false;
+    this.loading = true;
+
+    this.authService.cancelProposal(this.proposalToCancel.id).subscribe({
+      next: (response) => {
+        this.loading = false;
+        this.showResponseModal(
+          `Proposta para "${this.proposalToCancel?.innovation_name}" foi cancelada com sucesso!`, 
+          'success'
+        );
+        this.loadAllProposals();
+        this.proposalToCancel = null;
+      },
+      error: (error) => {
+        console.error('Erro ao cancelar proposta:', error);
+        this.loading = false;
+        this.showResponseModal('Erro ao cancelar a proposta. Tente novamente.', 'error');
+        this.proposalToCancel = null;
+      }
+    });
+  }
+
+  private showResponseModal(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
+    this.responseModalConfig = {
+      message: message,
+      type: type,
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.responseModalVisible = true;
+  }
+
+  onResponseModalConfirm(): void {
+    this.closeResponseModal();
+  }
+
+  closeResponseModal(): void {
+    this.responseModalVisible = false;
+  }
+
+  openCancelModal(proposal: ProposalData): void {
+    this.proposalToCancel = proposal;
+    this.showCancelModal = true;
   }
 }
 

@@ -58,7 +58,76 @@ export class SdbrSolicitacoesComponent implements OnInit {
       }
     });
   }
-  
+
+  aceitarProposta(propostaId: number) {
+    const id = propostaId;
+    
+    this.authService.postAcceptProposalInnovation(id).subscribe({
+      next: (response) => {
+        this.error = null;
+        this.criarSalaParaProposta(response.proposal);
+      },
+      error: (error) => {
+        let errorMessage = error.error?.message || error.message;
+        this.error = errorMessage;
+        this.showErrorModal(errorMessage);
+      }
+    });
+  }
+
+  private criarSalaParaProposta(proposta: any) {
+    if (!proposta) {
+      return;
+    }
+
+    const criarSalaPayload = {
+      innovation_id: proposta.innovation?.id || proposta.innovation_id,
+      investor_id: proposta.investor?.id || proposta.investor_id
+    };
+    
+    this.authService.createRoom(criarSalaPayload).subscribe({
+      next: (roomResponse) => {
+        this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
+      },
+      error: (roomError) => {
+        this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
+      }
+    });
+  }
+
+  private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
+    this.fecharModal();
+    this.modalConfig = {
+      title: 'Sucesso!',
+      message: mensagem,
+      type: 'success',
+      confirmText: 'OK',
+      showCancel: false
+    };
+    this.showResponseModal = true;
+    
+    // Recarrega a página após 2 segundos
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  }
+
+  rejeitarProposta(propostaId: number) {
+    const id = propostaId 
+    this.authService.postRejectProposalInnovation(id).subscribe({
+      next: (response) => {
+        this.error = null;
+        this.carregarSolicitacoes();
+        this.fecharModal();
+        this.showSuccessModal('Proposta rejeitada com sucesso!');
+      },
+      error: (error) => {
+        let errorMessage = error;
+        this.error = errorMessage;
+        this.showErrorModal(errorMessage);
+      }
+    });
+  }
 
   getImageUrl(proposta: any): string {
     if (proposta.investor_profile_picture_url) {
@@ -91,7 +160,6 @@ export class SdbrSolicitacoesComponent implements OnInit {
       }).format(numVal);
     }
 
-    // Para valores acima de 999.999.999,99, usar abreviação com vírgula como separador decimal
     const abbreviations = [
       { limit: 1_000_000_000_000, suffix: 'T' },
       { limit: 1_000_000_000, suffix: 'B' },
@@ -117,65 +185,6 @@ export class SdbrSolicitacoesComponent implements OnInit {
   fecharModal() {
     this.mostrarModal = false;
     this.propostaSelecionada = null;
-  }
-
-  aceitarProposta(propostaId: number) {
-
-    const id = propostaId;
-    
-    this.authService.postAcceptProposalInnovation(id).subscribe({
-      next: (response) => {
-        this.error = null;
-        this.criarSalaParaProposta(response.proposal);
-      },
-      error: (error) => {
-        let errorMessage = error.error?.message || error.message;
-        this.error = errorMessage;
-        this.showErrorModal(errorMessage);
-      }
-    });
-  }
-
-  private criarSalaParaProposta(proposta: any) {
-    if (!proposta) {
-      return;
-    }
-
-    const criarSalaPayload = {
-      innovation_id: proposta.innovation?.id || proposta.innovation_id,
-      investor_id: proposta.investor?.id || proposta.investor_id
-    };
-    this.authService.createRoom(criarSalaPayload).subscribe({
-      next: (roomResponse) => {
-        this.finalizarAceitacao('Proposta aceita e sala de negociação criada com sucesso!');
-      },
-      error: (roomError) => {
-        this.finalizarAceitacao('Proposta aceita com sucesso! Erro ao criar sala de negociação.');
-      }
-    });
-  }
-
-  private finalizarAceitacao(mensagem: string = 'Proposta aceita com sucesso!') {
-    this.carregarSolicitacoes();
-    this.fecharModal();
-    this.showSuccessModal(mensagem);
-  }
-
-  rejeitarProposta(propostaId: number) {
-    const id = propostaId 
-    this.authService.postRejectProposalInnovation(id).subscribe({
-      next: (response) => {
-        this.error = null;
-        this.carregarSolicitacoes();
-        this.fecharModal();
-        this.showSuccessModal('Proposta rejeitada com sucesso!');
-      },
-      error: (error) => {
-        let errorMessage = error;
-        this.error = errorMessage;
-        this.showErrorModal(errorMessage);
-      }
-    });
   }
 
   showSuccessModal(message: string) {
@@ -228,7 +237,6 @@ export class SdbrSolicitacoesComponent implements OnInit {
       return `${proposta.investor_name} ${proposta.investor_last_name}`;
     }
     
-    // Fallback para campos alternativos se existirem
     if (proposta.investor_nome) {
       return proposta.investor_nome;
     }

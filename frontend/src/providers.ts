@@ -54,7 +54,8 @@ export const api = {
     getProposalCompleted: prefix + '',
     paymentProposal: prefix + '/payment-proposal',
     signatureContract: prefix + '/signature-contract',
-    checkSignatureStatus: prefix + '/check-contract-signatures'
+    checkSignatureStatus: prefix + '/check-contract-signatures',
+    cancelproposal: prefix + '/cancelproposal',
 }
 
 export const socialAccounts = {

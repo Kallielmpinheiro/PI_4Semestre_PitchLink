@@ -5,8 +5,13 @@
             <div class="flex items-center space-x-4">
                 <div class="relative group">
                     <div class="relative inline-flex h-12 w-12 overflow-hidden rounded-full transition-transform duration-300 transform group-hover:scale-105 ring-2 ring-blue-100">
-                        <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                            <img [src]="receiverProfilePictureUrl" alt="Foto do {{receiverName}}">
+                        <div *ngIf="receiverProfilePictureUrl" class="flex h-full w-full items-center justify-center">
+                            <img [src]="receiverProfilePictureUrl" 
+                                 [alt]="'Foto do ' + receiverName"
+                                 class="h-full w-full object-cover object-center">
+                        </div>
+                        <div *ngIf="!receiverProfilePictureUrl" class="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                            <span class="font-semibold text-lg">{{receiverName?.charAt(0) || 'U'}}</span>
                         </div>
                     </div>
                     <span class="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-400 animate-pulse"></span>
@@ -19,7 +24,6 @@
                     </div>
                 </div>
             </div>
-            
         </div>
     </div>
     
@@ -45,9 +49,12 @@
                 </div>
                 
                 <div *ngIf="msg.sender_id !== senderId" class="flex justify-start">
-                    <div class="relative h-8 w-8 overflow-hidden rounded-full mr-2 mt-2 flex-shrink-0">
-                        <img *ngIf="msg.sender_img_url" [src]="msg.sender_img_url" alt="Foto perfil" 
-                             class="h-full w-full object-cover">
+                    <div class="relative h-8 w-8 overflow-hidden rounded-full mr-2 mt-2 flex-shrink-0 ring-1 ring-gray-200">
+                        <div *ngIf="msg.sender_img_url" class="h-full w-full">
+                            <img [src]="msg.sender_img_url" 
+                                 [alt]="'Foto de ' + msg.sender"
+                                 class="h-full w-full object-cover object-center">
+                        </div>
                         <div *ngIf="!msg.sender_img_url" class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 text-gray-600">
                             <span class="font-medium text-xs">{{msg.sender?.charAt(0) || 'U'}}</span>
                         </div>

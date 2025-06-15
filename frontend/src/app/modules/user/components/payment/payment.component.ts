@@ -136,7 +136,7 @@ export class PaymentComponent implements OnInit {
       next: (response) => {
         if (response && response.plans) {
           this.plans = response.plans;
-          this.currentPlan = response.current_plan || 'no_plan';
+          this.currentPlan = response.current_plan || 'Gratuito';
           this.stripePublishableKey = response.stripe_publishable_key;
           
           if (this.stripePublishableKey) {
@@ -208,6 +208,11 @@ export class PaymentComponent implements OnInit {
           if (this.cardElement) {
             this.cardElement.clear();
           }
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+          
         } else {
           throw new Error(confirmResponse.message);
         }

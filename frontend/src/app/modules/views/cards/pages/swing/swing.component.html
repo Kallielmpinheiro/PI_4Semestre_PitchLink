@@ -1,6 +1,6 @@
 <div class="pitch">
   <!-- Header com Search e Filter Button - só mostra se houver cards -->
-  <div class="pitch-header" *ngIf="arrayCards().length > 0">
+  <div class="pitch-header" *ngIf="arrayCards().length > 0 && !allCardsProcessed()">
     <!-- Search Bar -->
     <div class="search-container">
       <div class="search-wrapper">
@@ -15,8 +15,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        
-
       </div>
     </div>
 
@@ -33,11 +31,11 @@
   </div>
 
   <!-- Main Content Area -->
-  <div class="pitch-content" [class.no-header]="arrayCards().length === 0">
-    <!-- Filters Panel - só mostra se houver cards -->
-    <div *ngIf="showFilter() && arrayCards().length > 0" class="filter-overlay" (click)="toggleFilter()"></div>
+  <div class="pitch-content" [class.no-header]="arrayCards().length === 0 || allCardsProcessed()">
+    <!-- Filters Panel - só mostra se houver cards e não terminaram todos -->
+    <div *ngIf="showFilter() && arrayCards().length > 0 && !allCardsProcessed()" class="filter-overlay" (click)="toggleFilter()"></div>
     
-    <div *ngIf="showFilter() && arrayCards().length > 0" class="filter-panel">
+    <div *ngIf="showFilter() && arrayCards().length > 0 && !allCardsProcessed()" class="filter-panel">
       <div class="filter-panel-inner">
         <!-- Header -->
         <div class="filter-header bg-gradient-to-br from-purple-600 to-blue-500">
@@ -179,8 +177,36 @@
         </div>
       }
 
+      <!-- All Cards Processed State -->
+      @else if (allCardsProcessed()) {
+        <div class="state-container">
+          <div class="error-content">
+            <div class="error-icon">
+              <svg class="h-16 w-16 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              </svg>
+            </div>
+            
+            <h3 class="error-title">Parabéns! Você analisou todas as oportunidades</h3>
+            <p class="error-subtitle">No momento não temos mais inovações disponíveis</p>
+            <p class="error-description">
+              Você visualizou todas as oportunidades de investimento disponíveis no momento. 
+              Nossa equipe está constantemente adicionando novas inovações à plataforma. 
+              Que tal verificar se há novas oportunidades disponíveis?
+            </p>
+            
+            <button type="button" class="retry-button" (click)="reloadCards()">
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Verificar novas oportunidades
+            </button>
+          </div>
+        </div>
+      }
+
       <!-- Cards Content -->
-      @else if (filteredCards().length > 0) {
+      @else if (filteredCards().length > 0 && !allCardsProcessed()) {
         <div class="pitch--cards">
           @for (item of filteredCards(); track item) {
             <div class="pitch--card" #pitchCardRef [id]="item.idCard">

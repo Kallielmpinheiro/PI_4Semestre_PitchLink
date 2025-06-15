@@ -13,7 +13,7 @@ from asgiref.sync import async_to_sync
 class User(models.Model):
     
     PLAN_CHOICES = [
-        ('no_plan', _('No plan')),
+        ('no_plan', _('Gratuito')),
         ('esmerald', _('Esmerald')),
         ('sapphire', _('Sapphire')),
         ('ruby', _('Ruby')),

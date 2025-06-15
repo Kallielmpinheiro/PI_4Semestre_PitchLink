@@ -61,20 +61,23 @@
         </td>
         <td class="px-6 py-4">
           <div class="flex gap-2 flex-wrap">
+            <!-- Sempre mostra Ver Detalhes -->
             <button (click)="viewInnovation(innovation)"
               class="text-blue-400 hover:underline hover:text-blue-300 transition-colors duration-150">
               Ver Detalhes
             </button>
-            <button *ngIf="canCancelInnovation(innovation)" 
-                    (click)="editInnovation(innovation)"
-              class="text-yellow-400 hover:underline hover:text-yellow-300 transition-colors duration-150">
-              Editar
-            </button>
-            <button *ngIf="canCancelInnovation(innovation)" 
-                    (click)="cancelInnovation(innovation)"
-              class="text-red-400 hover:underline hover:text-red-300 transition-colors duration-150">
-              Cancelar
-            </button>
+            
+            <!-- Só mostra Editar e Cancelar se o status for 'active' -->
+            <ng-container *ngIf="innovation.status === 'active'">
+              <button (click)="editInnovation(innovation)"
+                class="text-yellow-400 hover:underline hover:text-yellow-300 transition-colors duration-150">
+                Editar
+              </button>
+              <button (click)="cancelInnovation(innovation)"
+                class="text-red-400 hover:underline hover:text-red-300 transition-colors duration-150">
+                Cancelar
+              </button>
+            </ng-container>
           </div>
         </td>
       </tr>
