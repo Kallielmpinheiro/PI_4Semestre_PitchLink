@@ -84,11 +84,11 @@ export class SidebarComponent implements OnInit {
 
     this.authService.getUser().subscribe(
       dataResponse => {
-        
+        console.log(dataResponse)
         this.nome = dataResponse.data.first_name;
         this.sobrenome = dataResponse.data.last_name;
         this.email = dataResponse.data.email;
-        this.plan = dataResponse.data.plan
+        this.plan = dataResponse.data.plan === 'no_plan' ? 'Gratuito' : dataResponse.data.plan;
         this.data_nasc = dataResponse.data.data_nasc;
         this.categories = dataResponse.data.categories;
       },

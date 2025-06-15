@@ -28,6 +28,7 @@ export class SwingComponent implements OnInit, AfterViewInit {
   public selectedCard = signal<ICards | null>(null);
   public hasError = signal<boolean>(false);
   public isLoading = signal<boolean>(true);
+  public allCardsProcessed = signal<boolean>(false); // Nova propriedade
 
   public showFilter = signal<boolean>(false);
   public searchTerm = signal<string>('');
@@ -134,8 +135,6 @@ export class SwingComponent implements OnInit, AfterViewInit {
       return;
     }
 
-
-
     this.pendingCardElement = document.getElementById(cardId);
     this.pendingAction = 'accept';
 
@@ -159,6 +158,7 @@ export class SwingComponent implements OnInit, AfterViewInit {
     }
     
     this.resetPendingState();
+    this.checkIfAllCardsProcessed(); // Verificar se todos os cards foram processados
   }
 
   // Método para resetar o estado pendente
@@ -167,6 +167,22 @@ export class SwingComponent implements OnInit, AfterViewInit {
     this.selectedCard.set(null);
     this.pendingCardElement = null;
     this.pendingAction = null;
+  }
+
+  // Método para verificar se todos os cards foram processados
+  private checkIfAllCardsProcessed() {
+    setTimeout(() => {
+      const remainingCards = document.querySelectorAll('.pitch--card:not(.removed)').length;
+      if (remainingCards === 0 && this.arrayCards().length > 0) {
+        this.allCardsProcessed.set(true);
+      }
+    }, 500); // Pequeno delay para garantir que a animação de remoção termine
+  }
+
+  // Método para resetar e recarregar cards
+  reloadCards(): void {
+    this.allCardsProcessed.set(false);
+    this.ngOnInit();
   }
 
   // Método para remover um card
@@ -185,11 +201,15 @@ export class SwingComponent implements OnInit, AfterViewInit {
     
     // Atualiza a posição dos cartões restantes
     this.initCardsPosition();
+    
+    // Verificar se todos os cards foram processados
+    this.checkIfAllCardsProcessed();
   }
 
   ngOnInit(): void {
     this.isLoading.set(true);
     this.hasError.set(false);
+    this.allCardsProcessed.set(false); // Reset do estado
     
     this.authService.getInnovation().subscribe({
       next: (dataResponse) => {

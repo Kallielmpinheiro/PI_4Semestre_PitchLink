@@ -84,15 +84,12 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.messagesList = sortedMessages;
             this.shouldScrollToBottom = true;
 
-            
             if (!this.receiverId && this.senderId && response.messages.length > 0) {
               const participantsIds = new Set<number>();
               response.messages.forEach((msg: any) => {
                 if (msg.sender_id) participantsIds.add(msg.sender_id);
                 if (msg.receiver_id) participantsIds.add(msg.receiver_id);
               });
-              
-              
               
               const potentialReceivers = [...participantsIds].filter(id => id !== this.senderId);
               
@@ -108,8 +105,6 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
                   this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
                 }
 
-                console.log(receiverMessage)
-
                 this.tryInitializeWebSocket();
               } else if (participantsIds.size > 0) {
                 this.receiverId = [...participantsIds][0];
@@ -122,8 +117,6 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
                   this.receiverName = receiverMessage.sender;
                   this.receiverProfilePictureUrl = receiverMessage.sender_img_url;
                 }
-
-                console.log(this.receiverName)
 
                 this.tryInitializeWebSocket();
               } else {
@@ -156,28 +149,31 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private buscarReceptorDaNegociacao(): void {
-    
     this.authService.getNegociacao()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          
           if (response && response.data && response.data.length > 0) {
             const salaCorrespondente = response.data.find(
               (r: any) => r.id === this.roomId
             );
-            
             
             if (salaCorrespondente && salaCorrespondente.participants && salaCorrespondente.participants.length > 0) {
               const outroParticipante = salaCorrespondente.participants.find(
                 (p: any) => p.id !== this.senderId
               );
               
-              
               if (outroParticipante) {
                 this.receiverId = outroParticipante.id;
+                // Adicionar estas linhas para definir o nome e foto do receptor
+                this.receiverName = outroParticipante.name || outroParticipante.username || `Usuário ${outroParticipante.id}`;
+                this.receiverProfilePictureUrl = outroParticipante.profile_picture || outroParticipante.image_url || '';
               } else if (salaCorrespondente.participants.length > 0) {
                 this.receiverId = salaCorrespondente.participants[0].id;
+                // Adicionar estas linhas também
+                const firstParticipant = salaCorrespondente.participants[0];
+                this.receiverName = firstParticipant.name || firstParticipant.username || `Usuário ${firstParticipant.id}`;
+                this.receiverProfilePictureUrl = firstParticipant.profile_picture || firstParticipant.image_url || '';
               }
               
               this.tryInitializeWebSocket();
@@ -185,7 +181,11 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
               if (!this.roomId && response.data.length > 0) {
                 this.roomId = response.data[0].id;
                 if (response.data[0].participants && response.data[0].participants.length > 0) {
-                  this.receiverId = response.data[0].participants[0].id;
+                  const firstParticipant = response.data[0].participants[0];
+                  this.receiverId = firstParticipant.id;
+                  // Adicionar estas linhas também
+                  this.receiverName = firstParticipant.name || firstParticipant.username || `Usuário ${firstParticipant.id}`;
+                  this.receiverProfilePictureUrl = firstParticipant.profile_picture || firstParticipant.image_url || '';
                   this.roomLoaded = true;
                   this.tryInitializeWebSocket();
                 }
@@ -421,9 +421,15 @@ export class MensagensComponent implements OnInit, OnDestroy, AfterViewChecked {
         next: (response) => {
           if (response.data?.length > 0) {
             this.roomId = response.data[0].id;
-            this.receiverId = response.data[0].participants[0].id;
-            this.roomLoaded = true;
-            this.tryInitializeWebSocket();
+            if (response.data[0].participants && response.data[0].participants.length > 0) {
+              const firstParticipant = response.data[0].participants[0];
+              this.receiverId = firstParticipant.id;
+              // Adicionar informações do receptor
+              this.receiverName = firstParticipant.name || firstParticipant.username || `Usuário ${firstParticipant.id}`;
+              this.receiverProfilePictureUrl = firstParticipant.profile_picture || firstParticipant.image_url || '';
+              this.roomLoaded = true;
+              this.tryInitializeWebSocket();
+            }
           }
         },
         error: (err) => console.error(err)

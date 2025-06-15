@@ -33,7 +33,7 @@ class UserAdmin(admin.ModelAdmin):
     get_user_info.short_description = 'Usuário'
     
     def get_plan_display(self, obj):
-        colors = {'no_plan': '#6c757d', 'esmerald': '#28a745', 'sapphire': '#007bff', 'ruby': '#dc3545'}
+        colors = {'gratuito': '#6c757d', 'esmerald': '#28a745', 'sapphire': '#007bff', 'ruby': '#dc3545'}
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">{}</span>',
             colors.get(obj.plan, '#6c757d'),
