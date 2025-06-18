@@ -299,51 +299,62 @@ export class PropostasComponent implements OnInit, OnChanges {
 
   formatCurrency(event: any): void {
     let value = event.target.value;
-    
+
+    // Remove tudo que não for dígito
     value = value.replace(/\D/g, '');
-    
-    if (!value) {
-      event.target.value = '';
-      this.proposalForm.get('investimento_minimo')?.setValue('');
-      return;
+
+    // Garante pelo menos "0" caso esteja vazio
+    if (value === '') {
+      value = '0';
     }
-    
-    const numericValue = parseInt(value) / 100;
-    
+
+    // Converte para número e divide por 100 para representar centavos
+    const numericValue = parseInt(value, 10) / 100;
+
+    // Formata como moeda brasileira com 2 casas decimais
     const formattedValue = numericValue.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    
+
+    // Atualiza o input visivelmente
     event.target.value = formattedValue;
-    
-    this.proposalForm.get('investimento_minimo')?.setValue(numericValue.toString());
+
+    // Atualiza o valor do formulário (como número ou string)
+    this.proposalForm.get('investimento_minimo')?.setValue(numericValue.toFixed(2));
   }
+
 
   formatPercentage(event: any): void {
     let value = event.target.value;
-    
+
+    // Remove tudo que não for número
     value = value.replace(/\D/g, '');
-    
-    if (!value) {
-      event.target.value = '';
-      this.proposalForm.get('porcentagem_cedida')?.setValue('');
-      return;
+
+    // Garante pelo menos '0' pra permitir digitar 0%
+    if (value === '') {
+      value = '0';
     }
-    
-    const numericValue = parseInt(value) / 100;
-    
+
+    // Converte para número decimal com 2 casas (ex: 1 => 0.01, 123 => 1.23)
+    const numericValue = parseInt(value, 10) / 100;
+
+    // Garante que não ultrapasse 100%
     const limitedValue = Math.min(numericValue, 100);
-    
+
+    // Formata no padrão brasileiro com 2 casas
     const formattedValue = limitedValue.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    
+
+    // Mostra o valor formatado no input
     event.target.value = formattedValue;
-    
-    this.proposalForm.get('porcentagem_cedida')?.setValue(limitedValue.toString());
+
+    // Atualiza o formulário com precisão de 2 casas
+    this.proposalForm.get('porcentagem_cedida')?.setValue(limitedValue.toFixed(2));
   }
+
 
   onCancel(): void {
     this.cancelled.emit();

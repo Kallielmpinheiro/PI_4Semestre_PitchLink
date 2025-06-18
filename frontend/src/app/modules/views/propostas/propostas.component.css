@@ -22,3 +22,7 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 100, 100, 0.5);
 }
+
+input::placeholder {
+  color: rgba(100, 100, 100, 0.822);
+}

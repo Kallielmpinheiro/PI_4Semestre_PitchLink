@@ -352,7 +352,9 @@ def get_innovation(request):
     base_url = f"{request.scheme}://{request.get_host()}"
     
     try:
-        inv = Innovation.objects.exclude(owner=user, status='active')
+        inv = Innovation.objects.exclude(
+            Q(owner=user) | Q(status='cancelled')
+        )
         
         if not inv.exists():
             return 404, {'message': 'Nenhuma inovação encontrada'}
@@ -501,30 +503,27 @@ def search_innovation(request, payload : SearchInnovationReq):
 
 @api.post("/create-room", auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
 def create_room(request, payload: CreateRoomRequest):
-    
     try:
         user = request.auth
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
-
     try:
         investor = User.objects.get(id=payload.investor_id)
     except User.DoesNotExist:
         return 404, {'message': 'Conta não encontrada'}
-
     try:
         innovation = Innovation.objects.get(id=payload.innovation_id)
     except Innovation.DoesNotExist:
         return 404, {'message': 'Inovação não encontrada'}
 
-    room, created = NegotiationRoom.objects.get_or_create(innovation=innovation)
+    room = NegotiationRoom.objects.create(innovation=innovation)
     room.participants.add(user, investor)
-    
+
     return 200, {
         "room_id": str(room.idRoom),
         "status": room.status,
         "participants": [u.id for u in room.participants.all()],
-        "created": created
+        "created": True
     }
 
 @api.post("/send-message", auth=AuthBearer(), response={200: dict, 404: dict, 403: dict})
